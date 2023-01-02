@@ -10,17 +10,27 @@
 #include <linux/delay.h>
 #include <linux/spinlock.h>
 #include <linux/pm_qos.h>
+#include <linux/pm_runtime.h>
+#include <device/mali_kbase_device.h>
 #include <mali_kbase.h>
 #include <mali_kbase_defs.h>
 #include <mali_kbase_config.h>
 #include "mali_kbase_config_platform.h"
 #include "platform/mtk_platform_common.h"
+#include "platform/mtk_platform_common/mtk_platform_debug.h"
 #include <ged_dvfs.h>
 #include <mtk_gpufreq.h>
 #include <mtk_gpu_utility.h>
 #if IS_ENABLED(CONFIG_MTK_AEE_IPANIC)
 #include <mboot_params.h>
 #endif
+#include <asm/ptrace.h>
+
+/* KBASE_PLATFORM_DEBUG_ENABLE, 1 for debug log enable, 0 for disable */
+#define KBASE_PLATFORM_DEBUG_ENABLE  (0)
+
+/* KBASE_PLATFORM_SUSPEND_DELAY, the ms for autosuspend timeout */
+#define KBASE_PLATFORM_SUSPEND_DELAY (100) /* ms */
 
 DEFINE_MUTEX(g_mfg_lock);
 static int g_cur_opp_idx;
@@ -61,7 +71,8 @@ static inline void gpu_dvfs_status_reset_footprint(void)
 
 static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 {
-#if defined(CONFIG_MTK_GPUFREQ_V2)
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
 	if (mtk_common_gpufreq_bringup()) {
 		mtk_common_pm_mfg_active();
 		return 0;
@@ -74,62 +85,48 @@ static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 #endif
 		return 0;
 	}
-#endif /* CONFIG_MTK_GPUFREQ_V2 */
 
 	if (mtk_common_pm_is_mfg_active())
 		return 0;
 
-	dev_vdbg(kbdev->dev, "GPU PM Callback - Active");
-
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_1);
 
 	/* on,off/ SWCG(BG3D)/ MTCMOS/ BUCK */
-#if defined(CONFIG_MTK_GPUFREQ_V2)
 	if (gpufreq_power_control(POWER_ON) < 0) {
-		dev_info(kbdev->dev, "GPU PM Callback - Power On Failed");
+		KBASE_PLATFORM_LOGE("Power On Failed");
 		return 1;
 	}
-#endif /* CONFIG_MTK_GPUFREQ_V2 */
 
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_2);
 
-#if defined(CONFIG_MTK_GPUFREQ_V2)
 	gpufreq_set_timestamp();
-#endif /* CONFIG_MTK_GPUFREQ_V2 */
 
 	/* set a flag to enable GPU DVFS */
 	mtk_common_pm_mfg_active();
 
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_3);
 
-	/* resume frequency */
-	mtk_common_gpufreq_commit(g_cur_opp_idx);
-
-	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_4);
-
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 	ged_dvfs_gpu_clock_switch_notify(1);
 #endif
 
-	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_5);
+	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_4);
 
 	return 0;
 }
 
 static void pm_callback_power_off_nolock(struct kbase_device *kbdev)
 {
-#if defined(CONFIG_MTK_GPUFREQ_V2)
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
 	if (mtk_common_gpufreq_bringup())
 		return;
 
 	if (!gpufreq_power_ctrl_enable())
 		return;
-#endif /* CONFIG_MTK_GPUFREQ_V2 */
 
 	if (!mtk_common_pm_is_mfg_active())
 		return;
-
-	dev_vdbg(kbdev->dev, "GPU PM Callback - Idle");
 
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_6);
 
@@ -150,30 +147,38 @@ static void pm_callback_power_off_nolock(struct kbase_device *kbdev)
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_9);
 
 	/* check MFG bus if idle */
-#if defined(CONFIG_MTK_GPUFREQ_V2)
 	gpufreq_check_bus_idle();
-#endif /* CONFIG_MTK_GPUFREQ_V2 */
 
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_A);
 
 	/* on,off/ SWCG(BG3D)/ MTCMOS/ BUCK */
-#if defined(CONFIG_MTK_GPUFREQ_V2)
 	if (gpufreq_power_control(POWER_OFF) < 0) {
-		dev_info(kbdev->dev, "GPU PM Callback - Power Off Failed");
+		KBASE_PLATFORM_LOGE("Power Off Failed");
 		return;
 	}
-#endif /* CONFIG_MTK_GPUFREQ_V2 */
 
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_B);
 }
 
+
 static int pm_callback_power_on(struct kbase_device *kbdev)
 {
-	int ret = 0;
+	int ret = 1;
+	unsigned long flags;
 
-	if (kbdev->gpu_props.props.raw_props.coherency_mode == COHERENCY_ACE_LITE) {
-		cpu_latency_qos_update_request(&g_qos_request, 149);
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
+	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+	WARN_ON(kbdev->pm.backend.gpu_powered);
+
+	if (likely(kbdev->csf.firmware_inited)) {
+		WARN_ON(!kbdev->pm.active_count);
+		WARN_ON(kbdev->pm.runtime_active);
 	}
+	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+
+	if (kbdev->gpu_props.props.raw_props.coherency_mode == COHERENCY_ACE_LITE)
+		cpu_latency_qos_update_request(&g_qos_request, 149);
 
 	mutex_lock(&g_mfg_lock);
 	ret = pm_callback_power_on_nolock(kbdev);
@@ -185,75 +190,178 @@ static int pm_callback_power_on(struct kbase_device *kbdev)
 
 static void pm_callback_power_off(struct kbase_device *kbdev)
 {
+	unsigned long flags;
+
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
+	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+	WARN_ON(kbdev->pm.backend.gpu_powered);
+
+	if (likely(kbdev->csf.firmware_inited)) {
+		WARN_ON(kbase_csf_scheduler_get_nr_active_csgs(kbdev));
+		WARN_ON(kbdev->pm.backend.mcu_state != KBASE_MCU_OFF);
+	}
+	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+
+	/* Power down the GPU immediately */
 	mutex_lock(&g_mfg_lock);
 	mtk_notify_gpu_power_change(0);
 	pm_callback_power_off_nolock(kbdev);
 	mutex_unlock(&g_mfg_lock);
 
-	if (kbdev->gpu_props.props.raw_props.coherency_mode == COHERENCY_ACE_LITE) {
+	if (kbdev->gpu_props.props.raw_props.coherency_mode == COHERENCY_ACE_LITE)
 		cpu_latency_qos_update_request(&g_qos_request, PM_QOS_DEFAULT_VALUE);
-	}
 }
 
-static void pm_callback_power_suspend(struct kbase_device *kbdev)
+#if IS_ENABLED(CONFIG_MALI_SLEEP_MODE)
+static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
 {
+	unsigned long flags;
+	int error;
+
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
+	lockdep_assert_held(&kbdev->pm.lock);
+
+	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+	WARN_ON(!kbdev->pm.backend.gpu_powered);
+	WARN_ON(!kbdev->pm.active_count);
+	WARN_ON(kbdev->pm.runtime_active);
+	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+
+	if (pm_runtime_status_suspended(kbdev->dev)) {
+		error = pm_runtime_get_sync(kbdev->dev);
+		KBASE_PLATFORM_LOGD("pm_runtime_get_sync returned %d", error);
+	} else {
+		/* Call the async version here, otherwise there could be
+		 * a deadlock if the runtime suspend operation is ongoing.
+		 * Caller would have taken the kbdev->pm.lock and/or the
+		 * scheduler lock, and the runtime suspend callback function
+		 * will also try to acquire the same lock(s).
+		 */
+		error = pm_runtime_get(kbdev->dev);
+		KBASE_PLATFORM_LOGD("pm_runtime_get returned %d", error);
+	}
+
+	kbdev->pm.runtime_active = true;
+}
+
+static void pm_callback_runtime_gpu_idle(struct kbase_device *kbdev)
+{
+	unsigned long flags;
+
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
+	lockdep_assert_held(&kbdev->pm.lock);
+
+	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
+	WARN_ON(!kbdev->pm.backend.gpu_powered);
+	WARN_ON(kbdev->pm.backend.l2_state != KBASE_L2_OFF);
+	WARN_ON(kbdev->pm.active_count);
+	WARN_ON(!kbdev->pm.runtime_active);
+	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+
+	pm_runtime_mark_last_busy(kbdev->dev);
+	pm_runtime_put_autosuspend(kbdev->dev);
+	kbdev->pm.runtime_active = false;
+}
+
+static int kbase_device_runtime_init(struct kbase_device *kbdev)
+{
+	int ret = 0;
+
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
+	pm_runtime_set_autosuspend_delay(kbdev->dev, KBASE_PLATFORM_SUSPEND_DELAY);
+	pm_runtime_use_autosuspend(kbdev->dev);
+
+	pm_runtime_set_active(kbdev->dev);
+	pm_runtime_enable(kbdev->dev);
+
+	if (!pm_runtime_enabled(kbdev->dev)) {
+		KBASE_PLATFORM_LOGE("pm_runtime not enabled");
+		ret = -EINVAL;
+	} else if (atomic_read(&kbdev->dev->power.usage_count)) {
+		KBASE_PLATFORM_LOGE("%s: Device runtime usage count unexpectedly non zero %d",
+			__func__, atomic_read(&kbdev->dev->power.usage_count));
+		ret = -EINVAL;
+	}
+
+	return ret;
+}
+
+static void kbase_device_runtime_disable(struct kbase_device *kbdev)
+{
+	KBASE_PLATFORM_LOGD("%s", __func__);
+
+	if (atomic_read(&kbdev->dev->power.usage_count))
+		KBASE_PLATFORM_LOGE("%s: Device runtime usage count unexpectedly non zero %d",
+			__func__, atomic_read(&kbdev->dev->power.usage_count));
+
+	pm_runtime_disable(kbdev->dev);
+}
+
+static int pm_callback_runtime_on(struct kbase_device *kbdev)
+{
+	KBASE_PLATFORM_LOGD("%s", __func__);
+	return 0;
+}
+
+static void pm_callback_runtime_off(struct kbase_device *kbdev)
+{
+	KBASE_PLATFORM_LOGD("%s", __func__);
+}
+#endif /* CONFIG_MALI_SLEEP_MODE */
+
+static void pm_callback_resume(struct kbase_device *kbdev)
+{
+	KBASE_PLATFORM_LOGI("%s", __func__);
 	mutex_lock(&g_mfg_lock);
-	dev_vdbg(kbdev->dev, "GPU PM Callback - Suspend");
-	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_E);
+	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_F);
 	mutex_unlock(&g_mfg_lock);
 }
 
-static void pm_callback_power_resume(struct kbase_device *kbdev)
+static void pm_callback_suspend(struct kbase_device *kbdev)
 {
+	KBASE_PLATFORM_LOGI("%s", __func__);
 	mutex_lock(&g_mfg_lock);
-	dev_vdbg(kbdev->dev, "GPU PM Callback - Resume");
-	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_F);
+	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_E);
 	mutex_unlock(&g_mfg_lock);
 }
 
 struct kbase_pm_callback_conf pm_callbacks = {
 	.power_on_callback = pm_callback_power_on,
 	.power_off_callback = pm_callback_power_off,
-	.power_suspend_callback  = pm_callback_power_suspend,
-	.power_resume_callback = pm_callback_power_resume,
+	.power_suspend_callback = pm_callback_suspend,
+	.power_resume_callback = pm_callback_resume,
+#if IS_ENABLED(CONFIG_MALI_SLEEP_MODE)
+	.power_runtime_init_callback = kbase_device_runtime_init,
+	.power_runtime_term_callback = kbase_device_runtime_disable,
+	.power_runtime_on_callback = pm_callback_runtime_on,
+	.power_runtime_off_callback = pm_callback_runtime_off,
+	.power_runtime_gpu_idle_callback = pm_callback_runtime_gpu_idle,
+	.power_runtime_gpu_active_callback = pm_callback_runtime_gpu_active,
+#else /* CONFIG_MALI_SLEEP_MODE */
+	.power_runtime_init_callback = NULL,
+	.power_runtime_term_callback = NULL,
+	.power_runtime_on_callback = NULL,
+	.power_runtime_off_callback = NULL,
+	.power_runtime_gpu_idle_callback = NULL,
+	.power_runtime_gpu_active_callback = NULL,
+#endif /* CONFIG_MALI_SLEEP_MODE */
 };
-
-#ifndef CONFIG_OF
-static struct kbase_io_resources io_resources = {
-	.job_irq_number = 68,
-	.mmu_irq_number = 69,
-	.gpu_irq_number = 70,
-	.io_memory_region = {
-	.start = 0xFC010000,
-	.end = 0xFC010000 + (4096 * 4) - 1
-	}
-};
-#endif /* CONFIG_OF */
-
-static struct kbase_platform_config versatile_platform_config = {
-#ifndef CONFIG_OF
-	.io_resources = &io_resources
-#endif
-};
-
-struct kbase_platform_config *kbase_get_platform_config(void)
-{
-	return &versatile_platform_config;
-}
 
 int mtk_platform_device_init(struct kbase_device *kbdev)
 {
-
 	if (!kbdev) {
-		dev_info(kbdev->dev, "@%s: kbdev is NULL", __func__);
+		KBASE_PLATFORM_LOGE("@%s: kbdev is NULL", __func__);
 		return -1;
 	}
 
-	cpu_latency_qos_add_request(&g_qos_request,
-		PM_QOS_DEFAULT_VALUE);
+	cpu_latency_qos_add_request(&g_qos_request, PM_QOS_DEFAULT_VALUE);
 
 	gpu_dvfs_status_reset_footprint();
-	dev_info(kbdev->dev, "GPU PM Callback - Initialize Done");
+	KBASE_PLATFORM_LOGI("Initialize Done");
 
 	return 0;
 }
