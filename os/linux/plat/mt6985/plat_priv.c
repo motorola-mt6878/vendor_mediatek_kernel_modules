@@ -110,6 +110,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_LITTLE_CORE,
 		.u4ISRMask = CPU_LITTLE_CORE,
+		.u4WfdmaThNum = 2,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -132,6 +133,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_ALL_CORE,
 		.u4ISRMask = CPU_BIG_CORE,
+		.u4WfdmaThNum = 2,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -154,6 +156,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_BIG_CORE,
+		.u4WfdmaThNum = 2,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -176,6 +179,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_BIG_CORE,
+		.u4WfdmaThNum = 1,
 		.fgDramBoost = FALSE
 	}
 };
@@ -361,6 +365,10 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 
 	kalSetRpsMap(prGlueInfo, prBoostInfo->u4RpsMap);
 	kalSetISRMask(prAdapter, prBoostInfo->u4ISRMask);
+
+#if defined(_HIF_PCIE)
+	kalConfigWfdmaTh(prGlueInfo, prBoostInfo->u4WfdmaThNum);
+#endif
 
 	kalSetDramBoost(prAdapter, prBoostInfo->fgDramBoost);
 
