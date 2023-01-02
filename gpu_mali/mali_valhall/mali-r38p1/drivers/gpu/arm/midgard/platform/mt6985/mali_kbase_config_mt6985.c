@@ -108,8 +108,6 @@ static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_2);
 
-	gpufreq_set_ocl_timestamp();
-
 	/* set a flag to enable GPU DVFS */
 	mtk_common_pm_mfg_active();
 
