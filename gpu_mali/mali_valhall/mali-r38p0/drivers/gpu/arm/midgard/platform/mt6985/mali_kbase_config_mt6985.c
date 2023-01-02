@@ -16,8 +16,8 @@
 #include <mali_kbase_defs.h>
 #include <mali_kbase_config.h>
 #include "mali_kbase_config_platform.h"
-#include "platform/mtk_platform_common.h"
-#include "platform/mtk_platform_common/mtk_platform_debug.h"
+#include <platform/mtk_platform_common.h>
+#include <platform/mtk_platform_common/mtk_platform_debug.h>
 #include <ged_dvfs.h>
 #include <mtk_gpufreq.h>
 #include <mtk_gpu_utility.h>
@@ -351,21 +351,25 @@ struct kbase_pm_callback_conf pm_callbacks = {
 #endif /* CONFIG_MALI_SLEEP_MODE */
 };
 
-int mtk_platform_device_init(struct kbase_device *kbdev)
+int mtk_platform_pm_init(struct kbase_device *kbdev)
 {
-	if (!kbdev) {
-		KBASE_PLATFORM_LOGE("@%s: kbdev is NULL", __func__);
+	if (IS_ERR_OR_NULL(kbdev))
 		return -1;
-	}
 
-	cpu_latency_qos_add_request(&g_qos_request, PM_QOS_DEFAULT_VALUE);
+	cpu_latency_qos_add_request(&g_qos_request,
+		PM_QOS_DEFAULT_VALUE);
 
 	gpu_dvfs_status_reset_footprint();
-	KBASE_PLATFORM_LOGI("Initialize Done");
+
+	dev_info(kbdev->dev, "GPU PM Callback - Initialize Done");
 
 	return 0;
 }
 
-void mtk_platform_device_term(struct kbase_device *kbdev) {
+void mtk_platform_pm_term(struct kbase_device *kbdev)
+{
+	if (IS_ERR_OR_NULL(kbdev))
+		return;
+
 	cpu_latency_qos_remove_request(&g_qos_request);
 }
