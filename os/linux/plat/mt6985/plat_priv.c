@@ -537,3 +537,10 @@ exit:
 	return ret;
 }
 #endif
+
+#if (CFG_SUPPORT_HOST_OFFLOAD == 1)
+u_int8_t kalIsSupportMawd(void)
+{
+	return TRUE;
+}
+#endif
