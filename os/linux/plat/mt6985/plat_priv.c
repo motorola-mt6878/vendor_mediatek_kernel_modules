@@ -46,7 +46,11 @@
 static uint32_t u4EmiMetOffset = 0x45D400;
 
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
+#define RST_PIN_MIN_WAIT_TIME		10 /* ms */
+
 static struct pinctrl *pinctrl_ptr;
+static int8_t last_wf_rst_pin_state;
+static OS_SYSTIME last_toggle_time;
 
 static int32_t mt6985_wlan_pinctrl_init(void);
 static int32_t mt6985_wlan_pinctrl_action(enum WLAN_PINCTRL_MSG msg);
@@ -564,8 +568,37 @@ static int32_t mt6985_wlan_pinctrl_init(void)
 			ret);
 	}
 
+	last_toggle_time = 0;
+	last_wf_rst_pin_state = -1;
+
 exit:
 	return ret;
+}
+
+static void ensure_rst_pin_min_wait_time(int8_t state)
+{
+	OS_SYSTIME current_time = 0;
+	uint32_t retry = 0;
+
+	if (last_wf_rst_pin_state == state)
+		return;
+
+	while (TRUE) {
+		GET_CURRENT_SYSTIME(&current_time);
+
+		if (last_toggle_time == 0)
+			break;
+		else if (CHECK_FOR_TIMEOUT(current_time,
+					   last_toggle_time,
+					   RST_PIN_MIN_WAIT_TIME))
+			break;
+
+		DBGLOG_LIMITED(INIT, INFO, "retry: %d.\n", retry);
+		retry++;
+		kalMdelay(1);
+	}
+	GET_CURRENT_SYSTIME(&last_toggle_time);
+	last_wf_rst_pin_state = state;
 }
 
 static int32_t mt6985_wlan_pinctrl_action(enum WLAN_PINCTRL_MSG msg)
@@ -580,9 +613,11 @@ static int32_t mt6985_wlan_pinctrl_action(enum WLAN_PINCTRL_MSG msg)
 	switch (msg) {
 	case WLAN_PINCTRL_MSG_FUNC_ON:
 		name = "wf_rst_on";
+		ensure_rst_pin_min_wait_time(1);
 		break;
 	case WLAN_PINCTRL_MSG_FUNC_OFF:
 		name = "wf_rst_off";
+		ensure_rst_pin_min_wait_time(0);
 		break;
 	default:
 		goto exit;
