@@ -82,8 +82,8 @@ enum ENUM_CPU_BOOST_STATUS eBoostCpuTable[] = {
 	ENUM_CPU_BOOST_STATUS_LV1, /* 5: 250Mbps */
 	ENUM_CPU_BOOST_STATUS_LV1, /* 6 */
 	ENUM_CPU_BOOST_STATUS_LV1, /* 7 */
-	ENUM_CPU_BOOST_STATUS_LV3, /* 8: 1200Mbps */
-	ENUM_CPU_BOOST_STATUS_LV3, /* 9: 2500Mbps */
+	ENUM_CPU_BOOST_STATUS_LV2, /* 8: 1200Mbps */
+	ENUM_CPU_BOOST_STATUS_LV3, /* 9: 2000Mbps */
 	ENUM_CPU_BOOST_STATUS_LV3  /* 10 */
 };
 
@@ -112,6 +112,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4RpsMap = RPS_LITTLE_CORE,
 		.u4ISRMask = CPU_LITTLE_CORE,
 		.u4WfdmaThNum = 2,
+		.fgKeepPcieWakeup = FALSE,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -121,43 +122,45 @@ struct BOOST_INFO rBoostInfo[] = {
 			.i4BigCpuFreq = AUTO_CPU_FREQ
 		},
 		.rHifThreadInfo = {
-			.u4CpuMask = CPU_LITTLE_CORE,
+			.u4CpuMask = CPU_BIG_CORE,
 			.u4Priority = AUTO_PRIORITY
 		},
 		.rMainThreadInfo = {
-			.u4CpuMask = CPU_LITTLE_CORE,
+			.u4CpuMask = CPU_BIG_CORE,
 			.u4Priority = AUTO_PRIORITY
 		},
 		.rRxThreadInfo = {
-			.u4CpuMask = CPU_LITTLE_CORE,
+			.u4CpuMask = CPU_BIG_CORE,
 			.u4Priority = AUTO_PRIORITY
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_BIG_CORE,
 		.u4WfdmaThNum = 2,
+		.fgKeepPcieWakeup = FALSE,
 		.fgDramBoost = FALSE
 	},
 	{
 		/* ENUM_CPU_BOOST_STATUS_LV2 */
 		.rCpuInfo = {
-			.i4LittleCpuFreq = AUTO_CPU_FREQ,
-			.i4BigCpuFreq = AUTO_CPU_FREQ
+			.i4LittleCpuFreq = MAX_CPU_FREQ,
+			.i4BigCpuFreq = MAX_CPU_FREQ
 		},
 		.rHifThreadInfo = {
 			.u4CpuMask = CPU_BIG_CORE,
-			.u4Priority = AUTO_PRIORITY
+			.u4Priority = HIGH_PRIORITY
 		},
 		.rMainThreadInfo = {
 			.u4CpuMask = CPU_BIG_CORE,
-			.u4Priority = AUTO_PRIORITY
+			.u4Priority = HIGH_PRIORITY
 		},
 		.rRxThreadInfo = {
 			.u4CpuMask = CPU_BIG_CORE,
-			.u4Priority = AUTO_PRIORITY
+			.u4Priority = HIGH_PRIORITY
 		},
 		.u4RpsMap = RPS_BIG_CORE,
-		.u4ISRMask = CPU_BIG_CORE,
+		.u4ISRMask = CPU_X_CORE,
 		.u4WfdmaThNum = 2,
+		.fgKeepPcieWakeup = FALSE,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -181,6 +184,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_X_CORE,
 		.u4WfdmaThNum = 1,
+		.fgKeepPcieWakeup = TRUE,
 		.fgDramBoost = FALSE
 	}
 };
@@ -369,13 +373,14 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 
 #if defined(_HIF_PCIE)
 	kalConfigWfdmaTh(prGlueInfo, prBoostInfo->u4WfdmaThNum);
+	kalSetPcieKeepWakeup(prGlueInfo, prBoostInfo->fgKeepPcieWakeup);
 #endif
 
 	kalSetDramBoost(prAdapter, prBoostInfo->fgDramBoost);
 
 #define TEMP_LOG_TEMPLATE \
 	"CPUInfo[%d:%d] ThreadInfo:[%02x:%02x:%02x][%u:%u:%u] " \
-	"Rps:[%02x] ISR:[%02x] D:[%u]\n"
+	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]\n"
 
 	DBGLOG(INIT, INFO,
 		TEMP_LOG_TEMPLATE,
@@ -389,7 +394,8 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 		prBoostInfo->rRxThreadInfo.u4Priority,
 		prBoostInfo->u4RpsMap,
 		prBoostInfo->u4ISRMask,
-		prBoostInfo->fgDramBoost
+		prBoostInfo->fgDramBoost,
+		prBoostInfo->fgKeepPcieWakeup
 		);
 #undef TEMP_LOG_TEMPLATE
 }
