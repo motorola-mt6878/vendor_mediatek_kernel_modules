@@ -112,6 +112,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4RpsMap = RPS_LITTLE_CORE,
 		.u4ISRMask = CPU_LITTLE_CORE,
 		.i4RxRfbRetWorkCpu = -1,
+		.i4TxWorkCpu = -1,
 		.i4RxWorkCpu = -1,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
@@ -140,6 +141,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4ISRMask = CPU_BIG_CORE,
 		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
+		.i4TxWorkCpu = WORK_ALL_CPU_OK,
 		.i4RxWorkCpu = 4,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
@@ -167,6 +169,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4ISRMask = CPU_X_CORE,
 		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
+		.i4TxWorkCpu = WORK_ALL_CPU_OK,
 		.i4RxWorkCpu = 7,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 1,
@@ -194,6 +197,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4ISRMask = CPU_X_CORE,
 		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
+		.i4TxWorkCpu = WORK_ALL_CPU_OK,
 		.i4RxWorkCpu = 7,
 		.fgKeepPcieWakeup = TRUE,
 		.u4WfdmaTh = 2,
@@ -393,6 +397,10 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 			prBoostInfo->i4RxRfbRetWorkCpu);
 #endif /* CFG_SUPPORT_RETURN_WORK */
 
+#if CFG_SUPPORT_TX_WORK
+	kalTxWorkSetCpu(prGlueInfo, prBoostInfo->i4TxWorkCpu);
+#endif /* CFG_SUPPORT_TX_WORK */
+
 #if CFG_SUPPORT_RX_WORK
 	kalRxWorkSetCpu(prGlueInfo, prBoostInfo->i4RxWorkCpu);
 #endif /* CFG_SUPPORT_RX_WORK */
@@ -417,6 +425,12 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 #define RETURN_WORK_TEMPLATE ""
 #endif /* CFG_SUPPORT_RETURN_WORK */
 
+#if CFG_SUPPORT_TX_WORK
+#define TX_WORK_TEMPLATE " TxWork:[%d]"
+#else /* CFG_SUPPORT_TX_WORK */
+#define TX_WORK_TEMPLATE ""
+#endif /* CFG_SUPPORT_TX_WORK */
+
 #if CFG_SUPPORT_RX_WORK
 #define RX_WORK_TEMPLATE " RxWork:[%d]"
 #else /* CFG_SUPPORT_RX_WORK */
@@ -428,6 +442,7 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]\n" \
 	TX_FREE_MSDU_WORK_TEMPLATE \
 	RETURN_WORK_TEMPLATE \
+	TX_WORK_TEMPLATE \
 	RX_WORK_TEMPLATE \
 	"\n"
 
@@ -451,6 +466,9 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 #if CFG_SUPPORT_RETURN_WORK
 		prBoostInfo->i4RxRfbRetWorkCpu,
 #endif /* CFG_SUPPORT_RETURN_WORK */
+#if CFG_SUPPORT_TX_WORK
+		prBoostInfo->i4TxWorkCpu,
+#endif /* CFG_SUPPORT_TX_WORK */
 #if CFG_SUPPORT_RX_WORK
 		prBoostInfo->i4RxWorkCpu
 #endif /* CFG_SUPPORT_RX_WORK */
@@ -745,3 +763,8 @@ u_int8_t kalIsSupportRro(void)
 	return TRUE;
 }
 #endif
+
+uint32_t kalGetBigCpuMask(void)
+{
+	return CPU_BIG_CORE;
+}
