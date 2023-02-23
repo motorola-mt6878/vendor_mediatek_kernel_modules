@@ -115,6 +115,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.i4RxWorkCpu = -1,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
+		.i4TxFreeMsduWorkCpu = -1,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -137,6 +138,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_BIG_CORE,
+		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
 		.i4RxWorkCpu = 4,
 		.fgKeepPcieWakeup = FALSE,
@@ -163,6 +165,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_X_CORE,
+		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
 		.i4RxWorkCpu = 7,
 		.fgKeepPcieWakeup = FALSE,
@@ -189,6 +192,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_X_CORE,
+		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
 		.i4RxWorkCpu = 7,
 		.fgKeepPcieWakeup = TRUE,
@@ -379,6 +383,11 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 	kalSetRpsMap(prGlueInfo, prBoostInfo->u4RpsMap);
 	kalSetISRMask(prAdapter, prBoostInfo->u4ISRMask);
 
+#if CFG_SUPPORT_TX_FREE_MSDU_WORK
+	kalTxFreeMsduWorkSetCpu(prGlueInfo,
+			prBoostInfo->i4TxFreeMsduWorkCpu);
+#endif /* CFG_SUPPORT_TX_FREE_MSDU_WORK */
+
 #if CFG_SUPPORT_RETURN_WORK
 	kalRxRfbReturnWorkSetCpu(prGlueInfo,
 			prBoostInfo->i4RxRfbRetWorkCpu);
@@ -395,10 +404,32 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 
 	kalSetDramBoost(prAdapter, prBoostInfo->fgDramBoost);
 
+
+#if CFG_SUPPORT_TX_FREE_MSDU_WORK
+#define TX_FREE_MSDU_WORK_TEMPLATE " TxFreeMsduWork:[%d]"
+#else /* CFG_SUPPORT_TX_FREE_MSDU_WORK */
+#define TX_FREE_MSDU_WORK_TEMPLATE ""
+#endif /* CFG_SUPPORT_TX_FREE_MSDU_WORK */
+
+#if CFG_SUPPORT_RETURN_WORK
+#define RETURN_WORK_TEMPLATE " RxRfbRetWork:[%d]"
+#else /* CFG_SUPPORT_RETURN_WORK */
+#define RETURN_WORK_TEMPLATE ""
+#endif /* CFG_SUPPORT_RETURN_WORK */
+
+#if CFG_SUPPORT_RX_WORK
+#define RX_WORK_TEMPLATE " RxWork:[%d]"
+#else /* CFG_SUPPORT_RX_WORK */
+#define RX_WORK_TEMPLATE ""
+#endif /* CFG_SUPPORT_RX_WORK */
+
 #define TEMP_LOG_TEMPLATE \
 	"CPUInfo[%d:%d] ThreadInfo:[%02x:%02x:%02x][%u:%u:%u] " \
 	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]\n" \
-	"RxRfbRetWork:[%d] RxWork:[%d]\n"
+	TX_FREE_MSDU_WORK_TEMPLATE \
+	RETURN_WORK_TEMPLATE \
+	RX_WORK_TEMPLATE \
+	"\n"
 
 	DBGLOG(INIT, INFO,
 		TEMP_LOG_TEMPLATE,
@@ -414,8 +445,15 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 		prBoostInfo->u4ISRMask,
 		prBoostInfo->fgDramBoost,
 		prBoostInfo->fgKeepPcieWakeup,
+#if CFG_SUPPORT_TX_FREE_MSDU_WORK
+		prBoostInfo->i4TxFreeMsduWorkCpu,
+#endif /* CFG_SUPPORT_TX_FREE_MSDU_WORK */
+#if CFG_SUPPORT_RETURN_WORK
 		prBoostInfo->i4RxRfbRetWorkCpu,
+#endif /* CFG_SUPPORT_RETURN_WORK */
+#if CFG_SUPPORT_RX_WORK
 		prBoostInfo->i4RxWorkCpu
+#endif /* CFG_SUPPORT_RX_WORK */
 		);
 #undef TEMP_LOG_TEMPLATE
 }
