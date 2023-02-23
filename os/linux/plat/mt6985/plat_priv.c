@@ -111,9 +111,10 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_LITTLE_CORE,
 		.u4ISRMask = CPU_LITTLE_CORE,
+		.i4RxRfbRetWorkCpu = -1,
 		.i4RxWorkCpu = -1,
-		.u4WfdmaThNum = 2,
 		.fgKeepPcieWakeup = FALSE,
+		.u4WfdmaTh = 0,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -136,9 +137,10 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_BIG_CORE,
+		.i4RxRfbRetWorkCpu = 6,
 		.i4RxWorkCpu = 4,
-		.u4WfdmaThNum = 2,
 		.fgKeepPcieWakeup = FALSE,
+		.u4WfdmaTh = 0,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -161,9 +163,10 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_X_CORE,
+		.i4RxRfbRetWorkCpu = 6,
 		.i4RxWorkCpu = 7,
-		.u4WfdmaThNum = 2,
 		.fgKeepPcieWakeup = FALSE,
+		.u4WfdmaTh = 1,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -186,9 +189,10 @@ struct BOOST_INFO rBoostInfo[] = {
 		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_X_CORE,
+		.i4RxRfbRetWorkCpu = 6,
 		.i4RxWorkCpu = 7,
-		.u4WfdmaThNum = 1,
 		.fgKeepPcieWakeup = TRUE,
+		.u4WfdmaTh = 2,
 		.fgDramBoost = FALSE
 	}
 };
@@ -375,13 +379,18 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 	kalSetRpsMap(prGlueInfo, prBoostInfo->u4RpsMap);
 	kalSetISRMask(prAdapter, prBoostInfo->u4ISRMask);
 
+#if CFG_SUPPORT_RETURN_WORK
+	kalRxRfbReturnWorkSetCpu(prGlueInfo,
+			prBoostInfo->i4RxRfbRetWorkCpu);
+#endif /* CFG_SUPPORT_RETURN_WORK */
+
 #if CFG_SUPPORT_RX_WORK
 	kalRxWorkSetCpu(prGlueInfo, prBoostInfo->i4RxWorkCpu);
 #endif /* CFG_SUPPORT_RX_WORK */
 
 #if defined(_HIF_PCIE)
-	kalConfigWfdmaTh(prGlueInfo, prBoostInfo->u4WfdmaThNum);
 	kalSetPcieKeepWakeup(prGlueInfo, prBoostInfo->fgKeepPcieWakeup);
+	kalConfigWfdmaTh(prGlueInfo, prBoostInfo->u4WfdmaTh);
 #endif
 
 	kalSetDramBoost(prAdapter, prBoostInfo->fgDramBoost);
@@ -389,7 +398,7 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 #define TEMP_LOG_TEMPLATE \
 	"CPUInfo[%d:%d] ThreadInfo:[%02x:%02x:%02x][%u:%u:%u] " \
 	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]\n" \
-	"RxWork:[%d]\n"
+	"RxRfbRetWork:[%d] RxWork:[%d]\n"
 
 	DBGLOG(INIT, INFO,
 		TEMP_LOG_TEMPLATE,
@@ -405,6 +414,7 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 		prBoostInfo->u4ISRMask,
 		prBoostInfo->fgDramBoost,
 		prBoostInfo->fgKeepPcieWakeup,
+		prBoostInfo->i4RxRfbRetWorkCpu,
 		prBoostInfo->i4RxWorkCpu
 		);
 #undef TEMP_LOG_TEMPLATE
