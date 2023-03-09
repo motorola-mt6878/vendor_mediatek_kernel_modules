@@ -10,8 +10,6 @@
 #include <platform/mtk_platform_common.h>
 #include <mtk_gpufreq.h>
 #include <ged_dvfs.h>
-#include <ged_base.h>
-#include <ged_type.h>
 
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 #include <platform/mtk_platform_common/mtk_platform_dvfs.h>
@@ -62,10 +60,6 @@
 #if IS_ENABLED(CONFIG_MALI_MTK_PENDING_SUBMISSION_MODE)
 #include <platform/mtk_platform_common/mtk_platform_pending_submission.h>
 #endif /* CONFIG_MALI_MTK_PENDING_SUBMISSION_MODE */
-
-#if IS_ENABLED(CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY)
-#include <platform/mtk_platform_common/mtk_platform_adaptive_power_policy.h>
-#endif /* CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY */
 
 #include "csf/mali_kbase_csf_trace_buffer.h"
 
@@ -151,14 +145,6 @@ void mtk_common_debug(enum mtk_common_debug_types type, int pid, u64 hook_point)
 		if (!mtk_common_gpufreq_bringup() && kbdev->pm.backend.gpu_powered) {
 #if defined(CONFIG_MTK_GPUFREQ_V2)
 			gpufreq_dump_infra_status();
-
-#if IS_ENABLED(CONFIG_MALI_MTK_LOG_BUFFER)
-			mtk_logbuffer_print(&kbdev->logbuf_exception,
-				"[gpu_greq] GPU: cur_volt=%u cur_greq=%u, STACK: cur_volt=%u cur_greq=%u\n",
-				gpufreq_get_cur_volt(TARGET_GPU), gpufreq_get_cur_freq(TARGET_GPU),
-				gpufreq_get_cur_volt(TARGET_STACK), gpufreq_get_cur_freq(TARGET_STACK));
-#endif /* CONFIG_MALI_MTK_LOG_BUFFER */
-
 #else
 			mt_gpufreq_dump_infra_status();
 #endif /* CONFIG_MTK_GPUFREQ_V2 */
@@ -257,6 +243,24 @@ int mtk_common_ged_dvfs_get_last_commit_idx(void)
 {
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 	return (int)ged_dvfs_get_last_commit_idx();
+#else
+	return -1;
+#endif
+}
+
+unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_idx(void)
+{
+#if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
+	return (unsigned long)ged_dvfs_write_sysram_last_commit_idx();
+#else
+	return -1;
+#endif
+}
+
+unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_idx_test(int commit_idx)
+{
+#if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
+	return (unsigned long)ged_dvfs_write_sysram_last_commit_idx_test(commit_idx);
 #else
 	return -1;
 #endif
@@ -393,9 +397,6 @@ void mtk_common_debugfs_init(struct kbase_device *kbdev)
 #if IS_ENABLED(CONFIG_MALI_MTK_PENDING_SUBMISSION_MODE)
 	mtk_debug_pending_submission_mode_debugfs_init(kbdev);
 #endif /* CONFIG_MALI_MTK_PENDING_SUBMISSION_MODE */
-#if IS_ENABLED(CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY)
-	mtk_debug_adaptive_power_policy_debugfs_init(kbdev);
-#endif /* CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY */
 #if IS_ENABLED(CONFIG_MALI_MTK_IRQ_TRACE)
 	mtk_debug_irq_trace_debugfs_init(kbdev);
 #endif /* CONFIG_MALI_MTK_IRQ_TRACE */

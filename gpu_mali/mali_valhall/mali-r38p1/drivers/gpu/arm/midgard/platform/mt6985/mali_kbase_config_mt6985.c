@@ -21,8 +21,6 @@
 #include <platform/mtk_platform_common.h>
 #include <platform/mtk_platform_common/mtk_platform_debug.h>
 #include <ged_dvfs.h>
-#include <ged_base.h>
-#include <ged_type.h>
 #include <mtk_gpufreq.h>
 #include <mtk_gpu_utility.h>
 #if IS_ENABLED(CONFIG_MTK_AEE_IPANIC)
@@ -223,6 +221,8 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
 
 	lockdep_assert_held(&kbdev->pm.lock);
 
+	mtk_common_ged_dvfs_write_sysram_last_commit_idx();
+
 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
 	WARN_ON(!kbdev->pm.backend.gpu_powered);
 	WARN_ON(!kbdev->pm.active_count);
@@ -258,6 +258,8 @@ static void pm_callback_runtime_gpu_idle(struct kbase_device *kbdev)
 	KBASE_PLATFORM_LOGD("%s", __func__);
 
 	lockdep_assert_held(&kbdev->pm.lock);
+
+	mtk_common_ged_dvfs_write_sysram_last_commit_idx();
 
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 	ged_dvfs_gpu_clock_switch_notify(GED_SLEEP);
@@ -357,18 +359,14 @@ int mtk_platform_pm_init(struct kbase_device *kbdev)
 {
 	struct device_node *np = kbdev->dev->of_node;
 	u32 sleep_mode_enable = 0;
-	u32 segment_id = 0;
 
 	if (IS_ERR_OR_NULL(kbdev))
 		return -1;
 
-	segment_id = ged_get_segment_id();
-
 	if (!of_property_read_u32(np, "sleep-mode-enable", &sleep_mode_enable)) {
 		dev_info(kbdev->dev, "Sleep mode %s", (sleep_mode_enable)? "enabled": "disabled");
-		dev_info(kbdev->dev, "Segment ID %08X", segment_id);
 
-		if ((sleep_mode_enable == 1) || (segment_id == MT6985W_TCZA_SEGMENT)) {
+		if (sleep_mode_enable == 1) {
 			pm_callbacks.power_runtime_init_callback = kbase_device_runtime_init;
 			pm_callbacks.power_runtime_term_callback = kbase_device_runtime_disable;
 			pm_callbacks.power_runtime_on_callback = pm_callback_runtime_on;
