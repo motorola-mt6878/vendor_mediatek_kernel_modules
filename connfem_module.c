@@ -76,6 +76,9 @@ struct connfem_context connfem_ctx_mt6985 = {
 struct connfem_context connfem_ctx_mt6886 = {
 	.id = 0x6886
 };
+struct connfem_context connfem_ctx_mt6897 = {
+	.id = 0x6897
+};
 
 static const struct of_device_id connfem_of_ids[] = {
 	{
@@ -101,6 +104,10 @@ static const struct of_device_id connfem_of_ids[] = {
 	{
 		.compatible = "mediatek,mt6886-connfem",
 		.data = (void *)&connfem_ctx_mt6886
+	},
+	{
+		.compatible = "mediatek,mt6897-connfem",
+		.data = (void *)&connfem_ctx_mt6897
 	},
 	{}
 };
@@ -131,7 +138,7 @@ static const struct file_operations connfem_dev_fops = {
 /* Module Parameters */
 static unsigned int connfem_major;
 static unsigned int epa_elna_hwid = CFM_PARAM_EPAELNA_HWID_INVALID;
-static char *config_file = "connfem.cfg";
+static char *config_file;
 
 /*******************************************************************************
  *			      F U N C T I O N S
