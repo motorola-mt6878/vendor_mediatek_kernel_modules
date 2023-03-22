@@ -49,7 +49,8 @@
 #include "dvfsrc-exp.h"
 #include <linux/interconnect.h>
 
-static uint32_t u4EmiMetOffset = 0x45D400;
+static uint32_t u4EmiMetOffset = 0x98000;
+static uint32_t u4ProjectId = 6985;
 
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
 #define RST_PIN_MIN_WAIT_TIME		10 /* ms */
@@ -571,6 +572,11 @@ int32_t kalBoostCpu(struct ADAPTER *prAdapter,
 uint32_t kalGetEmiMetOffset(void)
 {
 	return u4EmiMetOffset;
+}
+
+uint32_t kalGetProjectId(void)
+{
+	return u4ProjectId;
 }
 
 void kalSetEmiMetOffset(uint32_t newEmiMetOffset)
