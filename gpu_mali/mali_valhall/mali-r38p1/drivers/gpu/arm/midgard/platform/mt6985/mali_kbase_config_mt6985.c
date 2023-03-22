@@ -104,7 +104,7 @@ static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 	mtk_common_ged_dvfs_write_sysram_last_commit_idx();
 
 	/* on,off/ SWCG(BG3D)/ MTCMOS/ BUCK */
-	if (gpufreq_power_control(POWER_ON, g_cur_opp_idx) < 0) {
+	if (gpufreq_power_control(GPU_PWR_ON, g_cur_opp_idx) < 0) {
 		KBASE_PLATFORM_LOGE("Power On Failed");
 		return 1;
 	}
@@ -152,7 +152,7 @@ static void pm_callback_power_off_nolock(struct kbase_device *kbdev)
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_7);
 
 	/* on,off/ SWCG(BG3D)/ MTCMOS/ BUCK */
-	if (gpufreq_power_control(POWER_OFF, GPUPPM_DEFAULT_IDX) < 0) {
+	if (gpufreq_power_control(GPU_PWR_OFF, GPUPPM_DEFAULT_IDX) < 0) {
 		KBASE_PLATFORM_LOGE("Power Off Failed");
 		return;
 	}
