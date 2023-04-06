@@ -40,7 +40,6 @@ DEFINE_MUTEX(g_dsu_request_lock);
 #endif
 
 DEFINE_MUTEX(g_mfg_lock);
-static int g_cur_opp_idx;
 
 enum gpu_dvfs_status_step {
 	GPU_DVFS_STATUS_STEP_1 = 0x1,
@@ -97,12 +96,12 @@ static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_1);
 
-	/* get required frequency from GED */
-	g_cur_opp_idx = mtk_common_ged_dvfs_get_last_commit_idx();
-	mtk_common_ged_dvfs_write_sysram_last_commit_idx();
+	/* update required frequency from GED to sysram */
+	mtk_common_ged_dvfs_write_sysram_last_commit_top_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx();
 
 	/* on,off/ SWCG(BG3D)/ MTCMOS/ BUCK */
-	if (gpufreq_power_control(GPU_PWR_ON, g_cur_opp_idx) < 0) {
+	if (gpufreq_power_control(GPU_PWR_ON) < 0) {
 		KBASE_PLATFORM_LOGE("Power On Failed");
 		return 1;
 	}
@@ -150,7 +149,7 @@ static void pm_callback_power_off_nolock(struct kbase_device *kbdev)
 	gpu_dvfs_status_footprint(GPU_DVFS_STATUS_STEP_7);
 
 	/* on,off/ SWCG(BG3D)/ MTCMOS/ BUCK */
-	if (gpufreq_power_control(GPU_PWR_OFF, GPUPPM_DEFAULT_IDX) < 0) {
+	if (gpufreq_power_control(GPU_PWR_OFF) < 0) {
 		KBASE_PLATFORM_LOGE("Power Off Failed");
 		return;
 	}
@@ -222,7 +221,8 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
 
 	lockdep_assert_held(&kbdev->pm.lock);
 
-	mtk_common_ged_dvfs_write_sysram_last_commit_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_top_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx();
 
 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
 	WARN_ON(!kbdev->pm.backend.gpu_powered);
@@ -260,7 +260,8 @@ static void pm_callback_runtime_gpu_idle(struct kbase_device *kbdev)
 
 	lockdep_assert_held(&kbdev->pm.lock);
 
-	mtk_common_ged_dvfs_write_sysram_last_commit_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_top_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx();
 
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 	ged_dvfs_gpu_clock_switch_notify(GED_SLEEP);
