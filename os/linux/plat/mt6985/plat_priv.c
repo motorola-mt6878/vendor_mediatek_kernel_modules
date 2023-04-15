@@ -38,6 +38,8 @@
 #define RPS_BIG_CORE (CPU_BIG_CORE - 0x10)
 #define RPS_LITTLE_CORE (CPU_LITTLE_CORE - 0x01)
 
+#define TX_CPU_BIG_CORE (CPU_BIG_CORE - 0x20)
+
 #if (KERNEL_VERSION(5, 10, 0) <= CFG80211_VERSION_CODE)
 #include <linux/regulator/consumer.h>
 #endif
@@ -119,6 +121,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.i4RxRfbRetWorkCpu = -1,
 		.i4TxWorkCpu = -1,
 		.i4RxWorkCpu = -1,
+		.i4RxNapiWorkCpu = -1,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
 		.i4TxFreeMsduWorkCpu = -1,
@@ -146,8 +149,9 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4ISRMask = CPU_BIG_CORE,
 		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
-		.i4TxWorkCpu = WORK_ALL_CPU_OK,
+		.i4TxWorkCpu = 6,
 		.i4RxWorkCpu = 4,
+		.i4RxNapiWorkCpu = 4,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
 		.fgDramBoost = FALSE
@@ -174,8 +178,9 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4ISRMask = CPU_X_CORE,
 		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
-		.i4TxWorkCpu = WORK_ALL_CPU_OK,
-		.i4RxWorkCpu = 7,
+		.i4TxWorkCpu = 6,
+		.i4RxWorkCpu = 4,
+		.i4RxNapiWorkCpu = 7,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 1,
 		.fgDramBoost = TRUE
@@ -202,8 +207,9 @@ struct BOOST_INFO rBoostInfo[] = {
 		.u4ISRMask = CPU_X_CORE,
 		.i4TxFreeMsduWorkCpu = 5,
 		.i4RxRfbRetWorkCpu = 6,
-		.i4TxWorkCpu = WORK_ALL_CPU_OK,
-		.i4RxWorkCpu = 7,
+		.i4TxWorkCpu = 6,
+		.i4RxWorkCpu = 4,
+		.i4RxNapiWorkCpu = 7,
 		.fgKeepPcieWakeup = TRUE,
 		.u4WfdmaTh = 2,
 		.fgDramBoost = TRUE
@@ -446,6 +452,10 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 	kalRxWorkSetCpu(prGlueInfo, prBoostInfo->i4RxWorkCpu);
 #endif /* CFG_SUPPORT_RX_WORK */
 
+#if CFG_SUPPORT_RX_WORK
+	kalRxNapiWorkSetCpu(prGlueInfo, prBoostInfo->i4RxNapiWorkCpu);
+#endif /* CFG_SUPPORT_RX_WORK */
+
 #if defined(_HIF_PCIE)
 	kalSetPcieKeepWakeup(prGlueInfo, prBoostInfo->fgKeepPcieWakeup);
 	kalConfigWfdmaTh(prGlueInfo, prBoostInfo->u4WfdmaTh);
@@ -478,6 +488,12 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 #define RX_WORK_TEMPLATE ""
 #endif /* CFG_SUPPORT_RX_WORK */
 
+#if CFG_SUPPORT_RX_NAPI_WORK
+#define RX_NAPI_WORK_TEMPLATE " RxNapiWork:[%d]"
+#else /* CFG_SUPPORT_RX_NAPI_WORK */
+#define RX_NAPI_WORK_TEMPLATE ""
+#endif /* CFG_SUPPORT_RX_NAPI_WORK */
+
 #define TEMP_LOG_TEMPLATE \
 	"CPUInfo[%d:%d] ThreadInfo:[%02x:%02x:%02x][%u:%u:%u] " \
 	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]\n" \
@@ -485,6 +501,7 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 	RETURN_WORK_TEMPLATE \
 	TX_WORK_TEMPLATE \
 	RX_WORK_TEMPLATE \
+	RX_NAPI_WORK_TEMPLATE \
 	"\n"
 
 	DBGLOG(INIT, INFO,
@@ -511,8 +528,11 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 		prBoostInfo->i4TxWorkCpu,
 #endif /* CFG_SUPPORT_TX_WORK */
 #if CFG_SUPPORT_RX_WORK
-		prBoostInfo->i4RxWorkCpu
+		prBoostInfo->i4RxWorkCpu,
 #endif /* CFG_SUPPORT_RX_WORK */
+#if CFG_SUPPORT_RX_NAPI_WORK
+		prBoostInfo->i4RxNapiWorkCpu
+#endif /* CFG_SUPPORT_RX_NAPI_WORK */
 		);
 #undef TEMP_LOG_TEMPLATE
 }
@@ -810,7 +830,7 @@ u_int8_t kalIsSupportRro(void)
 }
 #endif
 
-uint32_t kalGetBigCpuMask(void)
+uint32_t kalGetTxBigCpuMask(void)
 {
-	return CPU_BIG_CORE;
+	return TX_CPU_BIG_CORE;
 }
