@@ -59,9 +59,6 @@
 #define CSF_FIRMWARE_ENTRY_PROTECTED  (1ul << 5)
 #define CSF_FIRMWARE_ENTRY_SHARED     (1ul << 30)
 #define CSF_FIRMWARE_ENTRY_ZERO       (1ul << 31)
-#define CSHWIF1_IRQ_ACTIVE_IDX (54)
-#define COMPUTE_ACTIVE_IDX (22)
-#define L2_EXT_READ_IDX (29)
 
 /**
  * enum kbase_csf_queue_bind_state - bind state of the queue
@@ -1061,8 +1058,6 @@ struct kbase_csf_mcu_shared_regions {
  *                          queued for execution, this indicates whether the
  *                          GPU has become non-idle since the last time the
  *                          idle notification was received.
- * @gpu_adaptive_power_off  Effective only when the GPU adaptive power off has been
- *                          executed.
  * @non_idle_offslot_grps:  Count of off-slot non-idle groups. Reset during
  *                          the scheduler active phase in a tick. It then
  *                          tracks the count of non-idle groups across all the
@@ -1128,9 +1123,6 @@ struct kbase_csf_scheduler {
 	struct work_struct gpu_idle_work;
 	bool fast_gpu_idle_handling;
 	atomic_t gpu_no_longer_idle;
-#if IS_ENABLED(CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY)
-	atomic_t gpu_adaptive_power_off;
-#endif /* CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY */
 	atomic_t non_idle_offslot_grps;
 	u32 non_idle_scanout_grps;
 	u32 pm_active_count;
@@ -1239,7 +1231,6 @@ struct kbase_ipa_control_prfcnt {
 	u64 latest_raw_value;
 	u64 scaling_factor;
 	u64 accumulated_diff;
-    u64 accumulated_raw_diff;
 	enum kbase_ipa_core_type type;
 	u8 select_idx;
 	bool gpu_norm;
