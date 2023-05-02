@@ -775,7 +775,7 @@ static int32_t mt6985_wlan_pinctrl_action(struct mt66xx_chip_info *chip_info,
 	uint8_t *name;
 	int32_t ret = 0;
 
-	if (KAL_IS_ERR(pinctrl_ptr)) {
+	if (!pinctrl_ptr || KAL_IS_ERR(pinctrl_ptr)) {
 		ret = -EINVAL;
 		goto exit;
 	}
