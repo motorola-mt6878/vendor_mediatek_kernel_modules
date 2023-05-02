@@ -125,6 +125,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
 		.i4TxFreeMsduWorkCpu = -1,
+		.fgWifiNappingForceDis = FALSE,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -154,6 +155,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.i4RxNapiWorkCpu = 4,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
+		.fgWifiNappingForceDis = TRUE,
 		.fgDramBoost = FALSE
 	},
 	{
@@ -183,6 +185,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.i4RxNapiWorkCpu = 7,
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 1,
+		.fgWifiNappingForceDis = TRUE,
 		.fgDramBoost = TRUE
 	},
 	{
@@ -212,6 +215,7 @@ struct BOOST_INFO rBoostInfo[] = {
 		.i4RxNapiWorkCpu = 7,
 		.fgKeepPcieWakeup = TRUE,
 		.u4WfdmaTh = 2,
+		.fgWifiNappingForceDis = TRUE,
 		.fgDramBoost = TRUE
 	}
 };
@@ -462,7 +466,8 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 #endif
 
 	kalSetDramBoost(prAdapter, prBoostInfo->fgDramBoost);
-
+	kalConfigWiFiSnappingForceDisable(prGlueInfo,
+		prBoostInfo->fgWifiNappingForceDis);
 
 #if CFG_SUPPORT_TX_FREE_MSDU_WORK
 #define TX_FREE_MSDU_WORK_TEMPLATE " TxFreeMsduWork:[%d]"
