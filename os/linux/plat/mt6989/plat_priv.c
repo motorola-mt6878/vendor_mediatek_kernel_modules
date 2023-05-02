@@ -784,6 +784,15 @@ static int32_t mt6989_wlan_pinctrl_action(struct mt66xx_chip_info *chip_info,
 		name = "wf_rst_off";
 		ensure_rst_pin_min_wait_time(0);
 		break;
+	case WLAN_PINCTRL_MSG_FUNC_PTA_UART_INIT:
+		name = "wf_rst_pta_uart_init";
+		break;
+	case WLAN_PINCTRL_MSG_FUNC_PTA_UART_ON:
+		name = "wf_rst_pta_uart_on";
+		break;
+	case WLAN_PINCTRL_MSG_FUNC_PTA_UART_OFF:
+		name = "wf_rst_pta_uart_off";
+		break;
 	default:
 		DBGLOG(INIT, ERROR,
 			"Unknown msg: %d.\n",
