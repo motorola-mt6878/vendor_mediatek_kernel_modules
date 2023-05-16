@@ -452,9 +452,9 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 	kalRxWorkSetCpu(prGlueInfo, prBoostInfo->i4RxWorkCpu);
 #endif /* CFG_SUPPORT_RX_WORK */
 
-#if CFG_SUPPORT_RX_WORK
+#if CFG_SUPPORT_RX_NAPI_WORK
 	kalRxNapiWorkSetCpu(prGlueInfo, prBoostInfo->i4RxNapiWorkCpu);
-#endif /* CFG_SUPPORT_RX_WORK */
+#endif /* CFG_SUPPORT_RX_NAPI_WORK */
 
 #if defined(_HIF_PCIE)
 	kalSetPcieKeepWakeup(prGlueInfo, prBoostInfo->fgKeepPcieWakeup);
@@ -496,7 +496,7 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 
 #define TEMP_LOG_TEMPLATE \
 	"CPUInfo[%d:%d] ThreadInfo:[%02x:%02x:%02x][%u:%u:%u] " \
-	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]\n" \
+	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]" \
 	TX_FREE_MSDU_WORK_TEMPLATE \
 	RETURN_WORK_TEMPLATE \
 	TX_WORK_TEMPLATE \
