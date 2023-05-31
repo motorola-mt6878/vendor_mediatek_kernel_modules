@@ -106,7 +106,7 @@ static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 
 	/* update required frequency from GED to sysram */
 	mtk_common_ged_dvfs_write_sysram_last_commit_top_idx();
-	mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_dual();
 
 	/* on,off/ SWCG(BG3D)/ MTCMOS/ BUCK */
 	if (gpufreq_power_control(GPU_PWR_ON) < 0) {
@@ -234,7 +234,7 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
 	lockdep_assert_held(&kbdev->pm.lock);
 
 	mtk_common_ged_dvfs_write_sysram_last_commit_top_idx();
-	mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_dual();
 
 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
 	WARN_ON(!kbdev->pm.backend.gpu_powered);
@@ -284,7 +284,7 @@ static void pm_callback_runtime_gpu_idle(struct kbase_device *kbdev)
 	lockdep_assert_held(&kbdev->pm.lock);
 
 	mtk_common_ged_dvfs_write_sysram_last_commit_top_idx();
-	mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx();
+	mtk_common_ged_dvfs_write_sysram_last_commit_dual();
 
 #if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
 	ged_dvfs_gpu_clock_switch_notify(GED_SLEEP);
