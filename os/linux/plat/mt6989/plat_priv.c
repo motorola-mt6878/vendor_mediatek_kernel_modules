@@ -36,6 +36,7 @@
 
 #define RPS_ALL_CORE (CPU_ALL_CORE - 0x11)
 #define RPS_BIG_CORE (CPU_BIG_CORE - 0x10)
+#define RPS_HP_CORE (CPU_HP_CORE - 0x10)
 #define RPS_LITTLE_CORE (CPU_LITTLE_CORE - 0x01)
 
 #define TX_CPU_BIG_CORE (CPU_BIG_CORE - 0x20)
@@ -74,6 +75,7 @@ static struct WLAN_PINCTRL_OPS mt6989_pinctrl_ops = {
 enum ENUM_CPU_BOOST_STATUS {
 	ENUM_CPU_BOOST_STATUS_INIT = 0,
 	ENUM_CPU_BOOST_STATUS_LV0,
+	ENUM_CPU_BOOST_STATUS_LV0_5,
 	ENUM_CPU_BOOST_STATUS_LV1,
 	ENUM_CPU_BOOST_STATUS_LV2,
 	ENUM_CPU_BOOST_STATUS_LV3,
@@ -84,8 +86,8 @@ enum ENUM_CPU_BOOST_STATUS eBoostCpuTable[] = {
 	ENUM_CPU_BOOST_STATUS_LV0, /* 0 */
 	ENUM_CPU_BOOST_STATUS_LV0, /* 1 */
 	ENUM_CPU_BOOST_STATUS_LV0, /* 2 */
-	ENUM_CPU_BOOST_STATUS_LV0, /* 3 */
-	ENUM_CPU_BOOST_STATUS_LV0, /* 4 */
+	ENUM_CPU_BOOST_STATUS_LV0_5, /* 3: 100Mbps */
+	ENUM_CPU_BOOST_STATUS_LV0_5, /* 4 */
 	ENUM_CPU_BOOST_STATUS_LV1, /* 5: 250Mbps */
 	ENUM_CPU_BOOST_STATUS_LV1, /* 6 */
 	ENUM_CPU_BOOST_STATUS_LV1, /* 7 */
@@ -125,6 +127,35 @@ struct BOOST_INFO rBoostInfo[] = {
 		.fgKeepPcieWakeup = FALSE,
 		.u4WfdmaTh = 0,
 		.i4TxFreeMsduWorkCpu = -1,
+		.fgDramBoost = FALSE
+	},
+	{
+		/* ENUM_CPU_BOOST_STATUS_LV0_5 */
+		.rCpuInfo = {
+			.i4LittleCpuFreq = AUTO_CPU_FREQ,
+			.i4BigCpuFreq = AUTO_CPU_FREQ
+		},
+		.rHifThreadInfo = {
+			.u4CpuMask = CPU_HP_CORE,
+			.u4Priority = AUTO_PRIORITY
+		},
+		.rMainThreadInfo = {
+			.u4CpuMask = CPU_HP_CORE,
+			.u4Priority = AUTO_PRIORITY
+		},
+		.rRxThreadInfo = {
+			.u4CpuMask = CPU_HP_CORE,
+			.u4Priority = AUTO_PRIORITY
+		},
+		.u4RpsMap = RPS_HP_CORE,
+		.u4ISRMask = CPU_HP_CORE,
+		.i4TxFreeMsduWorkCpu = 5,
+		.i4RxRfbRetWorkCpu = 6,
+		.i4TxWorkCpu = -1,
+		.i4RxWorkCpu = 4,
+		.i4RxNapiWorkCpu = 4,
+		.fgKeepPcieWakeup = FALSE,
+		.u4WfdmaTh = 0,
 		.fgDramBoost = FALSE
 	},
 	{
