@@ -36,6 +36,8 @@
 #include "mali_kbase_csf_tiler_heap_reclaim.h"
 #include "mali_kbase_csf_mcu_shared_reg.h"
 #include <linux/version_compat_defs.h>
+#include <linux/sched.h>
+#include <uapi/linux/sched/types.h>
 
 #if IS_ENABLED(CONFIG_MALI_MTK_DEBUG) || IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
 #include <platform/mtk_platform_common.h>
@@ -942,7 +944,6 @@ static void scheduler_wakeup(struct kbase_device *kbdev, bool kick)
 		scheduler_enable_tick_timer_nolock(kbdev);
 }
 
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 static void scheduler_apply_pmode_exit_wa(struct kbase_device *kbdev)
 {
 	struct kbase_csf_scheduler *const scheduler = &kbdev->csf.scheduler;
@@ -969,7 +970,6 @@ static void pmode_exit_wa_worker(struct work_struct *work)
 	scheduler_apply_pmode_exit_wa(kbdev);
 	mutex_unlock(&kbdev->csf.scheduler.lock);
 }
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 
 static void scheduler_suspend(struct kbase_device *kbdev)
 {
@@ -977,9 +977,7 @@ static void scheduler_suspend(struct kbase_device *kbdev)
 
 	lockdep_assert_held(&scheduler->lock);
 
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 	scheduler_apply_pmode_exit_wa(kbdev);
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 
 	if (!WARN_ON(scheduler->state == SCHED_SUSPENDED)) {
 		dev_vdbg(kbdev->dev, "Suspending the Scheduler");
@@ -2277,9 +2275,7 @@ void remove_group_from_runnable(struct kbase_csf_scheduler *const scheduler,
 
 		KBASE_KTRACE_ADD_CSF_GRP(kctx->kbdev, SCHEDULER_PROTM_EXIT,
 					 scheduler->active_protm_grp, 0u);
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 		scheduler->apply_pmode_exit_wa = true;
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 		scheduler->active_protm_grp = NULL;
 	}
 	spin_unlock_irqrestore(&scheduler->interrupt_lock, flags);
@@ -4150,7 +4146,7 @@ static void scheduler_group_check_protm_enter(struct kbase_device *const kbdev,
 					spin_lock_irqsave(&scheduler->interrupt_lock, flags);
 				}
 #endif
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
+
 				/* Apply the platform specific workaround at the
 				 * time of entry only if the corresponding WA for
 				 * exit was applied. The re-entry to protected mode
@@ -4163,7 +4159,6 @@ static void scheduler_group_check_protm_enter(struct kbase_device *const kbdev,
 					kbase_pm_apply_pmode_entry_wa(kbdev);
 					spin_lock_irqsave(&scheduler->interrupt_lock, flags);
 				}
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 
 				/* Switch to protected mode */
 				scheduler->active_protm_grp = input_grp;
@@ -5373,9 +5368,7 @@ static void schedule_actions(struct kbase_device *kbdev, bool is_tick)
 	kbase_reset_gpu_assert_prevented(kbdev);
 	lockdep_assert_held(&scheduler->lock);
 
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 	scheduler_apply_pmode_exit_wa(kbdev);
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 
 	ret = kbase_csf_scheduler_wait_mcu_active(kbdev);
 	if (ret) {
@@ -5876,9 +5869,7 @@ static void scheduler_inner_reset(struct kbase_device *kbdev)
 	if (scheduler->active_protm_grp) {
 		KBASE_KTRACE_ADD_CSF_GRP(kbdev, SCHEDULER_PROTM_EXIT, scheduler->active_protm_grp,
 					 0u);
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 		scheduler->apply_pmode_exit_wa = true;
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 	}
 	scheduler->active_protm_grp = NULL;
 	memset(kbdev->csf.scheduler.csg_slots, 0,
@@ -6595,46 +6586,16 @@ void kbase_csf_scheduler_context_term(struct kbase_context *kctx)
 	kbase_ctx_sched_remove_ctx(kctx);
 }
 
-#if IS_ENABLED(CONFIG_MALI_MTK_SCHEDULER_KTHREAD_PATCH)
-#define KTHREAD_WAIT_TIMEOUT MAX_SCHEDULE_TIMEOUT - 1
-#endif
-
 static int kbase_csf_scheduler_kthread(void *data)
 {
 	struct kbase_device *const kbdev = data;
 	struct kbase_csf_scheduler *const scheduler = &kbdev->csf.scheduler;
-#if IS_ENABLED(CONFIG_MALI_MTK_SCHEDULER_KTHREAD_PATCH)
-	long ret = 0;
-	unsigned long timeout = KTHREAD_WAIT_TIMEOUT;
-	unsigned long expire = jiffies + timeout;
-#endif
-
 
 	while (scheduler->kthread_running) {
 		struct kbase_queue *queue;
 
-#if IS_ENABLED(CONFIG_MALI_MTK_SCHEDULER_KTHREAD_PATCH)
-		ret = wait_for_completion_interruptible_timeout(&scheduler->kthread_signal, timeout);
-		if (ret > 0) {
-			timeout = KTHREAD_WAIT_TIMEOUT;
-			expire = jiffies + timeout;
-		}
-		else if (ret == 0) {
-			pr_info("[%s]: TIMEOUT, continue waiting for completion\n", __func__);
-			timeout = KTHREAD_WAIT_TIMEOUT;
-			expire = jiffies + timeout;
-			continue;
-		}
-		else if ((ret == -ERESTARTSYS) && (time_before(jiffies, expire))) {
-			pr_info("[%s]: INTERRUPTED, continue waiting for completion\n", __func__);
-			timeout = expire - jiffies;
-			continue;
-		}
-		reinit_completion(&scheduler->kthread_signal);
-#else
 		wait_for_completion(&scheduler->kthread_signal);
 		reinit_completion(&scheduler->kthread_signal);
-#endif
 
 		/* Iterate through queues with pending kicks */
 		do {
@@ -6681,11 +6642,8 @@ static int kbase_csf_scheduler_kthread(void *data)
 		} else if (atomic_read(&scheduler->pending_tock_work)) {
 			schedule_on_tock(kbdev);
 		}
-#if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
-		dev_vdbg(kbdev->dev, "Waking up for event after a scheduling iteration.");
-#else
+
 		dev_dbg(kbdev->dev, "Waking up for event after a scheduling iteration.");
-#endif /* CONFIG_MALI_MTK_DEBUG */
 		wake_up_all(&kbdev->csf.event_wait);
 	}
 
@@ -6696,6 +6654,7 @@ int kbase_csf_scheduler_init(struct kbase_device *kbdev)
 {
 	struct kbase_csf_scheduler *scheduler = &kbdev->csf.scheduler;
 	u32 num_groups = kbdev->csf.global_iface.group_num;
+	struct sched_param param = { .sched_priority = MAX_RT_PRIO - 1 };
 
 	bitmap_zero(scheduler->csg_inuse_bitmap, num_groups);
 	bitmap_zero(scheduler->csg_slots_idle_mask, num_groups);
@@ -6719,7 +6678,7 @@ int kbase_csf_scheduler_init(struct kbase_device *kbdev)
 		dev_err(kbdev->dev, "Failed to spawn the GPU queue submission worker thread");
 		return -ENOMEM;
 	}
-
+	sched_setscheduler_nocheck(scheduler->gpuq_kthread, SCHED_FIFO, &param);
 	return kbase_csf_mcu_shared_regs_data_init(kbdev);
 }
 
@@ -6761,16 +6720,12 @@ int kbase_csf_scheduler_early_init(struct kbase_device *kbdev)
 	scheduler->top_grp = NULL;
 	scheduler->last_schedule = 0;
 	scheduler->active_protm_grp = NULL;
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 	scheduler->apply_pmode_exit_wa = false;
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 	scheduler->csg_scheduling_period_ms = CSF_SCHEDULER_TIME_TICK_MS;
 	scheduler_doorbell_init(kbdev);
 
 	INIT_WORK(&scheduler->gpu_idle_work, gpu_idle_worker);
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 	INIT_WORK(&scheduler->pmode_exit_wa_work, pmode_exit_wa_worker);
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 	scheduler->fast_gpu_idle_handling = false;
 	atomic_set(&scheduler->gpu_no_longer_idle, false);
 	atomic_set(&scheduler->non_idle_offslot_grps, 0);
@@ -6801,9 +6756,7 @@ void kbase_csf_scheduler_term(struct kbase_device *kbdev)
 		 */
 		WARN_ON(kbase_csf_scheduler_get_nr_active_csgs(kbdev));
 		flush_work(&kbdev->csf.scheduler.gpu_idle_work);
-#if IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA)
 		flush_work(&kbdev->csf.scheduler.pmode_exit_wa_work);
-#endif /* IS_ENABLED(CONFIG_MALI_MTK_PDCA_SVP_WA) */
 		mutex_lock(&kbdev->csf.scheduler.lock);
 
 		if (kbdev->csf.scheduler.state != SCHED_SUSPENDED) {
