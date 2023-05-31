@@ -84,7 +84,7 @@ static inline void gpu_dvfs_status_reset_footprint(void)
 
 static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 {
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
 	if (mtk_common_gpufreq_bringup()) {
 		mtk_common_pm_mfg_active();
@@ -132,7 +132,7 @@ static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 
 static void pm_callback_power_off_nolock(struct kbase_device *kbdev)
 {
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
 	if (mtk_common_gpufreq_bringup())
 		return;
@@ -171,7 +171,7 @@ static int pm_callback_power_on(struct kbase_device *kbdev)
 	int ret = 1;
 	unsigned long flags;
 
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s %pK\n", __func__, (void *)kbdev->dev->pm_domain);
 
 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
 	WARN_ON(kbdev->pm.backend.gpu_powered);
@@ -197,7 +197,7 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 	unsigned long flags;
 	struct arm_smccc_res res;
 
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
 	spin_lock_irqsave(&kbdev->hwaccess_lock, flags);
 	WARN_ON(kbdev->pm.backend.gpu_powered);
@@ -229,7 +229,7 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
 #if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
 	mtk_platform_cpu_cache_request(kbdev, REQ_DSU_POWER_ON);
 #endif
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
 	lockdep_assert_held(&kbdev->pm.lock);
 
@@ -279,7 +279,7 @@ static void pm_callback_runtime_gpu_idle(struct kbase_device *kbdev)
 {
 	unsigned long flags;
 
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s", __func__);
 
 	lockdep_assert_held(&kbdev->pm.lock);
 
@@ -312,7 +312,7 @@ static int kbase_device_runtime_init(struct kbase_device *kbdev)
 #endif
 	int ret = 0;
 
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
 #if IS_ENABLED(CONFIG_MALI_MTK_AUTOSUSPEND_DELAY)
 	if (!of_property_read_u32(np, "autosuspend-delay-ms", &gInit_autosuspend_delay_ms))
@@ -347,7 +347,7 @@ static int kbase_device_runtime_init(struct kbase_device *kbdev)
 
 static void kbase_device_runtime_disable(struct kbase_device *kbdev)
 {
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
 	if (atomic_read(&kbdev->dev->power.usage_count))
 		KBASE_PLATFORM_LOGE("%s: Device runtime usage count unexpectedly non zero %d",
@@ -358,13 +358,13 @@ static void kbase_device_runtime_disable(struct kbase_device *kbdev)
 
 static int pm_callback_runtime_on(struct kbase_device *kbdev)
 {
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 	return 0;
 }
 
 static void pm_callback_runtime_off(struct kbase_device *kbdev)
 {
-	KBASE_PLATFORM_LOGD("%s", __func__);
+	dev_vdbg(kbdev->dev, "%s\n", __func__);
 }
 
 static void pm_callback_resume(struct kbase_device *kbdev)
