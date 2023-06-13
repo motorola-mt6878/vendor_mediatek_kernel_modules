@@ -13098,6 +13098,7 @@ int kalNapiPoll(struct napi_struct *napi, int budget)
 	/* follow timeout rule in net_rx_action() */
 	const unsigned long ulTimeLimit = jiffies + 2;
 #endif
+	static int32_t i4UserCnt;
 
 #if CFG_QUEUE_RX_IF_CONN_NOT_READY
 	if (HAL_IS_RX_DIRECT(prAdapter))
@@ -13121,6 +13122,10 @@ int kalNapiPoll(struct napi_struct *napi, int budget)
 		return TRACE(kalNapiPollSwRfb(napi, budget),
 			"kalNapiPollSwRfb");
 	}
+
+	/* Allow one user only */
+	if (GLUE_INC_REF_CNT(i4UserCnt) > 1)
+		goto end;
 
 	prRxNapiSkbQ = &prGlueInfo->rRxNapiSkbQ;
 	prFlushSkbQ = &rFlushSkbQ;
@@ -13147,7 +13152,7 @@ next_try:
 			DBGLOG(RX, ERROR, "skb NULL %d %d\n",
 				work_done, skb_queue_len(prFlushSkbQ));
 			kal_napi_complete_done(napi, work_done);
-			return work_done;
+			goto end;
 		}
 
 		/*
@@ -13180,7 +13185,8 @@ next_try:
 
 	/* Debug check only */
 	if (!time_before_eq(jiffies, ulTimeLimit))
-		DBGLOG(RX, WARN, "timeout hit %lu\n", jiffies-ulTimeLimit);
+		DBGLOG_LIMITED(RX, WARN, "timeout hit %lu\n",
+			jiffies-ulTimeLimit);
 
 	if (work_done > budget)
 		work_done = budget;
@@ -13193,6 +13199,8 @@ next_try:
 			napi_schedule(napi);
 	}
 #endif /* CFG_SUPPORT_RX_GRO_PEAK */
+end:
+	GLUE_DEC_REF_CNT(i4UserCnt);
 	return work_done;
 #else /* CFG_SUPPORT_RX_NAPI */
 	return 0;
