@@ -8406,7 +8406,11 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 #endif /* CFG_SUPPORT_FW_IDX_LOG_TRANS */
 
 #if CFG_SUPPORT_PCIE_ASPM
+#if CFG_PCIE_KEEP_L0
+	INIT_UINT(prWifiVar->fgPcieEnableL1ss, "PcieEnableL1ss", 0);
+#else
 	INIT_UINT(prWifiVar->fgPcieEnableL1ss, "PcieEnableL1ss", 1);
+#endif
 #endif
 
 #if CFG_SUPPORT_PCIE_GEN_SWITCH
