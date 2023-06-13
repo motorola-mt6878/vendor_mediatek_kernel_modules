@@ -36,7 +36,7 @@
 #include <linux/ktime.h>
 #include <soc/mediatek/emi.h>
 #define MTK_EMI_DRAM_OFFSET 0x40000000
-#define PREFILL_TARGET (0)
+#define PREFILL_TARGET (SZ_256M >> PAGE_SHIFT)
 #define RANK_POOL_LIMIT (SZ_256M >> PAGE_SHIFT)
 #define X_GUARD (SZ_16M >> PAGE_SHIFT)
 #define REFILL_TARGET (X_GUARD << 1)
@@ -1153,10 +1153,10 @@ static int example_mgm_get_import_memory_id(
 #if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
 	buf = import_data->u.dma_buf;
 	gid = dma_buf_get_gid(buf);
-	if(gid == GPU_ONLY_GID){
+	if(gid == slbc_gid_val(ID_GPU)){
 		group_id = GPU_ONLY_PBHA;
 	}
-	else if(gid == GPU_TO_OVL_GID){
+	else if(gid == slbc_gid_val(ID_GPU_W)){
 		group_id = GPU_TO_OVL_PBHA;
 	}
 	return group_id;
@@ -1350,8 +1350,7 @@ static int memory_group_manager_probe(struct platform_device *pdev)
 	/*
 	 * Enable only in multiple rank env
 	 */
-	if (mtk_emicen_get_rk_cnt() == 2 &&
-		(info.totalram << PAGE_SHIFT) > mtk_emicen_get_rk_size(0)) {
+	if (mtk_emicen_get_rk_cnt() == 2) {
 		mgm_data->ui64RankBoundary = MTK_EMI_DRAM_OFFSET + mtk_emicen_get_rk_size(0);
 		mgm_data->rank_mode = NORMAL_MODE;
 		mgm_data->szRefillTarget = REFILL_TARGET;

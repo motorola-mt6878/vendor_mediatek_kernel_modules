@@ -719,8 +719,6 @@ unsigned long kbase_mem_evictable_reclaim_count_objects(struct shrinker *s,
 #if IS_ENABLED(CONFIG_MALI_MTK_JIT_RECLAIM_ANTITHRASHING)
 	now_ns = ktime_get_raw_ns();
 
-	mutex_lock(&kctx->jit_evict_lock);
-
 	list_for_each_entry_safe(alloc, tmp, &kctx->evict_list, evict_node) {
 		if (!alloc->reg)
 			continue;
@@ -735,8 +733,6 @@ unsigned long kbase_mem_evictable_reclaim_count_objects(struct shrinker *s,
 		/* exclude those recently used jit mem */
 		nr_freeable_items -= alloc->reg->gpu_alloc->nents;
 	}
-
-	mutex_unlock(&kctx->jit_evict_lock);
 
 	trace_mali_mem_evictable_count(kctx, nr_freeable_items);
 #endif /* CONFIG_MALI_MTK_JIT_RECLAIM_ANTITHRASHING */
@@ -1556,7 +1552,7 @@ static struct kbase_va_region *kbase_mem_from_umm(struct kbase_context *kctx,
 	int group_id;
 #if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
 	int gid = 0;
-	struct slbc_gid_data slbc_data = {0,0,0,0,0,0,0,0,0};
+	struct slbc_gid_data slbc_data = {0x51ca11ca,0,0,0,0,0,0,0,0};
 #endif
 	/* 64-bit address range is the max */
 	if (*va_pages > (U64_MAX / PAGE_SIZE))
@@ -1628,11 +1624,8 @@ static struct kbase_va_region *kbase_mem_from_umm(struct kbase_context *kctx,
 
 	group_id = get_umm_memory_group_id(kctx, dma_buf);
 #if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
-	if(gid == GPU_ONLY_GID){
-		slbc_gid_request(ID_GPU,&gid,&slbc_data);
-		slbc_validate(ID_GPU,gid);
-	}
-	else if(gid == GPU_TO_OVL_GID){
+	/* GPU only GID is controlled along with power flow */
+	if (gid == slbc_gid_val(ID_GPU_W)) {
 		slbc_gid_request(ID_GPU_W,&gid,&slbc_data);
 		slbc_validate(ID_GPU_W,gid);
 	}

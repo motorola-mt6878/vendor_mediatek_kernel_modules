@@ -30,6 +30,12 @@
 #include <mboot_params.h>
 #endif
 #include <asm/ptrace.h>
+#if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+#include <mtk_heap.h>
+#include <slbc_ops.h>
+#include <linux/memory_group_manager.h>
+#endif
+
 
 /* KBASE_PLATFORM_DEBUG_ENABLE, 1 for debug log enable, 0 for disable */
 #define KBASE_PLATFORM_DEBUG_ENABLE  (0)
@@ -170,6 +176,10 @@ static int pm_callback_power_on(struct kbase_device *kbdev)
 {
 	int ret = 1;
 	unsigned long flags;
+#if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+	int gid = slbc_gid_val(ID_GPU);
+	struct slbc_gid_data slbc_data = {0x51ca11ca,0,0,0,0,0,0,0,0};
+#endif
 
 	dev_vdbg(kbdev->dev, "%s %pK\n", __func__, (void *)kbdev->dev->pm_domain);
 
@@ -184,6 +194,12 @@ static int pm_callback_power_on(struct kbase_device *kbdev)
 #if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
 	mtk_platform_cpu_cache_request(kbdev, REQ_DSU_POWER_ON);
 #endif
+
+#if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+	slbc_gid_request(ID_GPU, &gid, &slbc_data);
+	slbc_validate(ID_GPU, slbc_gid_val(ID_GPU));
+#endif
+
 	mutex_lock(&g_mfg_lock);
 	ret = pm_callback_power_on_nolock(kbdev);
 	mtk_notify_gpu_power_change(1);
@@ -196,6 +212,10 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 {
 	unsigned long flags;
 	struct arm_smccc_res res;
+#if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+		int gid = slbc_gid_val(ID_GPU);
+		struct slbc_gid_data slbc_data = {0x51ca11ca,0,0,0,0,0,0,0,0};
+#endif
 
 	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
@@ -213,6 +233,12 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 	mtk_notify_gpu_power_change(0);
 	pm_callback_power_off_nolock(kbdev);
 	mutex_unlock(&g_mfg_lock);
+
+#if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
+	slbc_gid_request(ID_GPU, &gid, &slbc_data);
+	slbc_validate(ID_GPU, slbc_gid_val(ID_GPU));
+#endif
+
 #if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
 	mtk_platform_cpu_cache_request(kbdev, REQ_DSU_POWER_OFF);
 #endif
