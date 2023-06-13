@@ -4732,6 +4732,9 @@ uint32_t halHifPowerOffWifi(struct ADAPTER *prAdapter)
 		}
 	}
 
+	if (prBusInfo->clearEvtRingTillCmdRingEmpty)
+		prBusInfo->clearEvtRingTillCmdRingEmpty(prAdapter);
+
 	prHifInfo->fgIsPowerOff = true;
 
 #if (CFG_SUPPORT_HOST_OFFLOAD == 1)
