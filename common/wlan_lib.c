@@ -8395,6 +8395,13 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 	INIT_INT(prWifiVar->icTxPwrEnvLmtMin, "TxPwrEnvLmtMin",
 		TX_PWR_ENV_LMT_MIN);
 #endif
+
+#if CFG_SUPPORT_THERMAL_QUERY
+	INIT_INT(prWifiVar->i4MaxTempLimit, "ThermalMaxTempThreshold",
+		 MAX_TEMP_THRESHOLD);
+	INIT_UINT(prWifiVar->u4MinTempQueryTime, "ThermalMinTempQueryTime",
+		  MIN_TEMP_QUERY_TIME);
+#endif
 }
 
 void wlanCfgSetSwCtrl(struct ADAPTER *prAdapter)
