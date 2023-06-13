@@ -212,10 +212,6 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 {
 	unsigned long flags;
 	struct arm_smccc_res res;
-#if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
-		int gid = slbc_gid_val(ID_GPU);
-		struct slbc_gid_data slbc_data = {0x51ca11ca,0,0,0,0,0,0,0,0};
-#endif
 
 	dev_vdbg(kbdev->dev, "%s\n", __func__);
 
@@ -235,8 +231,8 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 	mutex_unlock(&g_mfg_lock);
 
 #if IS_ENABLED(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE)
-	slbc_gid_request(ID_GPU, &gid, &slbc_data);
-	slbc_validate(ID_GPU, slbc_gid_val(ID_GPU));
+	slbc_invalidate(ID_GPU, slbc_gid_val(ID_GPU));
+	slbc_gid_release(ID_GPU, slbc_gid_val(ID_GPU));
 #endif
 
 #if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
