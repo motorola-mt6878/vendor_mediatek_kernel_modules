@@ -14588,7 +14588,7 @@ int32_t kalNlaPut(void *pvPacket, uint32_t attrType,
 
 	return nla_put(skb, attrType, attrLen, data);
 }
-
+#if CFG_SUPPORT_RTT
 void *
 kalProcessRttReportDone(struct GLUE_INFO *prGlueInfo,
 		uint32_t u4DataLen, uint32_t u4Count)
@@ -14617,7 +14617,7 @@ kalProcessRttReportDone(struct GLUE_INFO *prGlueInfo,
 
 	return (void *) skb;
 }
-
+#endif
 void *kalGetGlueNetDevHdl(struct GLUE_INFO *prGlueInfo)
 {
 	return (void *)(prGlueInfo->prDevHandler);

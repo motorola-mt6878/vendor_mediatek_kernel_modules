@@ -2513,11 +2513,11 @@ void kalWlanHardStartXmit(void *pvPacket, void *pvDev);
 
 int32_t kalNlaPut(void *pvPacket, uint32_t attrType,
 		uint32_t attrLen, const void *data);
-
+#if CFG_SUPPORT_RTT
 void *kalProcessRttReportDone(
 	struct GLUE_INFO *prGlueInfo,
 	uint32_t u4DataLen, uint32_t u4Count);
-
+#endif
 #ifndef __has_attribute
 #define __has_attribute(x) 0
 #endif

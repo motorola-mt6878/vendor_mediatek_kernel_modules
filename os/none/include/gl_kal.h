@@ -2265,11 +2265,11 @@ void kalWlanHardStartXmit(void *pvPacket, void *pvDev);
 
 uint8_t kalNlaPut(void *pvPacket, uint32_t attrType,
 		uint32_t attrLen, const void *data);
-
+#if CFG_SUPPORT_RTT
 void *
 kalProcessRttReportDone(struct GLUE_INFO *prGlueInfo,
 		uint32_t u4DataLen, uint32_t u4Count);
-
+#endif
 void *kalGetGlueNetDevHdl(struct GLUE_INFO *prGlueInfo);
 void *kalGetGlueDevHdl(struct GLUE_INFO *prGlueInfo);
 void kalGetPlatDev(void **dev);

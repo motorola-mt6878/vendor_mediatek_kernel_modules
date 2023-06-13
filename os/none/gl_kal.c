@@ -434,14 +434,14 @@ uint8_t kalNlaPut(void *pvPacket, uint32_t attrType,
 {
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__);
 }
-
+#if CFG_SUPPORT_RTT
 void *
 kalProcessRttReportDone(struct GLUE_INFO *prGlueInfo,
 		uint32_t u4DataLen, uint32_t u4Count)
 {
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__);
 }
-
+#endif
 void *kalGetGlueNetDevHdl(struct GLUE_INFO *prGlueInfo)
 {
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__);
