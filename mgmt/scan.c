@@ -2988,11 +2988,12 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 				prBssDesc->fgIEWAPI = TRUE;
 			break;
 #endif
-		/* Support AP Selection */
+
 		case ELEM_ID_BSS_LOAD:
 		{
 			struct IE_BSS_LOAD *prBssLoad =
 				(struct IE_BSS_LOAD *)pucIE;
+
 			if (IE_LEN(prBssLoad) !=
 				(sizeof(struct IE_BSS_LOAD) - 2)) {
 				DBGLOG(SCN, WARN,
@@ -3001,7 +3002,6 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 					IE_LEN(prBssLoad));
 				break;
 			}
-
 			prBssDesc->u2StaCnt = prBssLoad->u2StaCnt;
 			prBssDesc->ucChnlUtilization =
 				prBssLoad->ucChnlUtilizaion;
@@ -3009,9 +3009,36 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 			prBssDesc->fgExistBssLoadIE = TRUE;
 
 			updateLinkStatsApRec(prAdapter, prBssDesc);
-			break;
+
 		}
-		/* end Support AP Selection */
+			break;
+
+		case ELEM_ID_MOBILITY_DOMAIN:
+		{
+			struct IE_MOBILITY_DOMAIN *prMDIE =
+				(struct IE_MOBILITY_DOMAIN *)pucIE;
+
+			if (IE_LEN(prMDIE) !=
+				(sizeof(struct IE_MOBILITY_DOMAIN) - 2)) {
+				DBGLOG(SCN, WARN,
+					"MD IE_LEN err(%lu)->(%d)!\n",
+					(sizeof(struct IE_MOBILITY_DOMAIN) - 2),
+					IE_LEN(prMDIE));
+				break;
+			}
+
+			prBssDesc->fgIsFtOverDS = !!(prMDIE->ucBitMap & BIT(0));
+		}
+			break;
+
+		case ELEM_ID_EXTENDED_CAP:
+#if CFG_SUPPORT_802_11V_BSS_TRANSITION_MGT
+			prBssDesc->fgSupportBTM =
+				!!((*(uint32_t *)(pucIE + 2)) &
+				BIT(ELEM_EXT_CAP_BSS_TRANSITION_BIT));
+#endif
+			break;
+
 #if (CFG_SUPPORT_FILS_SK_OFFLOAD == 1)
 		case ELEM_ID_FILS_INDICATION:
 		{
@@ -3023,10 +3050,10 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 			WLAN_GET_FIELD_16(pucIE + 2, &info);
 			prBssDesc->ucIsFilsSkSupport =
 				!!(info & FILS_INFO_SK_SUPPORTED);
-
-			break;
 		}
+			break;
 #endif /* CFG_SUPPORT_FILS_SK_OFFLOAD */
+
 		case ELEM_ID_VENDOR:	/* ELEM_ID_P2P, ELEM_ID_WMM */
 		{
 			uint8_t ucOuiType;

@@ -4258,6 +4258,7 @@ void rsnGenerateFTIE(struct ADAPTER *prAdapter,
 	ucFtIeSize = IE_SIZE(prFtIEs->prFTIE);
 	prMsduInfo->u2FrameLength += ucFtIeSize;
 	kalMemCopy(pucBuffer, prFtIEs->prFTIE, ucFtIeSize);
+	DBGDUMP_MEM8(SAA, INFO, "FT: Generate FTIE\n", pucBuffer, ucFtIeSize);
 }
 
 u_int8_t rsnIsFtOverTheAir(struct ADAPTER *prAdapter, uint8_t ucBssIdx,
@@ -4268,8 +4269,7 @@ u_int8_t rsnIsFtOverTheAir(struct ADAPTER *prAdapter, uint8_t ucBssIdx,
 	prStaRec = cnmGetStaRecByIndex(prAdapter, ucStaRecIdx);
 	if (IS_BSS_INDEX_VALID(ucBssIdx) &&
 	    IS_BSS_AIS(GET_BSS_INFO_BY_INDEX(prAdapter, ucBssIdx)) &&
-	    prStaRec && prStaRec->ucAuthAlgNum ==
-	    (uint8_t) AUTH_ALGORITHM_NUM_FAST_BSS_TRANSITION)
+	    prStaRec && prStaRec->ucAuthAlgNum == AUTH_ALGORITHM_NUM_FT)
 		return TRUE;
 
 	return FALSE;
