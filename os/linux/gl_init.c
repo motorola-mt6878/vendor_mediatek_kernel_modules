@@ -2989,7 +2989,7 @@ static void wlanSetMulticastListWorkQueue(
 		return;
 	}
 
-	DBGLOG(INIT, INFO,
+	DBGLOG(INIT, TRACE,
 	       "Bss index:%d prDev->flags:0x%x\n",
 	       ucBssIndex, prDev->flags);
 
@@ -3059,7 +3059,7 @@ static void wlanSetMulticastListWorkQueue(
 		kalMemFree(prMCAddrList, VIR_MEM_TYPE,
 			   MAX_NUM_GROUP_ADDR * ETH_ALEN);
 	} else if (u4PacketFilter & PARAM_PACKET_FILTER_ALL_MULTICAST) {
-		DBGLOG(INIT, INFO,
+		DBGLOG(INIT, TRACE,
 			"Clear previous MAR settings to rx all mc pkt\n");
 		rStatus = kalIoctlByBssIdx(prGlueInfo,
 			 wlanoidSetMulticastList, NULL, 0,
