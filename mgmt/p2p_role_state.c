@@ -310,7 +310,14 @@ p2pRoleStateAbort_AP_CHNL_DETECTION(struct ADAPTER *prAdapter,
 				prP2pSpecificBssInfo->ucPreferredChannel;
 			prChnlReqInfo->eBand = prP2pSpecificBssInfo->eRfBand;
 			prChnlReqInfo->eChnlSco = prP2pSpecificBssInfo->eRfSco;
-			prChnlReqInfo->u4MaxInterval = P2P_AP_CHNL_HOLD_TIME_MS;
+			if (p2pFuncIsAPMode(prAdapter->rWifiVar.
+				prP2PConnSettings[prBssInfo->u4PrivateData]))
+				prChnlReqInfo->u4MaxInterval =
+					prAdapter->rWifiVar.u4ApChnlHoldTime;
+			else
+				prChnlReqInfo->u4MaxInterval =
+					prAdapter->rWifiVar.u4P2pChnlHoldTime;
+
 			prChnlReqInfo->eChnlReqType = CH_REQ_TYPE_GO_START_BSS;
 
 			prChnlReqInfo->eChannelWidth = CW_20_40MHZ;
@@ -501,7 +508,14 @@ p2pRoleStatePrepare_To_REQING_CHANNEL_STATE(struct ADAPTER *prAdapter,
 			prConnReqInfo->rChannelInfo.ucChannelNum;
 		prChnlReqInfo->eBand = prConnReqInfo->rChannelInfo.eBand;
 		prChnlReqInfo->eChnlSco = prBssInfo->eBssSCO;
-		prChnlReqInfo->u4MaxInterval = P2P_AP_CHNL_HOLD_TIME_MS;
+		if (p2pFuncIsAPMode(prAdapter->rWifiVar.
+			prP2PConnSettings[prBssInfo->u4PrivateData]))
+			prChnlReqInfo->u4MaxInterval =
+			prAdapter->rWifiVar.u4ApChnlHoldTime;
+		else
+			prChnlReqInfo->u4MaxInterval =
+			prAdapter->rWifiVar.u4P2pChnlHoldTime;
+
 		prChnlReqInfo->eChnlReqType = CH_REQ_TYPE_GO_START_BSS;
 
 		if (prBssInfo->eBand == BAND_5G
