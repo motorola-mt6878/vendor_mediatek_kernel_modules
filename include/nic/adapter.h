@@ -2575,6 +2575,9 @@ struct ADAPTER {
 	uint64_t u8MdRingStaBase;
 #endif /* CFG_MTK_WIFI_WFDMA_WB */
 #endif /* CFG_MTK_MDDP_SUPPORT */
+#if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
+	enum ENUM_PWR_MODE_6G_TYPE e6GPwrMode[MAX_BSSID_NUM];
+#endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE == 1 */
 };				/* end of _ADAPTER_T */
 
 /*******************************************************************************
