@@ -1116,6 +1116,9 @@ struct CMD_UPDATE_STA_RECORD {
 #else
 	uint8_t  aucPadding4[32];
 #endif
+#if (CFG_SUPPORT_802_11BE_MLO == 1)
+	uint8_t ucTidBitmap;
+#endif
 #if CFG_SUPPORT_RXSMM_WHITELIST
 	uint8_t  u1RxsmmEnable;
 #endif

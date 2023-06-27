@@ -687,7 +687,7 @@ struct STA_RECORD *cnmStaRecAlloc(struct ADAPTER *prAdapter,
 
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
 			prStaRec->ucMldStaIndex = MLD_GROUP_NONE;
-			prStaRec->ucTidBitmap = 0xFF;
+			prStaRec->ucTidBitmap = 0xff;
 #endif
 			break;
 		}
@@ -2365,6 +2365,9 @@ static void cnmStaRecCmdEhtContentFill(
 	struct CMD_UPDATE_STA_RECORD *prCmdContent)
 {
 	prCmdContent->ucVersion = CMD_UPDATE_STAREC_VER1;
+#if (CFG_SUPPORT_802_11BE_MLO == 1)
+	prCmdContent->ucTidBitmap = prStaRec->ucTidBitmap;
+#endif
 	memcpy(prCmdContent->ucEhtMacCapInfo, prStaRec->ucEhtMacCapInfo,
 		EHT_MAC_CAP_BYTE_NUM);
 	memcpy(prCmdContent->ucEhtPhyCapInfo, prStaRec->ucEhtPhyCapInfo,

@@ -3399,6 +3399,10 @@ static uint8_t rlmRecIeInfoForClient(struct ADAPTER *prAdapter,
 				ehtRlmRecOperation(prAdapter, prStaRec,
 					prBssInfo, pucIE);
 #endif
+#if (CFG_SUPPORT_802_11BE_MLO == 1)
+			if (IE_ID_EXT(pucIE) == ELEM_EXT_ID_TID2LNK_MAP)
+				mldParseT2LMIE(prAdapter, prStaRec, pucIE);
+#endif /* CFG_SUPPORT_802_11BE_MLO */
 #endif /* CFG_SUPPORT_802_11AX */
 			break;
 

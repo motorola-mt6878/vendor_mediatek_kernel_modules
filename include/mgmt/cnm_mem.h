@@ -267,6 +267,7 @@ struct STA_RECORD {
 	 *     1'b0: NOT support transmission for the TID in this link
 	 */
 	uint8_t ucTidBitmap;
+	uint8_t ucPendingTidBitmap;
 	uint8_t aucMldAddr[MAC_ADDR_LEN];
 #endif
 
@@ -866,6 +867,11 @@ struct MLD_STA_RECORD {
 	uint64_t aucRxPktCnt[ENUM_BAND_NUM];
 	uint32_t u4StaBitmap;
 	struct TIMER rEpcsTimer;
+	u_int8_t fgT2LMEnable;
+	u_int8_t fgT2LMNewState;
+	uint16_t u2T2LMSwitchTime;
+	uint32_t u4T2LMDuration;
+	struct TIMER rT2LMTimer;
 };
 #endif
 

@@ -3778,7 +3778,11 @@ uint32_t nicUniCmdStaRecTagEhtInfo(struct ADAPTER *ad,
 
 	tag->u2Tag = UNI_CMD_STAREC_TAG_EHT_BASIC;
 	tag->u2Length = sizeof(*tag);
+#if (CFG_SUPPORT_802_11BE_MLO == 1)
+	tag->ucTidBitmap = cmd->ucTidBitmap;
+#else
 	tag->ucTidBitmap = 0xff;
+#endif
 	WLAN_GET_FIELD_16(&cmd->ucEhtMacCapInfo[0], &tag->u2EhtMacCap);
 	WLAN_GET_FIELD_64(&cmd->ucEhtPhyCapInfo[0], &tag->u8EhtPhyCap);
 	tag->u8EhtPhyCapExt = (uint64_t) cmd->ucEhtPhyCapInfo[8];
