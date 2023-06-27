@@ -8412,6 +8412,10 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 	INIT_UINT(prWifiVar->u4MinTempQueryTime, "ThermalMinTempQueryTime",
 		  MIN_TEMP_QUERY_TIME);
 #endif
+
+#if WLAN_INCLUDE_SYS
+	sysGetExtCfg(prAdapter);
+#endif
 }
 
 void wlanCfgSetSwCtrl(struct ADAPTER *prAdapter)
