@@ -1916,6 +1916,7 @@ void glResetSubsysRstProcedure(struct RESET_STRUCT *rst,
 				glResetMsgHandler(ENUM_RST_MSG_L04_END);
 			} else {
 				glResetUpdateFlag(FALSE);
+				glResetOnEndUpdateFlag(FALSE);
 				DBGLOG(INIT, INFO,
 					"Don't trigger subsys reset due to driver is not ready\n");
 			}
@@ -1956,6 +1957,7 @@ void glResetSubsysRstProcedure(struct RESET_STRUCT *rst,
 			glResetMsgHandler(ENUM_RST_MSG_L04_END);
 		} else {
 			glResetUpdateFlag(FALSE);
+			glResetOnEndUpdateFlag(FALSE);
 			g_IsWfsysBusHang = FALSE;
 			DBGLOG(INIT, INFO,
 				"Don't trigger subsys reset due to driver is not ready\n");
@@ -2042,6 +2044,7 @@ int wlan_reset_thread_main(void *data)
 					DBGLOG(INIT, INFO,
 						"Don't trigger whole chip reset due to driver is not ready\n");
 					glResetUpdateFlag(FALSE);
+					glResetOnEndUpdateFlag(FALSE);
 				}
 			} else {
 				/*wfsys reset start*/
