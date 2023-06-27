@@ -706,6 +706,15 @@ static u_int8_t scanSanityCheckBssDesc(struct ADAPTER *prAdapter,
 		}
 	}
 
+#if CFG_EXT_SCAN
+	/* BTO case */
+	if (prBssDesc->fgIsInBTO) {
+		log_dbg(SCN, WARN, MACSTR " is in BTO.\n",
+			MAC2STR(prBssDesc->aucBSSID));
+		return FALSE;
+	}
+#endif
+
 	/* roaming case */
 	if (target &&
 	   (prAisBssInfo->eConnectionState == MEDIA_STATE_CONNECTED ||
@@ -1083,7 +1092,7 @@ uint16_t scanCalculateScoreByBlockList(struct ADAPTER *prAdapter,
 {
 	uint16_t u2Score = 0;
 
-	if (eRoamType < 0 || eRoamType >= ROAM_TYPE_NUM) {
+	if (eRoamType >= ROAM_TYPE_NUM) {
 		log_dbg(SCN, WARN, "Invalid roam type %d!\n", eRoamType);
 		return 0;
 	}
