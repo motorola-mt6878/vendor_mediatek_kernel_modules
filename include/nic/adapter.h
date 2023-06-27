@@ -1463,6 +1463,19 @@ struct WIFI_VAR {
 	/* used to limit query duration for low power */
 	int32_t i4MaxTempLimit;
 	uint32_t u4MinTempQueryTime;
+
+#if CFG_SAP_RPS_SUPPORT
+	u_int8_t fgSapRpsEnable;
+	u_int8_t fgSapRpsSwitch;
+	uint8_t  ucSapRpsPhase;
+	uint8_t  ucSapRpsStatus;
+	uint32_t u4RpsTriggerTime;
+	uint32_t u4RpsInpktThresh;
+	uint32_t u4RpsMeetTime;
+	u_int8_t fgSapRpsForceOn;
+	u_int8_t fgSapSuspendOn;
+	u_int8_t fgSapRpsAisCond;
+#endif
 };
 
 /* cnm_timer module */
