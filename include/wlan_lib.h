@@ -2002,6 +2002,9 @@ uint32_t
 wlanCfgGet(struct ADAPTER *prAdapter, const int8_t *pucKey, int8_t *pucValue,
 	   int8_t *pucValueDef, uint32_t u4Flags);
 
+void wlanCfgRecordValue(struct ADAPTER *prAdapter,
+			const int8_t *pucKey, uint32_t u4Value);
+
 uint32_t wlanCfgGetUint32(struct ADAPTER *prAdapter, const int8_t *pucKey,
 			  uint32_t u4ValueDef);
 
