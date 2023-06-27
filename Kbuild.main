@@ -1322,6 +1322,12 @@ else
     ccflags-y += -DCFG_WIFI_COREDUMP_SUPPORT=0
 endif
 
+ifeq ($(CONFIG_WIFI_FORCE_FULL_COREDUMP), y)
+    ccflags-y += -DCFG_WIFI_FORCE_FULL_COREDUMP=1
+else
+    ccflags-y += -DCFG_WIFI_FORCE_FULL_COREDUMP=0
+endif
+
 ifeq ($(CONFIG_SUPPORT_THERMAL_QUERY), y)
     ccflags-y += -DCFG_SUPPORT_THERMAL_QUERY=1
 else

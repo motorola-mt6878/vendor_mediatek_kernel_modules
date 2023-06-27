@@ -321,7 +321,9 @@ static int __coredump_init_ctrl_blk(struct coredump_ctx *ctx,
 	struct mt66xx_chip_info *chip_info)
 {
 	struct coredump_mem *mem = &ctx->mem;
+#if (CFG_WIFI_FORCE_FULL_COREDUMP == 1) || defined(MT6639)
 	struct GLUE_INFO *glue = ctx->priv;
+#endif
 	struct ctrl_blk_layout ctrl_blk;
 	int ret = 0;
 
@@ -329,6 +331,7 @@ static int __coredump_init_ctrl_blk(struct coredump_ctx *ctx,
 		COREDUMP_OFFSET_CTRL_BLOCK,
 		&ctrl_blk,
 		sizeof(ctrl_blk));
+
 	if (ret) {
 		DBGLOG(INIT, ERROR,
 			"Read CTRL BLK failed.\n");
@@ -371,6 +374,7 @@ static int __coredump_init_ctrl_blk(struct coredump_ctx *ctx,
 	else
 		mem->mem_region_num = ctrl_blk.mem_region_num;
 
+#if (CFG_WIFI_FORCE_FULL_COREDUMP == 1)
 	if (chip_info->checkbushang) {
 		if (chip_info->checkbushang(glue->prAdapter, TRUE)) {
 			DBGLOG(INIT, INFO, "Bus check failed.\n");
@@ -378,6 +382,7 @@ static int __coredump_init_ctrl_blk(struct coredump_ctx *ctx,
 			mem->mem_region_num = 0;
 		}
 	}
+#endif
 
 #ifdef MT6639
 	/*

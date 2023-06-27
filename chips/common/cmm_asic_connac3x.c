@@ -2435,7 +2435,12 @@ static void handle_whole_chip_reset(struct ADAPTER *prAdapter)
 	if (dbg_ops && dbg_ops->dumpBusHangCr)
 		dbg_ops->dumpBusHangCr(prAdapter);
 
+#if (CFG_WIFI_FORCE_FULL_COREDUMP == 1)
+	/* skip force dump and keep full coredump */
+	kalSetRstEvent(FALSE);
+#else
 	kalSetRstEvent(TRUE);
+#endif
 }
 #endif
 
