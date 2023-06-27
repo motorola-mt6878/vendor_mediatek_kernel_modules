@@ -848,7 +848,7 @@ struct MLD_STA_RECORD {
 	uint16_t u2PrimaryMldId;
 	uint16_t u2SecondMldId;
 	uint16_t u2SetupWlanId;
-	uint8_t fgNSEP;
+	uint8_t fgEPCS;
 	uint8_t fgMldType;
 	uint8_t aucStrBitmap[UNI_MLD_LINK_MAX];
 	uint16_t u2EmlCap;
@@ -856,6 +856,7 @@ struct MLD_STA_RECORD {
 	struct LINK rStarecList;
 	uint64_t aucRxPktCnt[ENUM_BAND_NUM];
 	uint32_t u4StaBitmap;
+	struct TIMER rEpcsTimer;
 };
 #endif
 
