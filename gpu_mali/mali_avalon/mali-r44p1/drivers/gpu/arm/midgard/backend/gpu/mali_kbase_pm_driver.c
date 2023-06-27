@@ -30,7 +30,6 @@
 #include <mali_kbase_pm.h>
 #include <mali_kbase_config_defaults.h>
 #include <mali_kbase_smc.h>
-#include <mtk_gpufreq.h>
 
 #if MALI_USE_CSF
 #include <csf/ipa_control/mali_kbase_csf_ipa_control.h>
@@ -51,7 +50,6 @@
 #ifdef CONFIG_MALI_ARBITER_SUPPORT
 #include <arbiter/mali_kbase_arbiter_pm.h>
 #endif /* CONFIG_MALI_ARBITER_SUPPORT */
-#include <platform/mtk_platform_utils.h> /* MTK_INLINE */
 
 #if MALI_USE_CSF
 #include <linux/delay.h>
@@ -72,6 +70,7 @@
 #endif /* CONFIG_MALI_MTK_LOG_BUFFER */
 
 #if IS_ENABLED(CONFIG_MALI_MTK_DEBUG) || IS_ENABLED(CONFIG_MALI_MTK_PROTECTED_PATCH)
+#include <mtk_gpufreq.h>
 #include <ged_dcs.h>
 #include <ged_log.h>
 #endif /* CONFIG_MALI_MTK_DEBUG || CONFIG_MALI_MTK_PROTECTED_PATCH */
@@ -594,14 +593,14 @@ static void kbase_pm_l2_config_override(struct kbase_device *kbdev)
 		val |= (0x1 << L2_CONFIG_ASN_HASH_ENABLE_SHIFT);
 
 		for (i = 0; i < ASN_HASH_COUNT; i++) {
-			dev_dbg(kbdev->dev, "Program 0x%x to ASN_HASH[%d]\n",
+			dev_vdbg(kbdev->dev, "Program 0x%x to ASN_HASH[%d]\n",
 				kbdev->l2_hash_values[i], i);
 			kbase_reg_write(kbdev, GPU_CONTROL_REG(ASN_HASH(i)),
 					kbdev->l2_hash_values[i]);
 		}
 	}
 
-	dev_dbg(kbdev->dev, "Program 0x%x to L2_CONFIG\n", val);
+	dev_vdbg(kbdev->dev, "Program 0x%x to L2_CONFIG\n", val);
 	kbase_reg_write(kbdev, GPU_CONTROL_REG(L2_CONFIG), val);
 }
 
@@ -1133,7 +1132,7 @@ static int kbase_pm_mcu_update_state(struct kbase_device *kbdev)
 		}
 
 		if (backend->mcu_state != prev_state) {
-			dev_dbg(kbdev->dev, "MCU state transition: %s to %s\n",
+			dev_vdbg(kbdev->dev, "MCU state transition: %s to %s\n",
 				kbase_mcu_state_to_string(prev_state),
 				kbase_mcu_state_to_string(backend->mcu_state));
 			kbase_ktrace_log_mcu_state(kbdev, backend->mcu_state);
@@ -1300,7 +1299,7 @@ static int kbase_pm_l2_update_state(struct kbase_device *kbdev)
 			if (backend->hwcnt_disabled) {
 				backend->l2_state = KBASE_L2_OFF;
 				KBASE_KTRACE_ADD(kbdev, PM_L2_OFF, NULL, backend->l2_state);
-				dev_dbg(kbdev->dev, "GPU lost has occurred - L2 off\n");
+				dev_vdbg(kbdev->dev, "GPU lost has occurred - L2 off\n");
 			}
 			break;
 		}
@@ -1349,9 +1348,6 @@ static int kbase_pm_l2_update_state(struct kbase_device *kbdev)
 						ged_check_power_duration();
 					}
 #endif /* CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY */
-#if IS_ENABLED(CONFIG_MALI_MTK_GPU_DVFS_ASYNC)
-					mtk_common_ged_dvfs_write_sysram_last_commit_dual();
-#endif /* CONFIG_MALI_MTK_GPU_DVFS_ASYNC */
 					kbase_pm_invoke(kbdev, KBASE_PM_CORE_L2, l2_present,
 							ACTION_PWRON);
 				}
@@ -1567,12 +1563,6 @@ static int kbase_pm_l2_update_state(struct kbase_device *kbdev)
 					if (kbdev->csf.scheduler.apo_support)
 						ged_get_idle_time();
 #endif /* CONFIG_MALI_MTK_ADAPTIVE_POWER_POLICY */
-#if defined(CONFIG_MTK_GPUFREQ_V2) && IS_ENABLED(CONFIG_MALI_MTK_MFG2_BACKDOOR)
-					gpufreq_set_mfgsys_config(CONFIG_MFG2_BEFORE_OFF, CONFIG_VAL_IGNORE);
-#endif /* CONFIG_MTK_GPUFREQ_V2 && CONFIG_MALI_MTK_MFG2_BACKDOOR */
-#if IS_ENABLED(CONFIG_MALI_MTK_GPU_DVFS_ASYNC)
-					mtk_common_ged_dvfs_write_sysram_last_commit_dual();
-#endif /* CONFIG_MALI_MTK_GPU_DVFS_ASYNC */
 					kbase_pm_invoke(kbdev, KBASE_PM_CORE_L2,
 							l2_present,
 							ACTION_PWROFF);
@@ -1637,7 +1627,7 @@ static int kbase_pm_l2_update_state(struct kbase_device *kbdev)
 			mtk_debug_irq_trace_l2_record(irq_trace_start_time,
 				prev_state, backend->l2_state);
 #endif /* CONFIG_MALI_MTK_IRQ_TRACE */
-			dev_dbg(kbdev->dev, "L2 state transition: %s to %s\n",
+			dev_vdbg(kbdev->dev, "L2 state transition: %s to %s\n",
 				kbase_l2_core_state_to_string(prev_state),
 				kbase_l2_core_state_to_string(
 					backend->l2_state));
@@ -1776,7 +1766,7 @@ static int kbase_pm_shaders_update_state(struct kbase_device *kbdev)
 #endif
 			backend->shaders_state =
 				KBASE_SHADERS_OFF_CORESTACK_OFF;
-			dev_dbg(kbdev->dev, "GPU lost has occurred - shaders off\n");
+			dev_vdbg(kbdev->dev, "GPU lost has occurred - shaders off\n");
 			break;
 		}
 
@@ -2085,7 +2075,7 @@ static int kbase_pm_shaders_update_state(struct kbase_device *kbdev)
 		}
 
 		if (backend->shaders_state != prev_state)
-			dev_dbg(kbdev->dev, "Shader state transition: %s to %s\n",
+			dev_vdbg(kbdev->dev, "Shader state transition: %s to %s\n",
 				kbase_shader_core_state_to_string(prev_state),
 				kbase_shader_core_state_to_string(
 					backend->shaders_state));
@@ -2510,6 +2500,8 @@ static void kbase_pm_timed_out(struct kbase_device *kbdev, const char *timeout_m
 
 #if IS_ENABLED(CONFIG_MALI_MTK_DEBUG)
 	mtk_common_debug(MTK_COMMON_DBG_DUMP_DB_BY_SETTING, -1, MTK_DBG_HOOK_PM_TIMEOUT);
+	mtk_common_debug(MTK_COMMON_DBG_DUMP_PM_STATUS, -1, MTK_DBG_HOOK_PM_TIMEOUT);
+	mtk_common_debug(MTK_COMMON_DBG_DUMP_INFRA_STATUS, -1, MTK_DBG_HOOK_PM_TIMEOUT);
 #endif /* CONFIG_MALI_MTK_DEBUG */
 
 	dev_err(kbdev->dev, "Sending reset to GPU - all running jobs will be lost\n");
@@ -2781,7 +2773,7 @@ static void update_user_reg_page_mapping(struct kbase_device *kbdev)
 		unmap_mapping_range(kbdev->csf.user_reg.filp->f_inode->i_mapping,
 				    kctx->csf.user_reg.file_offset << PAGE_SHIFT, PAGE_SIZE, 1);
 		list_del_init(&kctx->csf.user_reg.link);
-		dev_dbg(kbdev->dev, "Updated USER Reg page mapping of ctx %d_%d", kctx->tgid,
+		dev_vdbg(kbdev->dev, "Updated USER Reg page mapping of ctx %d_%d", kctx->tgid,
 			kctx->id);
 	}
 	mutex_unlock(&kbdev->csf.reg_lock);
@@ -3242,7 +3234,7 @@ void kbase_pm_cache_snoop_enable(struct kbase_device *kbdev)
 		if (kbdev->snoop_enable_smc != 0)
 			kbase_invoke_smc_fid(kbdev->snoop_enable_smc, 0, 0, 0);
 #endif /* CONFIG_ARM64 */
-		dev_dbg(kbdev->dev, "MALI - CCI Snoops - Enabled\n");
+		dev_vdbg(kbdev->dev, "MALI - CCI Snoops - Enabled\n");
 		kbdev->cci_snoop_enabled = true;
 	}
 }
@@ -3256,7 +3248,7 @@ void kbase_pm_cache_snoop_disable(struct kbase_device *kbdev)
 			kbase_invoke_smc_fid(kbdev->snoop_disable_smc, 0, 0, 0);
 		}
 #endif /* CONFIG_ARM64 */
-		dev_dbg(kbdev->dev, "MALI - CCI Snoops Disabled\n");
+		dev_vdbg(kbdev->dev, "MALI - CCI Snoops Disabled\n");
 		kbdev->cci_snoop_enabled = false;
 	}
 }
@@ -3365,7 +3357,7 @@ static int kbase_pm_do_reset(struct kbase_device *kbdev)
 	}
 
 	if (kbase_is_gpu_removed(kbdev)) {
-		dev_dbg(kbdev->dev, "GPU has been removed, reset no longer needed.\n");
+		dev_vdbg(kbdev->dev, "GPU has been removed, reset no longer needed.\n");
 		destroy_hrtimer_on_stack(&rtdata.timer);
 		return -EINVAL;
 	}
