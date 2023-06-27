@@ -2274,6 +2274,43 @@ void glBusFuncOff(void)
 #endif
 }
 
+#if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
+void glDumpPcieEpConf(void)
+{
+#define DUMP_INFO_MAX_LENGTH	128
+	struct pci_dev *pdev = g_prDev;
+	uint32_t u4DumpAddr, u4Value;
+	int32_t i4Offset = 0;
+	uint8_t dumpBuffer[DUMP_INFO_MAX_LENGTH];
+
+	if (!g_prDev)
+		return;
+
+	kalMemZero(dumpBuffer, DUMP_INFO_MAX_LENGTH);
+	pci_read_config_dword(pdev, 0x4, &u4Value);
+	i4Offset += kalSnprintf(dumpBuffer + i4Offset,
+		DUMP_INFO_MAX_LENGTH - i4Offset, "0x4=%08x, ", u4Value);
+
+	for (u4DumpAddr = 0x10; u4DumpAddr < 0x24; u4DumpAddr += 0x4) {
+		pci_read_config_dword(pdev, u4DumpAddr, &u4Value);
+		i4Offset += kalSnprintf(dumpBuffer + i4Offset,
+			DUMP_INFO_MAX_LENGTH - i4Offset,
+			"0x%02x=%08x, ", u4DumpAddr, u4Value);
+	}
+	DBGLOG(INIT, INFO, "%s\n", dumpBuffer);
+
+	kalMemZero(dumpBuffer, DUMP_INFO_MAX_LENGTH);
+	i4Offset = 0;
+	for (u4DumpAddr = 0xe0; u4DumpAddr < 0xf4; u4DumpAddr += 0x4) {
+		pci_read_config_dword(pdev, u4DumpAddr, &u4Value);
+		i4Offset += kalSnprintf(dumpBuffer + i4Offset,
+			DUMP_INFO_MAX_LENGTH - i4Offset,
+			"0x%02x=%08x, ", u4DumpAddr, u4Value);
+	}
+	DBGLOG(INIT, INFO, "%s\n", dumpBuffer);
+}
+#endif
+
 #if CFG_SUPPORT_PCIE_GEN_SWITCH
 int mtk_pcie_speed(struct pci_dev *dev, int speed)
 {
