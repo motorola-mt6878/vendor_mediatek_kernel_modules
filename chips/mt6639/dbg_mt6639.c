@@ -1627,7 +1627,7 @@ void mt6639_dumpPcieRegWithScanDump(void)
 
 	/* dump range from 0x7403_0000 to 0x7403_47FC */
 	for (i = 0; i <= 0x47FC; i+=4) {
-		u4RegVal = 0x7403000 + i;
+		u4RegVal = 0x74030000 + i;
 		connv3_hif_dbg_read(CONNV3_DRV_TYPE_WIFI, CONNV3_DRV_TYPE_BT,
 			u4RegVal, &u4Value);
 		DBGLOG(HAL, INFO, "CR[0x%08x] value[0x%08x]\n",
