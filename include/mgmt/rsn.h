@@ -420,6 +420,10 @@ uint8_t rsnIsKeyMgmtSha256(uint32_t akm);
 uint8_t rsnIsKeyMgmtSha384(uint32_t akm);
 uint8_t rsnKekLen(uint32_t akmp, uint16_t pmk_len);
 uint8_t rsnCipherKeyLen(uint32_t cipher);
+void rsnReqDumpWTBL(struct ADAPTER *prAdapter,
+	enum ENUM_FW_DUMP eType, uint8_t ucBssIndex);
+void rsnTriggerDumpWTBL(struct ADAPTER *prAdapter,
+	struct MSG_HDR *prMsgHdr);
 void rsnDumpWTBL(struct ADAPTER *prAdapter);
 
 /*******************************************************************************
