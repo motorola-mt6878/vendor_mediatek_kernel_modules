@@ -2847,10 +2847,6 @@ static struct devapc_vio_callbacks wlan_devapc_vio_handle = {
 
 void unregister_plat_connsys_cbs(void)
 {
-#if (CFG_SUPPORT_POWER_THROTTLING == 1)
-	power_throttling_deinit();
-#endif
-
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
 	unregister_connv3_cbs();
 #endif
@@ -2864,10 +2860,6 @@ void register_plat_connsys_cbs(void)
 
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
 	register_connv3_cbs();
-#endif
-
-#if (CFG_SUPPORT_POWER_THROTTLING == 1)
-	power_throttling_init();
 #endif
 
 #if CFG_MTK_WIFI_DEVAPC
