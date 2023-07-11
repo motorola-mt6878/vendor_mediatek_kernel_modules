@@ -7878,10 +7878,6 @@ static void wlanRemove(void)
 
 	kalWlanUeventDeinit();
 
-	HAL_LP_OWN_SET(prAdapter, &fgResult);
-	DBGLOG(INIT, INFO, "HAL_LP_OWN_SET(%d)\n",
-	       (uint32_t) fgResult);
-
 	/* Add debug dump for DEVAPC write address 0 */
 #if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
 	DBGLOG(INIT, ERROR, "wlanRemove pcie dump:\n");
@@ -7892,6 +7888,10 @@ static void wlanRemove(void)
 
 	/* 4 <5> Release the Bus */
 	glBusRelease(prDev);
+
+	HAL_LP_OWN_SET(prAdapter, &fgResult);
+	DBGLOG(INIT, INFO, "HAL_LP_OWN_SET(%d)\n",
+	       (uint32_t) fgResult);
 
 #if (CFG_SUPPORT_TRACE_TC4 == 1)
 	wlanDebugTC4Uninit();
