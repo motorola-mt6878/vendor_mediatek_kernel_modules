@@ -757,6 +757,18 @@ else
     ccflags-y += -DCFG_SUPPORT_WIFI_MDDP_NO_MMIO_READ=0
 endif
 
+ifeq ($(CONFIG_SUPPORT_LOW_POWER), y)
+    ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF), pcie)
+        ccflags-y += -DCFG_SUPPORT_LOW_POWER=1
+    else ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF), axi)
+        ccflags-y += -DCFG_SUPPORT_LOW_POWER=1
+    else
+        ccflags-y += -DCFG_SUPPORT_LOW_POWER=0
+    endif
+else
+    ccflags-y += -DCFG_SUPPORT_LOW_POWER=0
+endif
+
 ifeq ($(CONFIG_SUPPORT_TX_DATA_DELAY), y)
     ifeq ($(CONFIG_MTK_COMBO_WIFI_HIF), pcie)
         ccflags-y += -DCFG_SUPPORT_TX_DATA_DELAY=1

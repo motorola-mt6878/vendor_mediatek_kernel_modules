@@ -8345,7 +8345,7 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 
 #if CFG_SUPPORT_PCIE_GEN_SWITCH
 	prWifiVar->u4PcieGenSwitchTputThr = (uint8_t) wlanCfgGetUint32(
-		prAdapter, "PcieGenSwitchTputThr", 100);
+		prAdapter, "PcieGenSwitchTputThr", 110);
 	prWifiVar->u4PcieGenSwitchJudgeTime = (uint8_t) wlanCfgGetUint32(
 		prAdapter, "PcieGenSwitchJudgeTime", 10);
 #endif
