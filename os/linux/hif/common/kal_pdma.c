@@ -2780,6 +2780,7 @@ int32_t wf_reg_start_wrapper(enum connv3_drv_type from_drv,
 	struct CHIP_DBG_OPS *prDebugOps = NULL;
 	bool dumpViaBt = FALSE;
 	int32_t ret = 0;
+	uint32_t u4RegVal = 0;
 
 	WIPHY_PRIV(wlanGetWiphy(), prGlueInfo);
 	if (prGlueInfo == NULL) {
@@ -2809,6 +2810,14 @@ int32_t wf_reg_start_wrapper(enum connv3_drv_type from_drv,
 	if (dumpViaBt) {
 		DBGLOG_LIMITED(HAL, WARN,
 			"PCIe AER.\n");
+		ret = -EFAULT;
+		goto exit;
+	}
+
+	HAL_MCR_RD(prGlueInfo->prAdapter, 0x1F5014, &u4RegVal);
+
+	if ((u4RegVal & BITS(12, 13)) == BITS(12, 13)) {
+		DBGLOG(HAL, INFO, "MCU off, 0x1F5014=0x%08x\n", u4RegVal);
 		ret = -EFAULT;
 		goto exit;
 	}
