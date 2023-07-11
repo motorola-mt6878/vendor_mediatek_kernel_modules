@@ -2128,9 +2128,10 @@ void aisFillBssInfoFromBssDesc(struct ADAPTER *prAdapter,
 
 #if CFG_SUPPORT_DBDC
 	/* DBDC decsion.may change OpNss */
-	cnmDbdcPreConnectionEnableDecision(
-			prAdapter,
-			&rDbdcDecisionInfo);
+	if (prAdapter->rWifiVar.fgDbDcModeEn == FALSE)
+		cnmDbdcPreConnectionEnableDecision(
+				prAdapter,
+				&rDbdcDecisionInfo);
 #endif /*CFG_SUPPORT_DBDC*/
 }
 
@@ -4366,6 +4367,12 @@ enum ENUM_AIS_STATE aisFsmJoinCompleteAction(struct ADAPTER *prAdapter,
 							     prAssocRspSwRfb,
 							     prStaRec);
 
+				/* 3.1 Update DBDC mode */
+#if CFG_SUPPORT_DBDC
+				cnmDbdcRuntimeCheckDecision(prAdapter,
+							    ucBssIndex,
+							    FALSE);
+#endif
 
 				/* 4 <1.6> Indicate Connected Event to Host
 				 * immediately.
