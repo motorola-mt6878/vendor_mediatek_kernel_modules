@@ -1133,6 +1133,17 @@ void cnmCsaDoneEvent(struct ADAPTER *prAdapter,
 	prP2pBssInfo = prAdapter->aprBssInfo[ucBssIndex];
 
 	/* Clean up CSA variable */
+	cnmCsaResetParams(prAdapter, prP2pBssInfo);
+	if (!prP2pBssInfo ||
+		prP2pBssInfo->eCurrentOPMode == OP_MODE_INFRASTRUCTURE)
+		return;
+
+	p2pFunChnlSwitchNotifyDone(prAdapter);
+}
+
+void cnmCsaResetParams(struct ADAPTER *prAdapter,
+	struct BSS_INFO *prBssInfo)
+{
 	prAdapter->rWifiVar.fgCsaInProgress = FALSE;
 	prAdapter->rWifiVar.ucChannelSwitchMode = 0;
 	prAdapter->rWifiVar.ucNewOperatingClass = 0;
@@ -1142,11 +1153,6 @@ void cnmCsaDoneEvent(struct ADAPTER *prAdapter,
 	prAdapter->rWifiVar.ucNewChannelWidth = 0;
 	prAdapter->rWifiVar.ucNewChannelS1 = 0;
 	prAdapter->rWifiVar.ucNewChannelS2 = 0;
-	if (!prP2pBssInfo ||
-		prP2pBssInfo->eCurrentOPMode == OP_MODE_INFRASTRUCTURE)
-		return;
-
-	p2pFunChnlSwitchNotifyDone(prAdapter);
 }
 #endif
 
