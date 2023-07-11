@@ -4246,6 +4246,9 @@ void aisChangeAllMediaState(struct ADAPTER *prAdapter,
 			aisGetLinkBssInfo(prAisFsmInfo, i);
 		struct STA_RECORD *prStaRec =
 			aisGetLinkStaRec(prAisFsmInfo, i);
+		struct BSS_DESC *prBssDesc =
+			aisGetLinkBssDesc(prAisFsmInfo, i);
+		uint8_t ucBssIndex;
 
 		if (!prAisBssInfo)
 			continue;
@@ -4256,6 +4259,12 @@ void aisChangeAllMediaState(struct ADAPTER *prAdapter,
 				i, prStaRec->u2StatusCode);
 			cnmStaRecFree(prAdapter, prStaRec);
 			prStaRec = NULL;
+
+			ucBssIndex = prAisBssInfo->ucBssIndex;
+			if (prBssDesc) {
+				prBssDesc->fgIsConnected &= ~BIT(ucBssIndex);
+				prBssDesc->fgIsConnecting &= ~BIT(ucBssIndex);
+			}
 		}
 
 		kalResetStats(
