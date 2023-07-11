@@ -425,6 +425,7 @@ void rsnReqDumpWTBL(struct ADAPTER *prAdapter,
 void rsnTriggerDumpWTBL(struct ADAPTER *prAdapter,
 	struct MSG_HDR *prMsgHdr);
 void rsnDumpWTBL(struct ADAPTER *prAdapter);
+bool rsnFwDumpIsLimited(struct ADAPTER *prAdapter);
 
 /*******************************************************************************
  *                              F U N C T I O N S

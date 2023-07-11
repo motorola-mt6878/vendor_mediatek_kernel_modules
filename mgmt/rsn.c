@@ -4304,6 +4304,9 @@ void rsnReqDumpWTBL(struct ADAPTER *prAdapter,
 	if (!IS_FEATURE_ENABLED(prAdapter->rWifiVar.fgRxIcvErrDbg))
 		return;
 
+	if (rsnFwDumpIsLimited(prAdapter))
+		return;
+
 	prFwDumpMsg = (struct MSG_FW_DUMP *) cnmMemAlloc(prAdapter,
 		RAM_TYPE_MSG, sizeof(struct MSG_FW_DUMP));
 
@@ -4366,5 +4369,17 @@ void rsnDumpWTBL(struct ADAPTER *prAdapter)
 	kalStrnCpy(rChipConfigInfo.aucCmd, cmd, strLen);
 	wlanSetChipConfig(prAdapter, &rChipConfigInfo,
 			sizeof(rChipConfigInfo), &strOutLen, FALSE);
+}
+
+bool rsnFwDumpIsLimited(struct ADAPTER *prAdapter)
+{
+	if (CHECK_FOR_TIMEOUT(kalGetTimeTick(),
+				prAdapter->rRsnFwDumpTime,
+				SEC_TO_SYSTIME(1))) {
+		GET_CURRENT_SYSTIME(
+			&prAdapter->rRsnFwDumpTime);
+		return FALSE;
+	}
+	return TRUE;
 }
 

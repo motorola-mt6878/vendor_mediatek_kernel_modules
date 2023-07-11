@@ -2708,6 +2708,7 @@ struct ADAPTER {
 	struct STA_RECORD rSapLastStaRec;
 	u_int8_t fgSapLastStaRecSet;
 #endif
+	OS_SYSTIME rRsnFwDumpTime;
 };				/* end of _ADAPTER_T */
 
 /*******************************************************************************
