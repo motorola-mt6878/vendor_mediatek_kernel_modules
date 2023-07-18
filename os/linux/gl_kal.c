@@ -10296,7 +10296,7 @@ static uint32_t kalPerMonUpdate(struct ADAPTER *prAdapter)
 #endif /* CFG_QUEUE_RX_IF_CONN_NOT_READY */
 
 #define TEMP_LOG_TEMPLATE \
-	"ndevdrp:%s NAPI[%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu] " \
+	"ndevdrp:%s NAPI[%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu,%lu] " \
 	RRO_LOG_TEMPLATE \
 	"RxReorder[%s] " \
 	RX_PENDING_TEMPLATE \
@@ -10316,6 +10316,7 @@ static uint32_t kalPerMonUpdate(struct ADAPTER *prAdapter)
 		RX_GET_CNT(&prAdapter->rRxCtrl, RX_TASKLET_COUNT),
 		RX_GET_CNT(&prAdapter->rRxCtrl, RX_NAPI_WORK_COUNT),
 		RX_GET_CNT(&prAdapter->rRxCtrl, RX_NAPI_SCHEDULE_COUNT),
+		RX_GET_CNT(&prAdapter->rRxCtrl, RX_NAPI_LEGACY_SCHED_COUNT),
 		RX_GET_CNT(&prAdapter->rRxCtrl, RX_NAPI_FIFO_IN_COUNT),
 		RX_GET_CNT(&prAdapter->rRxCtrl, RX_NAPI_FIFO_OUT_COUNT),
 		RX_GET_CNT(&prAdapter->rRxCtrl, RX_NAPI_FIFO_FULL_COUNT),
@@ -13328,10 +13329,11 @@ next_try:
 			jiffies-ulTimeLimit);
 #endif /* CFG_SUPPORT_RX_GRO_PEAK */
 
-	if (work_done < budget) {
-		kal_napi_complete_done(napi, work_done);
-		if (skb_queue_len(prRxNapiSkbQ))
-			napi_schedule(napi);
+	work_done = kal_min_t(int, work_done, budget-1);
+	kal_napi_complete_done(napi, work_done);
+	if (skb_queue_len(prRxNapiSkbQ)) {
+		RX_INC_CNT(&prAdapter->rRxCtrl, RX_NAPI_LEGACY_SCHED_COUNT);
+		napi_schedule(napi);
 	}
 
 end:
