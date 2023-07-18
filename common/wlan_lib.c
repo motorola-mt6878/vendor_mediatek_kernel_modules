@@ -13064,6 +13064,19 @@ int wlanGetMaxTxRate(struct ADAPTER *prAdapter,
 	if (ucAPBwPermitted < ucBw)
 		ucBw = ucAPBwPermitted;
 
+	switch (ucBw) {
+	case MAX_BW_160MHZ:
+	case MAX_BW_80_80_MHZ:
+		ucBw = 3;
+		break;
+	case MAX_BW_320_1MHZ:
+	case MAX_BW_320_2MHZ:
+		ucBw = 4;
+		break;
+	default:
+		break;
+	}
+
 	/* Get Short GI Tx capability for HT/VHT, check from HT or VHT
 	 * capability BW SGI bit. Refer to 802.11 Short GI operation
 	 */
