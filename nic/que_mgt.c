@@ -6430,12 +6430,12 @@ void mqmUpdateEdcaParams(struct ADAPTER *prAdapter, struct BSS_INFO *prBssInfo,
 		prAcParam = &arAcParam[eAci];
 		mqmFillAcQueParam(prAcParam, prAcQueParams);
 		DBGLOG(QM, INFO,
-			"BSS[%u]: eAci[%d] ACM[%d] Aifsn[%d] CWmin/max[%d/%d] TxopLimit[%d]\n",
+			"BSS[%u]: eAci[%d] ACM[%d] Aifsn[%d] CWmin/max[%d/%d] TxopLimit[%d] Cnt[%d]\n",
 			prBssInfo->ucBssIndex, eAci,
 			prAcQueParams->ucIsACMSet,
 			prAcQueParams->u2Aifsn, prAcQueParams->u2CWmin,
 			prAcQueParams->u2CWmax,
-			prAcQueParams->u2TxopLimit);
+			prAcQueParams->u2TxopLimit, *pucWmmParamSetCount);
 	}
 }
 
@@ -6447,24 +6447,20 @@ u_int8_t mqmCompareMUEdcaParameters(struct ADAPTER *prAdapter,
 	struct _CMD_MU_EDCA_PARAMS_T *prBSSMUEdca;
 	struct _MU_AC_PARAM_RECORD_T *prMUAcParamInIE;
 	enum ENUM_WMM_ACI eAci;
-	uint8_t ucMUEdcaUpdateCnt;
+	uint8_t *pucMUEdcaUpdateCnt;
 #if (CFG_SUPPORT_802_11BE_EPCS == 1)
 	struct MLD_STA_RECORD *prMldStaRec;
 #endif
 
 #if (CFG_SUPPORT_802_11BE_EPCS == 1)
 	prMldStaRec = mldStarecGetByStarec(prAdapter, prStaRec);
-	ucMUEdcaUpdateCnt = (prMldStaRec && prMldStaRec->fgEPCS) ?
-		prBssInfo->ucBackupMUEdcaUpdateCnt :
-		prBssInfo->ucMUEdcaUpdateCnt;
+	pucMUEdcaUpdateCnt = (prMldStaRec && prMldStaRec->fgEPCS) ?
+		&prBssInfo->ucBackupMUEdcaUpdateCnt :
+		&prBssInfo->ucMUEdcaUpdateCnt;
 #else
-	ucMUEdcaUpdateCnt = prBssInfo->ucMUEdcaUpdateCnt;
+	pucMUEdcaUpdateCnt = &prBssInfo->ucMUEdcaUpdateCnt;
 #endif /* CFG_SUPPORT_802_11BE_EPCS */
 
-	/* Check Set Count */
-	if (ucMUEdcaUpdateCnt != (prIeMUEdcaParam->ucMUQosInfo &
-		WMM_QOS_INFO_PARAM_SET_CNT))
-		return FALSE;
 
 	for (eAci = 0; eAci < WMM_AC_INDEX_NUM; eAci++) {
 #if (CFG_SUPPORT_802_11BE_EPCS == 1)
@@ -6477,8 +6473,8 @@ u_int8_t mqmCompareMUEdcaParameters(struct ADAPTER *prAdapter,
 		prMUAcParamInIE = &prIeMUEdcaParam->arMUAcParam[eAci];
 
 		/* ACM */
-		if (prBSSMUEdca->ucIsACMSet != ((prMUAcParamInIE->ucAciAifsn &
-			WMM_ACIAIFSN_ACM) ? TRUE : FALSE))
+		if (prBSSMUEdca->ucIsACMSet != !!(prMUAcParamInIE->ucAciAifsn &
+			WMM_ACIAIFSN_ACM))
 			return FALSE;
 
 		/* AIFSN */
@@ -6499,8 +6495,21 @@ u_int8_t mqmCompareMUEdcaParameters(struct ADAPTER *prAdapter,
 
 		/* MU EDCA timer */
 		if (prBSSMUEdca->ucMUEdcaTimer !=
-			prMUAcParamInIE->ucMUEdcaTimer)
+			prMUAcParamInIE->ucMUEdcaTimer) {
+			DBGLOG(QM, INFO, "timer changed, %d -> %d\n",
+			       prBSSMUEdca->ucMUEdcaTimer,
+			       prMUAcParamInIE->ucMUEdcaTimer);
 			return FALSE;
+		}
+	}
+	/* Check Set Count */
+	if (*pucMUEdcaUpdateCnt != (prIeMUEdcaParam->ucMUQosInfo &
+		WMM_QOS_INFO_PARAM_SET_CNT)) {
+		DBGLOG(QM, INFO, "cnt changed, %d -> %d\n", *pucMUEdcaUpdateCnt,
+		       prIeMUEdcaParam->ucMUQosInfo &
+		       WMM_QOS_INFO_PARAM_SET_CNT);
+		*pucMUEdcaUpdateCnt = (prIeMUEdcaParam->ucMUQosInfo &
+			WMM_QOS_INFO_PARAM_SET_CNT);
 	}
 
 	return TRUE;
@@ -6574,13 +6583,12 @@ u_int8_t mqmUpdateMUEdcaParams(struct ADAPTER *prAdapter,
 				prMUAcParamInIE->ucMUEdcaTimer;
 
 			DBGLOG(QM, INFO,
-				"BSS[%u]: eAci[%d] ACM[%d] Aifsn[%d],",
+				"BSS[%u]: eAci[%d] ACM[%d] Aifsn[%d] ECWmin/max[%d/%d] Timer[%d] NewParameter[%d] Cnt[%d]\n",
 				prBssInfo->ucBssIndex, eAci,
-				prBSSMUEdca->ucIsACMSet, prBSSMUEdca->ucAifsn);
-			DBGLOG(QM, INFO,
-				"ECWmin/max[%d/%d] NewParameter[%d]\n",
+				prBSSMUEdca->ucIsACMSet, prBSSMUEdca->ucAifsn,
 				prBSSMUEdca->ucECWmin, prBSSMUEdca->ucECWmax,
-				fgNewParameter);
+				prBSSMUEdca->ucMUEdcaTimer, fgNewParameter,
+				*pucMUEdcaUpdateCnt);
 
 		}
 	} while (FALSE);
@@ -6747,10 +6755,6 @@ u_int8_t mqmIsEdcaParamsChanged(struct ADAPTER *prAdapter,
 	arAcQueParams = prBssInfo->arACQueParms;
 #endif /* CFG_SUPPORT_802_11BE_EPCS */
 
-	/* Check Set Count */
-	if (*pucWmmParamSetCount != (ucQosInfo &
-			WMM_QOS_INFO_PARAM_SET_CNT))
-		return TRUE;
 
 	for (eAci = 0; eAci < WMM_AC_INDEX_NUM; eAci++) {
 		prAcQueParams = &arAcQueParams[eAci];
@@ -6780,6 +6784,15 @@ u_int8_t mqmIsEdcaParamsChanged(struct ADAPTER *prAdapter,
 		if (prAcQueParams->u2TxopLimit !=
 			prWmmAcParams->u2TxopLimit)
 			return TRUE;
+	}
+	/* Check Set Count */
+	if (*pucWmmParamSetCount != (ucQosInfo &
+			WMM_QOS_INFO_PARAM_SET_CNT)) {
+		DBGLOG(QM, INFO,
+		       "IE count changed (%d -> %d) but Param unchanged\n",
+		       *pucWmmParamSetCount,
+		       ucQosInfo & WMM_QOS_INFO_PARAM_SET_CNT);
+		*pucWmmParamSetCount = ucQosInfo & WMM_QOS_INFO_PARAM_SET_CNT;
 	}
 
 	return FALSE;
