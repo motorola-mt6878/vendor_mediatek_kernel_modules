@@ -1579,6 +1579,8 @@ struct WIFI_VAR {
 	u_int8_t fgSapSuspendOn;
 	u_int8_t fgSapRpsAisCond;
 #endif
+
+	uint32_t u4PmkRefreshThreshold;
 };
 
 /* cnm_timer module */
