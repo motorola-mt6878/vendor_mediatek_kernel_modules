@@ -3835,24 +3835,6 @@ void halWpdmaFreeMsduWork(struct GLUE_INFO *prGlueInfo)
 		nicTxReturnMsduInfo(prGlueInfo->prAdapter, prMsduInfo);
 	}
 }
-
-static inline uint32_t halEnqueueMsduInfo(struct GLUE_INFO *pr,
-			struct MSDU_INFO *prMsduInfo)
-{
-	if (pr->prTxMsduRetFifoBuf &&
-		KAL_FIFO_IN(&pr->rTxMsduRetFifo, prMsduInfo)) {
-		kalTxFreeMsduTaskSchedule(pr);
-		return WLAN_STATUS_SUCCESS;
-	}
-
-	return WLAN_STATUS_NOT_ACCEPTED;
-}
-#else /* CFG_SUPPORT_TASKLET_FREE_MSDU */
-static inline uint32_t halEnqueueMsduInfo(struct GLUE_INFO *pr,
-			struct MSDU_INFO *prMsduInfo)
-{
-	return WLAN_STATUS_NOT_ACCEPTED;
-}
 #endif /* CFG_SUPPORT_TASKLET_FREE_MSDU */
 
 void halWpdmaFreeMsdu(struct GLUE_INFO *prGlueInfo,
@@ -3988,10 +3970,15 @@ bool halWpdmaWriteMsdu(struct GLUE_INFO *prGlueInfo,
 #endif
 		if (prMsduInfo->pfHifTxMsduDoneCb)
 			prMsduInfo->pfHifTxMsduDoneCb(prAdapter, prMsduInfo);
-
-	if (halEnqueueMsduInfo(prGlueInfo, prMsduInfo)
-		== WLAN_STATUS_NOT_ACCEPTED)
+#if CFG_SUPPORT_TASKLET_FREE_MSDU
+	if (prMsduInfo->pfTxDoneHandler == NULL &&
+		KAL_FIFO_IN(&prGlueInfo->rTxMsduRetFifo, prMsduInfo))
+		kalTxFreeMsduTaskSchedule(prGlueInfo);
+	else
+#endif /* CFG_SUPPORT_TASKLET_FREE_MSDU */
+	{
 		halWpdmaFreeMsdu(prGlueInfo, prMsduInfo, TRUE, NULL);
+	}
 
 	return true;
 }
@@ -4097,10 +4084,16 @@ bool halWpdmaWriteAmsdu(struct GLUE_INFO *prGlueInfo,
 				prMsduInfo->pfHifTxMsduDoneCb(
 						prGlueInfo->prAdapter,
 						prMsduInfo);
-
-		if (halEnqueueMsduInfo(prGlueInfo, prMsduInfo)
-			== WLAN_STATUS_NOT_ACCEPTED)
+#if CFG_SUPPORT_TASKLET_FREE_MSDU
+		if (prMsduInfo->pfTxDoneHandler == NULL &&
+			KAL_FIFO_IN(&prGlueInfo->rTxMsduRetFifo, prMsduInfo))
+			tasklet_schedule(&prGlueInfo->rTxMsduRetTask);
+		else {
+#endif /* CFG_SUPPORT_TASKLET_FREE_MSDU */
 			halWpdmaFreeMsdu(prGlueInfo, prMsduInfo, TRUE, NULL);
+#if CFG_SUPPORT_TASKLET_FREE_MSDU
+		}
+#endif /* CFG_SUPPORT_TASKLET_FREE_MSDU */
 		prCur = prNext;
 	}
 
