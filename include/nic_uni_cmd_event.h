@@ -2842,6 +2842,17 @@ struct UNI_CMD_LINK_LAYER_STATS {
 } __KAL_ATTRIB_PACKED__;
 
 __KAL_ATTRIB_PACKED_FRONT__
+struct UNI_CMD_CURRENT_TX_RATE {
+	uint16_t u2Tag;
+	uint16_t u2Length;
+
+	uint8_t ucArg0;
+	uint8_t ucArg1;
+	uint8_t ucArg2;
+	uint8_t ucArg3;
+} __KAL_ATTRIB_PACKED__;
+
+__KAL_ATTRIB_PACKED_FRONT__
 struct UNI_CMD_EML_INFO {
 	uint16_t u2Tag;
 	uint16_t u2Length;
@@ -5831,6 +5842,13 @@ struct UNI_EVENT_STA_STATISTICS {
 
 __KAL_ATTRIB_PACKED_FRONT__
 struct UNI_EVENT_LINK_STATS {
+	uint16_t u2Tag;
+	uint16_t u2Length;
+	uint8_t  aucBuffer[0];
+} __KAL_ATTRIB_PACKED__;
+
+__KAL_ATTRIB_PACKED_FRONT__
+struct UNI_EVENT_CURRENT_TX_RATE {
 	uint16_t u2Tag;
 	uint16_t u2Length;
 	uint8_t  aucBuffer[0];

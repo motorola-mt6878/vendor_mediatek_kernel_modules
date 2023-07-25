@@ -1387,6 +1387,7 @@ struct CAP_STATS_REG_MONTR_EMI_OFFSET {
 	uint32_t u4OffsetOfLq;
 	uint32_t u4OffsetOfStaStats;
 	uint32_t u4OffsetOfLlsStatus;
+	uint32_t u4OffsetOfLastTxRateInfo;
 };
 #endif
 
