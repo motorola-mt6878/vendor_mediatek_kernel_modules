@@ -2170,6 +2170,8 @@ void mt6639_DumpBusHangCr(struct ADAPTER *ad)
 	int ret = 0;
 	u_int8_t dumpViaBt = 0;
 #endif
+	u_int8_t fgIsBusAccessFailedBak = 0;
+
 
 	if (!ad) {
 		DBGLOG(HAL, ERROR, "NULL ADAPTER.\n");
@@ -2179,61 +2181,45 @@ void mt6639_DumpBusHangCr(struct ADAPTER *ad)
 	chip_info = ad->chip_info;
 	debug_ops = chip_info->prDebugOps;
 
+	DBGLOG(HAL, INFO, "Phase1: Trigger PCIe Scan Dump.\n");
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
-	if (glGetRstReason() == RST_DRV_OWN_FAIL ||
-		mtk_get_aer_triggered()) {
-		/* Notify BT to start */
-		ret = connv3_hif_dbg_start(CONNV3_DRV_TYPE_WIFI,
-			CONNV3_DRV_TYPE_BT);
-		if (ret != 0) {
-			DBGLOG(HAL, ERROR, "connv3_hif_dbg_start failed.\n");
-			goto exit_pcie_scan_dump;
-		} else {
-			DBGLOG(HAL, INFO,
-			"start BT dump for PCIe EP Scan dump.\n");
-		}
-
-		mt6639_dumpPcieRegWithScanDump();
-
-		/* Notify BT to end */
-		ret = connv3_hif_dbg_end(CONNV3_DRV_TYPE_WIFI,
-			CONNV3_DRV_TYPE_BT);
-		if (ret != 0)
-			DBGLOG(HAL, ERROR, "connv3_hif_dbg_end failed.\n");
+	/* Notify BT to start */
+	ret = connv3_hif_dbg_start(CONNV3_DRV_TYPE_WIFI,
+		CONNV3_DRV_TYPE_BT);
+	if (ret != 0) {
+		DBGLOG(HAL, ERROR, "connv3_hif_dbg_start failed.\n");
+		goto start_dump_via_pcie;
+	} else {
+		DBGLOG(HAL, INFO,
+		"start BT dump for PCIe EP Scan dump.\n");
 	}
-exit_pcie_scan_dump:
+
+	mt6639_dumpPcieRegWithScanDump();
+
+	/* Notify BT to end */
+	ret = connv3_hif_dbg_end(CONNV3_DRV_TYPE_WIFI,
+		CONNV3_DRV_TYPE_BT);
+	if (ret != 0)
+		DBGLOG(HAL, ERROR, "connv3_hif_dbg_end failed.\n");
 #endif
 
+start_dump_via_pcie:
+	DBGLOG(HAL, INFO, "Phase2: Trigger Wi-Fi dump via PCIe.\n");
 	if (debug_ops && debug_ops->dumpPcieStatus)
 		readable = debug_ops->dumpPcieStatus(ad->prGlueInfo);
 
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
 	if (debug_ops && debug_ops->checkDumpViaBt)
 		dumpViaBt = debug_ops->checkDumpViaBt();
-	if (readable == FALSE && !dumpViaBt)
-		return;
+	if (readable == FALSE || dumpViaBt)
+		goto start_dump_via_bt;
 #else
 	if (readable == FALSE)
-		return;
-#endif
-
-#if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
-	if (dumpViaBt) {
-		/* Notify BT to start */
-		ret = connv3_hif_dbg_start(CONNV3_DRV_TYPE_WIFI,
-			CONNV3_DRV_TYPE_BT);
-		if (ret != 0) {
-			DBGLOG(HAL, ERROR, "connv3_hif_dbg_start failed.\n");
-			goto exit_debug_sop;
-		} else
-			DBGLOG(HAL, INFO, "start BT dump.\n");
-	}
+		goto start_dump_via_bt;
 #endif
 
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
 	mt6639_dumpConninfraBus(ad);
-	if (dumpViaBt)
-		mt6639_dumpPcieReg();
 #endif
 	mt6639_dumpCbtopReg(ad);
 	mt6639_dumpWfsyscpupcr(ad);
@@ -2243,26 +2229,55 @@ exit_pcie_scan_dump:
 	mt6639_dumpWfTopReg(ad);
 	mt6639_dumpWfBusReg(ad);
 
+start_dump_via_bt:
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
-	if (dumpViaBt) {
-		/* Notify BT to end */
-		ret = connv3_hif_dbg_end(CONNV3_DRV_TYPE_WIFI,
-			CONNV3_DRV_TYPE_BT);
-		if (ret != 0)
-			DBGLOG(HAL, ERROR, "connv3_hif_dbg_end failed.\n");
-	}
+	DBGLOG(HAL, INFO, "Phase3: Trigger Wi-Fi dump via BT.\n");
+	if (debug_ops && debug_ops->dumpPcieStatus)
+		readable = debug_ops->dumpPcieStatus(ad->prGlueInfo);
 
-exit_debug_sop:
-	if (dumpViaBt) {
-		DBGLOG(HAL, INFO, "Trigger SCP dump.\n");
-		connectivity_export_conap_scp_trigger_cmd(CONN_HIF_DBG_WF,
-			CONN_HIF_DBG_CMD_PCIE, 0);
+	/* Notify BT to start */
+	ret = connv3_hif_dbg_start(CONNV3_DRV_TYPE_WIFI,
+		CONNV3_DRV_TYPE_BT);
+	if (ret != 0) {
+		DBGLOG(HAL, ERROR, "connv3_hif_dbg_start failed.\n");
+		goto start_dump_via_scp;
+	} else
+		DBGLOG(HAL, INFO, "start BT dump.\n");
 
-		/* delay 200 ms for async dump */
-		msleep(200);
-		fgTriggerDebugSop = FALSE;
-	}
+	/* force do dump via BT */
+	fgTriggerDebugSop = TRUE;
+	fgIsBusAccessFailedBak = fgIsBusAccessFailed;
+	fgIsBusAccessFailed = TRUE;
+
+	mt6639_dumpConninfraBus(ad);
+	mt6639_dumpPcieReg();
+	mt6639_dumpCbtopReg(ad);
+	mt6639_dumpWfsyscpupcr(ad);
+	mt6639_dumpPcGprLog(ad);
+	mt6639_dumpHostVdnrTimeoutInfo(ad);
+	mt6639_dumpN45CoreReg(ad);
+	mt6639_dumpWfTopReg(ad);
+	mt6639_dumpWfBusReg(ad);
+
+	fgIsBusAccessFailed = fgIsBusAccessFailedBak;
+
+	/* Notify BT to end */
+	ret = connv3_hif_dbg_end(CONNV3_DRV_TYPE_WIFI,
+		CONNV3_DRV_TYPE_BT);
+	if (ret != 0)
+		DBGLOG(HAL, ERROR, "connv3_hif_dbg_end failed.\n");
 #endif
+
+start_dump_via_scp:
+#if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
+	DBGLOG(HAL, INFO, "Phase4: Trigger SCP dump.\n");
+	connectivity_export_conap_scp_trigger_cmd(CONN_HIF_DBG_WF,
+		CONN_HIF_DBG_CMD_PCIE, 0);
+
+	/* delay 200 ms for async dump */
+	msleep(200);
+#endif
+	fgTriggerDebugSop = FALSE;
 }
 #endif
 
