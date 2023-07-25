@@ -44,7 +44,8 @@
 /* KBASE_PLATFORM_SUSPEND_DELAY, the ms for autosuspend timeout */
 #define KBASE_PLATFORM_SUSPEND_DELAY (100) /* ms */
 #if IS_ENABLED(CONFIG_MALI_MTK_AUTOSUSPEND_DELAY)
-#define KBASE_PLATFORM_SUSPEND_DELAY_60FPS (50) /* ms */
+#define KBASE_PLATFORM_MAX_SUSPEND_DELAY (25) /* ms */
+#define KBASE_PLATFORM_MIN_SUSPEND_DELAY (10) /* ms */
 static int gInit_autosuspend_delay_ms = KBASE_PLATFORM_SUSPEND_DELAY;
 static int gAutosuspend_delay_ms = 0;
 #endif
@@ -246,6 +247,7 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
 	unsigned long flags;
 	int error;
 #if IS_ENABLED(CONFIG_MALI_MTK_AUTOSUSPEND_DELAY)
+	int target_fps = 0;
 	int temp_autosuspend_delay_ms = 0;
 #endif
 
@@ -286,9 +288,17 @@ static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
 #endif
 
 #if IS_ENABLED(CONFIG_MALI_MTK_AUTOSUSPEND_DELAY)
-	if (ged_kpi_get_panel_refresh_rate() == 60)
-		temp_autosuspend_delay_ms = KBASE_PLATFORM_SUSPEND_DELAY_60FPS;
-	else
+	target_fps = ged_kpi_get_target_fps();
+
+	if (target_fps < 0 || target_fps > 120)
+		target_fps = ged_kpi_get_panel_refresh_rate();
+
+	if (target_fps > 0 && target_fps <= 120) {
+		if (target_fps >= 90)
+			temp_autosuspend_delay_ms = KBASE_PLATFORM_MAX_SUSPEND_DELAY;
+		else
+			temp_autosuspend_delay_ms = KBASE_PLATFORM_MIN_SUSPEND_DELAY;
+	} else
 		temp_autosuspend_delay_ms = gInit_autosuspend_delay_ms;
 
 	if (gAutosuspend_delay_ms != temp_autosuspend_delay_ms) {
