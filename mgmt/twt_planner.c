@@ -2317,6 +2317,9 @@ void twtPlannerRxNegoResult(
 	/* i-TWT/BTWT goes in existing flow */
 #endif
 
+	DBGLOG(TWT_PLANNER, STATE, "Rx nego id %d resp=%d\n",
+		ucTWTFlowId, prTWTResult->ucSetupCmd);
+
 	switch (prTWTResult->ucSetupCmd) {
 	case TWT_SETUP_CMD_ID_ACCEPT:
 #ifndef CFG_SUPPORT_TWT_EXT
@@ -2324,9 +2327,6 @@ void twtPlannerRxNegoResult(
 		twtPlannerAddAgrtTbl(prAdapter, prBssInfo, prStaRec,
 			prTWTResult, ucTWTFlowId, FALSE,
 			NULL, NULL /* handle TWT cmd timeout? */);
-		DBGLOG(TWT_PLANNER, STATE,
-			"Rx nego id %d\n",
-			ucTWTFlowId);
 
 		/* Disable SCAN during TWT activity */
 		prAdapter->fgEnOnlineScan = FALSE;
