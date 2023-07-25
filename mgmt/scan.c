@@ -2371,7 +2371,7 @@ void scanParseExtCapIE(uint8_t *pucIE, struct BSS_DESC *prBssDesc)
 		ELEM_EXT_CAP_EXT_SPEC_MGMT_CAPABLE_BIT,
 		prBssDesc->fgExtSpecMgmtCap);
 
-	DBGLOG(SCN, INFO,
+	DBGLOG(SCN, TRACE,
 		"BSSID[" MACSTR "] SSID:%s: Ext Spec Mgmt Cap[%d]\n",
 		MAC2STR(prBssDesc->aucBSSID),
 		prBssDesc->aucSSID,

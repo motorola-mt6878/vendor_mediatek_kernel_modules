@@ -10276,7 +10276,8 @@ uint32_t rlmTxPwrEnvMaxPwrUpdate(
 		 && (eHwBand != BAND_6G)
 #endif
 	) {
-		DBGLOG(RLM, WARN, "Skip TxPwrEnv update,band[%d]SpecMgmt[%d]\n",
+		DBGLOG(RLM, TRACE,
+			"Skip TxPwrEnv update,band[%d]SpecMgmt[%d]\n",
 			eHwBand,
 			prBssDesc->fgExtSpecMgmtCap);
 		return WLAN_STATUS_SUCCESS;
