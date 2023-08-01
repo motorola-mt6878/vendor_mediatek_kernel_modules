@@ -857,6 +857,7 @@ void roamingFsmSteps(struct ADAPTER *prAdapter,
 			break;
 
 		case ROAMING_STATE_HANDLE_NEW_CANDIDATE: {
+			prRoam->ucTxActionRetryCount = 0;
 #if CFG_SUPPORT_802_11V_BTM_OFFLOAD
 			if (prBtmParam->fgPendingResponse) {
 				eNextState = ROAMING_STATE_SEND_WNM_RESP;
