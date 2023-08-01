@@ -8272,6 +8272,8 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 	}
 	INIT_UINT(prWifiVar->u4WfdSccBalanceMode,
 			"wfdSccBalanceMode", 0);
+	INIT_UINT(prWifiVar->u4WfdSccBalanceRatio,
+			"wfdSccBalanceRatio", 10);
 #if (CFG_WFD_SCC_BALANCE_DEF_ENABLE == 1)
 	INIT_UINT(prWifiVar->u4WfdSccBalanceEnable,
 			"wfdSccBalanceEnable", FEATURE_ENABLED);
