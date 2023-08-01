@@ -76,6 +76,13 @@
 #if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
 #include "rlm_domain.h"
 #endif
+
+#if CFG_MTK_ANDROID_WMT
+#include <linux/of_reserved_mem.h>
+#include <linux/platform_device.h>
+#include <linux/of.h>
+#endif
+
 /*******************************************************************************
  *                              C O N S T A N T S
  *******************************************************************************
@@ -8035,6 +8042,33 @@ int wlanFuncOff(void)
 
 	return 0;
 }
+
+#if CFG_MTK_ANDROID_WMT
+static int wlanGetBootMode(void)
+{
+	struct device_node *dnode = NULL;
+	struct tag_bootmode *tag = NULL;
+
+	dnode = of_find_node_by_path("/chosen");
+	if (dnode == NULL)
+		dnode = of_find_node_by_path("/chosen@0");
+
+	if (dnode == NULL) {
+		DBGLOG(INIT, ERROR, "failed to get chosen node\n");
+		return -1;
+	}
+
+	tag = (struct tag_bootmode *)of_get_property(dnode, "atag,boot", NULL);
+	if (tag == NULL) {
+		DBGLOG(INIT, ERROR, "failed to get atag,boot\n");
+		return -1;
+	}
+	of_node_put(dnode);
+	DBGLOG(INIT, INFO, "bootmode: 0x%x\n", tag->bootmode);
+	return tag->bootmode;
+}
+#endif
+
 /*----------------------------------------------------------------------------*/
 /*!
  * \brief Driver entry point when the driver is configured as a Linux Module,
@@ -8047,10 +8081,17 @@ int wlanFuncOff(void)
 /* 1 Module Entry Point */
 static int initWlan(void)
 {
-	int ret = 0;
+	int ret = 0, bootmode = NORMAL_BOOT;
 	struct GLUE_INFO *prGlueInfo = NULL;
 	struct mt66xx_chip_info *chip = NULL;
 	DBGLOG(INIT, INFO, "initWlan\n");
+
+#if CFG_MTK_ANDROID_WMT
+	/* Skip module init if bootmode is KPOC */
+	bootmode = wlanGetBootMode();
+	if (bootmode == KERNEL_POWER_OFF_CHARGING_BOOT)
+		return -1;
+#endif
 
 #if (CFG_CHIP_RESET_SUPPORT)
 #if CFG_CHIP_RESET_KO_SUPPORT
@@ -8170,7 +8211,7 @@ static int initWlan(void)
 #endif
 
 #if CFG_MTK_MDDP_SUPPORT
-	mddpInit();
+	mddpInit(bootmode);
 #endif
 
 #if ((CFG_SUPPORT_ICS == 1) || (CFG_SUPPORT_PHY_ICS == 1))
