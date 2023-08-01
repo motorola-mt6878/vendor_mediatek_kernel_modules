@@ -7386,8 +7386,6 @@ static int32_t wlanProbe(void *pvData, void *pvDriverData)
 		mddpNotifyWifiOnStart();
 #endif
 
-		kalWlanUeventInit(); /* FW might send Uevent on start running */
-
 		if (wlanOnPreNetRegister(prGlueInfo, prAdapter, prChipInfo,
 					 prWifiVar, FALSE)) {
 			i4Status = -EIO;
@@ -7900,8 +7898,6 @@ static void wlanRemove(void)
 
 	wlanAdapterStop(prAdapter, FALSE);
 
-	kalWlanUeventDeinit();
-
 	/* Add debug dump for DEVAPC write address 0 */
 #if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
 	DBGLOG(INIT, ERROR, "wlanRemove pcie dump:\n");
@@ -8232,6 +8228,7 @@ static int initWlan(void)
 	else
 		wlan_pinctrl_action(chip, WLAN_PINCTRL_MSG_FUNC_PTA_UART_INIT);
 
+	kalWlanUeventInit();
 	DBGLOG(INIT, INFO, "initWlan::End\n");
 
 INIT_WLAN_RETURN:
@@ -8267,6 +8264,7 @@ static void exitWlan(void)
 
 	DBGLOG(INIT, INFO, "exitWlan::Start\n");
 
+	kalWlanUeventDeinit();
 #if CFG_AP_80211KVR_INTERFACE
 	if (nl_sk != NULL)
 		netlink_kernel_release(nl_sk);
