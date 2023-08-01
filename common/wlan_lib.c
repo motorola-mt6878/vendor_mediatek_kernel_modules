@@ -25,6 +25,9 @@
 #include "mgmt/ais_fsm.h"
 #include "mddp.h"
 #include "gl_kal.h"
+#if (CFG_HW_DETECT_REPORT == 1)
+#include "conn_dbg.h"
+#endif
 
 /*******************************************************************************
  *                              C O N S T A N T S
@@ -1291,6 +1294,10 @@ uint32_t wlanAdapterStart(struct ADAPTER *prAdapter,
 		/* 4 <7> Get ECO Version */
 		if (wlanSetChipEcoInfo(prAdapter) != WLAN_STATUS_SUCCESS) {
 			DBGLOG(INIT, ERROR, "wlanSetChipEcoInfo failed!\n");
+#if (CFG_HW_DETECT_REPORT == 1)
+			conn_dbg_add_log(CONN_DBG_LOG_TYPE_HW_ERR,
+					"[wlan][gen4m]wlanSetChipEcoInfo failed\n");
+#endif
 			u4Status = WLAN_STATUS_FAILURE;
 			eFailReason = SET_CHIP_ECO_INFO_FAIL;
 			break;

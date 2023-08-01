@@ -16,6 +16,9 @@
  *******************************************************************************
  */
 #include "precomp.h"
+#if (CFG_HW_DETECT_REPORT == 1)
+#include "conn_dbg.h"
+#endif
 
 /*******************************************************************************
  *                              C O N S T A N T S
@@ -2059,6 +2062,10 @@ uint32_t wlanDownloadFW(struct ADAPTER *prAdapter)
 		rStatus = prFwDlOps->phyAction(prAdapter);
 		if (rStatus != WLAN_STATUS_SUCCESS) {
 			DBGLOG(INIT, ERROR, "phyAction fail\n");
+#if (CFG_HW_DETECT_REPORT == 1)
+			conn_dbg_add_log(CONN_DBG_LOG_TYPE_HW_ERR,
+				"[wlan][gen4m]phyAction fail\n");
+#endif
 			goto exit;
 		}
 	}
