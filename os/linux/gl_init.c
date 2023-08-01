@@ -7963,6 +7963,7 @@ WLAN_REMOVE_RETURN:
 
 int wlanFuncOnImpl(void)
 {
+	struct mt66xx_chip_info *chip = NULL;
 	int ret = 0;
 
 #if (CFG_SUPPORT_POWER_THROTTLING == 1)
@@ -7983,6 +7984,9 @@ power_throttling_post_stop:
 #if (CFG_SUPPORT_POWER_THROTTLING == 1)
 	power_throttling_post_stop();
 #endif
+	glGetChipInfo((void **)&chip);
+	if (chip)
+		wlan_pinctrl_action(chip, WLAN_PINCTRL_MSG_FUNC_OFF);
 exit:
 	return ret;
 }
@@ -8011,13 +8015,8 @@ int wlanFuncOn(void)
 
 	ret = wlanFuncOnImpl();
 	if (ret) {
-		struct mt66xx_chip_info *chip = NULL;
-
 		DBGLOG(HAL, ERROR, "wlanFuncOnImpl failed, ret=%d\n",
 			ret);
-		glGetChipInfo((void **)&chip);
-		if (chip)
-			wlan_pinctrl_action(chip, WLAN_PINCTRL_MSG_FUNC_OFF);
 		goto connsys_pwr_off;
 	}
 
