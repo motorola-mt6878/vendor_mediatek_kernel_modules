@@ -1214,9 +1214,11 @@ void rsnAllowCrossAkm(struct ADAPTER *prAdapter, uint8_t ucBssIndex)
 	struct IEEE_802_11_MIB *prMib;
 	struct DOT11_RSNA_CONFIG_AUTHENTICATION_SUITES_ENTRY *prEntry;
 	enum ENUM_PARAM_AUTH_MODE eAuthMode;
+	struct GL_WPA_INFO *prWpaInfo;
 
 	eAuthMode = aisGetAuthMode(prAdapter, ucBssIndex);
 	prMib = aisGetMib(prAdapter, ucBssIndex);
+	prWpaInfo = aisGetWpaInfo(prAdapter, ucBssIndex);
 
 #if (CFG_TC10_FEATURE == 1)
 	if (eAuthMode == AUTH_MODE_WPA_PSK ||
@@ -1267,6 +1269,9 @@ void rsnAllowCrossAkm(struct ADAPTER *prAdapter, uint8_t ucBssIndex)
 		}
 	}
 #endif
+
+	if (prWpaInfo->u4Mfp == RSN_AUTH_MFP_OPTIONAL)
+		prWpaInfo->u4Mfp = RSN_AUTH_MFP_OPTIONAL_REQUIRED;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -1597,7 +1602,11 @@ u_int8_t rsnPerformPolicySelection(
 		} else if (kalGetMfpSetting(prAdapter->prGlueInfo,
 			ucBssIndex) == RSN_AUTH_MFP_OPTIONAL) {
 			u4MgmtProtection = prBssRsnInfo->u2RsnCap &
-				(ELEM_WPA_CAP_MFPR | ELEM_WPA_CAP_MFPC);
+				ELEM_WPA_CAP_MFPC;
+		} else if (kalGetMfpSetting(prAdapter->prGlueInfo,
+			ucBssIndex) == RSN_AUTH_MFP_OPTIONAL_REQUIRED) {
+			u4MgmtProtection = prBssRsnInfo->u2RsnCap &
+				(ELEM_WPA_CAP_MFPC | ELEM_WPA_CAP_MFPR);
 		} else {
 			if ((prBssRsnInfo->fgRsnCapPresent) &&
 			(prBssRsnInfo->u2RsnCap & ELEM_WPA_CAP_MFPR)) {
