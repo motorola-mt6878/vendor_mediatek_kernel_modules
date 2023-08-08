@@ -302,6 +302,10 @@ void bssDetermineStaRecPhyTypeSet(struct ADAPTER *prAdapter,
 		else
 			ucEhtOption = FEATURE_DISABLED;
 #endif
+
+		if (IS_FEATURE_ENABLED(prWifiVar->ucStaUapsd))
+			prStaRec->fgIsUapsdSupported =
+				prBssDesc->fgIsUapsdSupported;
 	}
 #if CFG_ENABLE_WIFI_DIRECT
 	/* Decide P2P GC PHY type set */
