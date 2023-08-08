@@ -614,7 +614,6 @@ extern u32 mtk_pcie_disable_data_trans(int port) __attribute__((weak));
 int mtk_pcie_speed(struct pci_dev *dev, int speed);
 int mtk_pcie_retrain(struct pci_dev *dev);
 #endif
-void glDumpPcieEpConf(void);
 #endif
 u_int8_t mtk_get_aer_triggered(void);
 

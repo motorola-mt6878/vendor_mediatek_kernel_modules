@@ -133,9 +133,6 @@ static struct cfg80211_qos_map default_qos_map = {
 	.up = {{0, 63}, },/* low, high */
 };
 
-#if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
-extern void glDumpPcieEpConf(void);
-#endif
 /*******************************************************************************
  *                             D A T A   T Y P E S
  *******************************************************************************
@@ -7908,11 +7905,6 @@ static void wlanRemove(void)
 
 	wlanAdapterStop(prAdapter, FALSE);
 
-	/* Add debug dump for DEVAPC write address 0 */
-#if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
-	DBGLOG(INIT, ERROR, "wlanRemove pcie dump:\n");
-	glDumpPcieEpConf();
-#endif
 	/* 4 <x> Stopping handling interrupt and free IRQ */
 	glBusFreeIrq(prDev, prGlueInfo);
 
