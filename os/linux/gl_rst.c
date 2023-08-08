@@ -1621,6 +1621,11 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 		kalMsleep(100);
 	}
 
+	while (kalIsResetOnEnd()) {
+		DBGLOG(REQ, WARN, "wifi driver is resetting\n");
+		kalMsleep(100);
+	}
+
 	if (!get_wifi_powered_status()) {
 		DBGLOG(REQ, WARN, "wifi driver is off now\n");
 		return 0;
