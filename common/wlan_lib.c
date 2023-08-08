@@ -7179,6 +7179,9 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 		"ApMldEML", FEATURE_DISABLED);
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
 	mldBssUpdateCapAll(prAdapter);
+#if (CFG_SUPPORT_802_11BE_EPCS == 1)
+	INIT_UINT(prWifiVar->fgEnEpcs, "EnableEpcs", FEATURE_DISABLED);
+#endif
 #endif
 #endif /* CFG_SUPPORT_802_11BE */
 	INIT_UINT(prWifiVar->ucApHt, "ApHT", FEATURE_ENABLED);
