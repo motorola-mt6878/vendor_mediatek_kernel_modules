@@ -4502,7 +4502,14 @@ int mtk_cfg80211_vendor_get_trx_stats(struct wiphy *wiphy,
 				     u4CgsTlvSize, aucTlvList) < 0))
 			goto err_handle_label;
 	}
-	kalMemFree(aucTlvList, u4MaxTlvSize, VIR_MEM_TYPE);
+	if (aucTlvList != NULL)
+		kalMemFree(aucTlvList, u4MaxTlvSize, VIR_MEM_TYPE);
+	if (arIndTx != NULL)
+		kalMemFree(arIndTx, ucTxNum * sizeof(uint32_t), VIR_MEM_TYPE);
+	if (arIndRx != NULL)
+		kalMemFree(arIndRx, ucRxNum * sizeof(uint32_t), VIR_MEM_TYPE);
+	if (arIndCgs != NULL)
+		kalMemFree(arIndCgs, ucCgsNum * sizeof(uint32_t), VIR_MEM_TYPE);
 	return cfg80211_vendor_cmd_reply(skb);
 
 err_handle_label:
