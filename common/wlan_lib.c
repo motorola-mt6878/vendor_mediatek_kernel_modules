@@ -6298,6 +6298,7 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 	struct BSS_INFO *prBssInfo;
 	uint8_t ucConnBss[MAX_BSSID_NUM] = {0};
 	struct LINK_SPEED_EX_ *prLq;
+	struct PARAM_GET_STATS_ONE_CMD *prParam;
 #if (CFG_SUPPORT_REG_STAT_FROM_EMI == 1)
 	uint32_t u4EmiUpdateMs = 0;
 #endif
@@ -6314,6 +6315,10 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 	/* linkQuality: prAdapter->rLinkQuality.rLq[ucBssIndex] */
 	/* staStats: prAdapter->rQueryStaStatistics[ucBssIndex] */
 
+	if (!pvQueryBuffer)
+		return WLAN_STATUS_FAILURE;
+
+	prParam = (struct PARAM_GET_STATS_ONE_CMD *)pvQueryBuffer;
 	prLq = &prAdapter->rLinkQuality.rLq[ucBssIndex];
 	DBGLOG(NIC, TRACE, "bssIdx:%u curTime:%u LRValid:%u\n",
 		ucBssIndex, kalGetTimeTick(),
@@ -6321,7 +6326,7 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 	if (prLq->fgIsLinkRateValid &&
 		!CHECK_FOR_TIMEOUT(kalGetTimeTick(),
 			prAdapter->rAllStatsUpdateTime,
-			SEC_TO_SYSTIME(CFG_LQ_MONITOR_FREQUENCY)))
+			MSEC_TO_SYSTIME(prParam->u4Period)))
 		return rResult;
 
 	prAdapter->rAllStatsUpdateTime = kalGetTimeTick();
@@ -6369,7 +6374,8 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 	DBGLOG(REQ, TRACE, "last update time local/EMI=%u/%u\n",
 		prAdapter->u4RegStatLastUpdateMs, u4EmiUpdateMs);
 	if (u4EmiUpdateMs != 0 &&
-		prAdapter->u4RegStatLastUpdateMs + 3000 <= u4EmiUpdateMs) {
+		prAdapter->u4RegStatLastUpdateMs +
+		prParam->u4Period <= u4EmiUpdateMs) {
 		nicCollectRegStatFromEmi(prAdapter);
 	} else
 #endif
@@ -7780,6 +7786,11 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 
 #if CFG_SUPPORT_LLS
 	INIT_UINT(prWifiVar->fgLinkStatsDump, "LinkStatsDump", 0);
+
+#if (CFG_SUPPORT_STATS_ONE_CMD == 1)
+	INIT_UINT(prWifiVar->u4LlsStatsCmdPeriod,
+		"LinkStatsCmdPeriod", CFG_STATS_ONE_CMD_PERIOD);
+#endif
 #endif
 
 #if CFG_SUPPORT_TX_LATENCY_STATS
@@ -13305,6 +13316,7 @@ uint32_t wlanLinkQualityMonitor(struct GLUE_INFO *prGlueInfo, bool bFgIsOid)
 #if (CFG_SUPPORT_STATS_ONE_CMD == 0)
 	struct PARAM_GET_STA_STATISTICS *prQueryStaStatistics;
 #else
+	struct PARAM_GET_STATS_ONE_CMD rParam;
 	uint32_t u4QueryInfoLen;
 #endif
 	struct PARAM_802_11_STATISTICS_STRUCT *prStat;
@@ -13344,9 +13356,10 @@ uint32_t wlanLinkQualityMonitor(struct GLUE_INFO *prGlueInfo, bool bFgIsOid)
 	kalMemZero(prStat, sizeof(struct PARAM_802_11_STATISTICS_STRUCT));
 
 #if (CFG_SUPPORT_STATS_ONE_CMD == 1)
+	rParam.u4Period = SEC_TO_MSEC(CFG_LQ_MONITOR_FREQUENCY);
 	u4Status = wlanQueryStatsOneCmd(prAdapter,
-				NULL,
-				0,
+				&rParam,
+				sizeof(rParam),
 				&u4QueryInfoLen,
 				FALSE);
 	DBGLOG(REQ, TRACE,
