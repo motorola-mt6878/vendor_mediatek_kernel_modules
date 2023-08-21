@@ -5293,6 +5293,20 @@ void scanHandleOceIE(struct SCAN_PARAM *prScanParam,
 	dumpMemory8(pucBuf, prScanParam->u2IELen);
 }
 
+uint8_t scanHandleOceChannel(struct ADAPTER *prAdapter,
+	enum ENUM_BAND eBand, uint8_t ucChannel)
+{
+	if (rlmDomainIsDfsChnls(prAdapter, ucChannel))
+		return FALSE;
+
+	if (eBand == BAND_2G4 && (ucChannel == 6 || ucChannel == 11))
+		return TRUE;
+	else if (eBand == BAND_5G && (ucChannel >= 36 && ucChannel <= 48))
+		return TRUE;
+	else
+		return FALSE;
+}
+
 uint8_t	*scanGetFilsCacheIdFromBssDesc(struct BSS_DESC *bss)
 {
 	uint8_t *ie;

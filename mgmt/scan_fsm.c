@@ -370,6 +370,12 @@ void scnSendScanReqV2(struct ADAPTER *prAdapter)
 				rlmDomainIsDfsChnls(prAdapter, ucChannel))
 				continue;
 
+			/* Reduce channel count for OCE */
+			if (prAdapter->rWifiVar.u4SwTestMode
+			    == ENUM_SW_TEST_MODE_SIGMA_OCE &&
+			    !scanHandleOceChannel(prAdapter, ucBand, ucChannel))
+				continue;
+
 			if (j < SCAN_CMD_CHNL_NUM) {
 				prCnlInfo = &(prCmdScanReq->arChannelList[j]);
 				prCnlInfo->ucBand = ucBand;

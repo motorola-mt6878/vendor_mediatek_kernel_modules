@@ -1180,6 +1180,9 @@ void scanParseWMMIE(struct ADAPTER *prAdapter,
 void scanHandleOceIE(struct SCAN_PARAM *prScanParam,
 	struct CMD_SCAN_REQ_V2 *prCmdScanReq);
 
+uint8_t scanHandleOceChannel(struct ADAPTER *prAdapter,
+	enum ENUM_BAND eBand, uint8_t ucChannel);
+
 uint8_t	*scanGetFilsCacheIdFromBssDesc(struct BSS_DESC *bss);
 
 void scnFsmDumpScanDoneInfo(struct ADAPTER *prAdapter,
