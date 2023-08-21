@@ -497,9 +497,6 @@ static void halDriverOwnTimeout(struct ADAPTER *prAdapter,
 		if (prAdapter->u4OwnFailedLogCount >
 			LP_OWN_BACK_FAILED_RESET_CNT) {
 #if IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE)
-#if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
-			mtk_pcie_dump_link_info(0);
-#endif
 			if (in_interrupt())
 				DBGLOG(INIT, INFO, "Skip reset in tasklet\n");
 			else {
@@ -619,6 +616,7 @@ u_int8_t halSetDriverOwn(struct ADAPTER *prAdapter)
 
 		if (fgResult) {
 #if IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE)
+done:
 			clear_bit(GLUE_FLAG_DRV_OWN_INT_BIT,
 				&prAdapter->prGlueInfo->ulFlag);
 #endif /* IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) */
@@ -644,8 +642,16 @@ u_int8_t halSetDriverOwn(struct ADAPTER *prAdapter)
 		} else if ((i > LP_OWN_BACK_FAILED_RETRY_CNT) &&
 			   (kalIsCardRemoved(prAdapter->prGlueInfo) ||
 			    fgIsBusAccessFailed || fgTimeout)) {
-			fgIsDriverOwnTimeout = TRUE;
+#if IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE)
+			if (prBusInfo->checkDriverOwnMsiStatus &&
+				prBusInfo->checkDriverOwnMsiStatus
+					(prAdapter->prGlueInfo)) {
+				fgResult = TRUE;
+				goto done;
+			}
+#endif /* IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) */
 			fgStatus = FALSE;
+			fgIsDriverOwnTimeout = TRUE;
 			break;
 		}
 

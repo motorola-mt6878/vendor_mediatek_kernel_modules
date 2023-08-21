@@ -549,8 +549,15 @@ irqreturn_t pcie_drv_own_thread_handler(int irq, void *dev_instance)
 
 	prGlueInfo = (struct GLUE_INFO *)dev_instance;
 
-	if (prGlueInfo)
-		set_bit(GLUE_FLAG_DRV_OWN_INT_BIT, &prGlueInfo->ulFlag);
+	if (!prGlueInfo)
+		DBGLOG(HAL, INFO, "NULL GlueInfo.\n");
+	else {
+		if (prGlueInfo->fgIsPendingMsi) {
+			DBGLOG(HAL, INFO, "Pending IRQ. Ignore.\n");
+			prGlueInfo->fgIsPendingMsi = FALSE;
+		} else
+			set_bit(GLUE_FLAG_DRV_OWN_INT_BIT, &prGlueInfo->ulFlag);
+	}
 
 	return IRQ_HANDLED;
 }

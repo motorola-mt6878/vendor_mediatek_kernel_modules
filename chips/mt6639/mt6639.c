@@ -174,6 +174,7 @@ static void mt6639WfdmaRxRingExtCtrl(
 	struct RTMP_RX_RING *rx_ring,
 	u_int32_t index);
 
+static u_int8_t mt6639CheckDriverOwnMsiStatus(struct GLUE_INFO *prGlueInfo);
 static void mt6639InitPcieInt(struct GLUE_INFO *prGlueInfo);
 static void mt6639PowerOffPcieMac(struct ADAPTER *prAdpater);
 static void mt6639PcieHwControlVote(
@@ -594,6 +595,7 @@ struct BUS_INFO mt6639_bus_info = {
 	.fw_own_clear_bit = PCIE_LPCR_FW_CLR_OWN,
 #if IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE)
 	.fgCheckDriverOwnInt = TRUE,
+	.checkDriverOwnMsiStatus = mt6639CheckDriverOwnMsiStatus,
 #else
 	.fgCheckDriverOwnInt = FALSE,
 #endif /* IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) */
@@ -2159,6 +2161,31 @@ static void mt6639WfdmaRxRingExtCtrl(
 #if CFG_SUPPORT_PCIE_ASPM
 void *pcie_vir_addr;
 #endif
+
+static u_int8_t mt6639CheckDriverOwnMsiStatus(struct GLUE_INFO *prGlueInfo)
+{
+	u_int8_t fgStatus = FALSE;
+
+#if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
+	uint32_t ret = mtk_pcie_dump_link_info(0);
+
+	/* Check driver own IRQ pending */
+	if (ret & BIT(9)) {
+		DBGLOG(INIT, INFO,
+		"Driver own IRQ pending. bypass timeout.\n");
+		fgStatus = TRUE;
+#if CFG_SUPPORT_PCIE_ASPM
+		/* Clear driver own MSI status, 0x112f0c14[27] = 1 */
+		if (pcie_vir_addr)
+		writel(BIT(27), (pcie_vir_addr + 0xC14));
+#endif
+		prGlueInfo->fgIsPendingMsi = TRUE;
+	}
+
+#endif /* IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT) */
+
+	return fgStatus;
+}
 
 static void mt6639InitPcieInt(struct GLUE_INFO *prGlueInfo)
 {

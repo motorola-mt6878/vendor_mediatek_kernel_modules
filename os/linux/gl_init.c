@@ -4541,6 +4541,7 @@ struct wireless_dev *wlanNetCreate(void *pvData,
 	SET_NETDEV_DEV(prDevHandler,
 			wiphy_dev(prWdev->wiphy));
 	prGlueInfo->fgIsInSuspend = 0;
+	prGlueInfo->fgIsPendingMsi = FALSE;
 
 	/* 4 <3.1.4> set device to glue */
 	prGlueInfo->prDev = prDev;

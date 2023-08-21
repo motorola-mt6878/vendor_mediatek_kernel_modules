@@ -980,6 +980,7 @@ struct GLUE_INFO {
 	wait_queue_head_t waitq_csi;
 #endif
 	unsigned long fgIsInSuspend;
+	u_int8_t fgIsPendingMsi;
 };
 
 typedef irqreturn_t(*PFN_WLANISR) (int irq, void *dev_id,
