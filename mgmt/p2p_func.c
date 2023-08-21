@@ -4436,7 +4436,11 @@ void p2pFuncValidateRxActionFrame(struct ADAPTER *prAdapter,
 	u_int32_t u4Oui;
 	u_int8_t ucOuiType;
 	u_int8_t fgBufferFrame = FALSE;
+	uint8_t fgIsRoleChannel = FALSE;
+	uint8_t i;
 	struct P2P_DEV_FSM_INFO *prP2pDevFsmInfo = NULL;
+	struct P2P_ROLE_FSM_INFO *prP2pRoleFsmInfo = NULL;
+	struct BSS_INFO *prP2pBssInfo = NULL;
 
 	if (prAdapter == NULL || prSwRfb == NULL) {
 		DBGLOG(P2P, ERROR, "Invalid parameter.\n");
@@ -4446,10 +4450,28 @@ void p2pFuncValidateRxActionFrame(struct ADAPTER *prAdapter,
 
 	prP2pDevFsmInfo = prAdapter->rWifiVar.prP2pDevFsmInfo;
 
+	for (i = 0; i < KAL_P2P_NUM; i++) {
+		prP2pRoleFsmInfo =
+			P2P_ROLE_INDEX_2_ROLE_FSM_INFO(prAdapter, i);
+		if (!prP2pRoleFsmInfo)
+			continue;
+
+		prP2pBssInfo = prAdapter->aprBssInfo[
+			prP2pRoleFsmInfo->ucBssIndex];
+		if (!prP2pBssInfo ||
+		    p2pFuncIsAPMode(prAdapter->rWifiVar.prP2PConnSettings[i]))
+			continue;
+
+		if (prP2pBssInfo->ucPrimaryChannel == prSwRfb->ucChnlNum) {
+			fgIsRoleChannel = TRUE;
+			break;
+		}
+	}
+
 	/* In case channel is not granted yet, we should ignore action
 	  * frames which may come from unexpected channels.
 	  */
-	if (fgIsDevInterface && prP2pDevFsmInfo &&
+	if (fgIsDevInterface && prP2pDevFsmInfo && !fgIsRoleChannel &&
 		((prP2pDevFsmInfo->eCurrentState !=
 			P2P_DEV_STATE_OFF_CHNL_TX &&
 		prP2pDevFsmInfo->eCurrentState !=
