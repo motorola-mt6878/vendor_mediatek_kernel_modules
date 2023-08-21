@@ -3075,6 +3075,7 @@ struct PARAM_SCAN_REQUEST_EXT {
 };
 
 struct PARAM_SCAN_REQUEST_ADV {
+	u_int8_t fgNeedMloScan;
 	uint8_t fgIsRrm;
 	uint8_t aucBSSID[MAC_ADDR_LEN];
 	uint16_t u2ChannelDwellTime;
@@ -3083,6 +3084,7 @@ struct PARAM_SCAN_REQUEST_ADV {
 	uint32_t u4SsidNum;
 	struct PARAM_SSID rSsid[CFG_SCAN_SSID_MAX_NUM];
 	uint8_t ucScanType;
+	uint8_t ucSSIDType;
 	uint32_t u4IELength;
 	uint8_t aucIEBuf[MAX_IE_LENGTH];
 	uint32_t u4ChannelNum;
