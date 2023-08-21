@@ -2595,6 +2595,7 @@ void connac3x_show_mawd_info(struct ADAPTER *prAdapter)
 
 void connac3x_show_rro_info(struct ADAPTER *prAdapter)
 {
+#define RRO_DBG_BUF_SIZE		128
 	struct mt66xx_chip_info *prChipInfo;
 	struct GL_HIF_INFO *prHifInfo;
 	struct WIFI_VAR *prWifiVar;
@@ -2602,6 +2603,8 @@ void connac3x_show_rro_info(struct ADAPTER *prAdapter)
 	struct RTMP_DMABUF *prAddrArray, *prIndCmd;
 	struct RRO_ADDR_ELEM *prAddrElem;
 	uint32_t u4Val = 0, u4Idx, u4AddrNum, u4Addr;
+	uint32_t u4Pos = 0;
+	static char aucRroDbg[RRO_DBG_BUF_SIZE];
 
 	prChipInfo = prAdapter->chip_info;
 	prHifInfo = &prAdapter->prGlueInfo->rHifInfo;
@@ -2609,6 +2612,8 @@ void connac3x_show_rro_info(struct ADAPTER *prAdapter)
 	prRxDesc = &prHifInfo->RxBlkDescRing[0];
 	prAddrArray = &prHifInfo->AddrArray;
 	prIndCmd = &prHifInfo->IndCmdRing;
+
+	kalMemZero(aucRroDbg, RRO_DBG_BUF_SIZE);
 
 	if (IS_FEATURE_ENABLED(prWifiVar->fgEnableMawd) &&
 	    halMawdCheckInfra(prAdapter)) {
@@ -2718,16 +2723,24 @@ void connac3x_show_rro_info(struct ADAPTER *prAdapter)
 		}
 	}
 
-	DBGLOG(HAL, INFO,
-	       "BLK Used[%u][%u][%u] Free[%u] Err[%u] Skip[%u] Fix[%u] Head[%u]",
-	       prHifInfo->u4RcbUsedListCnt[RX_RING_DATA0],
-	       prHifInfo->u4RcbUsedListCnt[RX_RING_DATA1],
-	       prHifInfo->u4RcbUsedListCnt[RX_RING_DATA2],
-	       prHifInfo->u4RcbFreeListCnt,
-	       prHifInfo->u4RcbErrorCnt,
-	       prHifInfo->u4RcbSkipCnt,
-	       prHifInfo->u4RcbFixCnt,
-	       prHifInfo->u4RcbHeadCnt);
+	u4Pos = kalScnprintf(aucRroDbg, RRO_DBG_BUF_SIZE, "BLK Used");
+	for (u4Idx = 0; u4Idx < NUM_OF_RX_RING; u4Idx++) {
+		if (!halIsDataRing(RX_RING, u4Idx))
+			continue;
+
+		u4Pos += kalScnprintf(aucRroDbg + u4Pos,
+				      RRO_DBG_BUF_SIZE - u4Pos,
+				      "[%u]",
+				      prHifInfo->u4RcbUsedListCnt[u4Idx]);
+	}
+	u4Pos += kalScnprintf(aucRroDbg + u4Pos, RRO_DBG_BUF_SIZE - u4Pos,
+			      " Free[%u] Err[%u] Skip[%u] Fix[%u] Head[%u]",
+			      prHifInfo->u4RcbFreeListCnt,
+			      prHifInfo->u4RcbErrorCnt,
+			      prHifInfo->u4RcbSkipCnt,
+			      prHifInfo->u4RcbFixCnt,
+			      prHifInfo->u4RcbHeadCnt);
+	DBGLOG(HAL, INFO, "%s\n", aucRroDbg);
 }
 #endif /* CFG_SUPPORT_HOST_OFFLOAD == 1 */
 
