@@ -5054,7 +5054,9 @@ void p2pRoleFsmRunEventAcs(struct ADAPTER *prAdapter,
 	if (prAcsReqInfo->eHwMode == P2P_VENDOR_ACS_HW_MODE_11ANY) {
 		struct BSS_INFO *prAisBssInfo;
 		prAisBssInfo = aisGetDefaultLinkBssInfo(prAdapter);
-		if (prAisBssInfo->eConnectionState == MEDIA_STATE_CONNECTED &&
+		if (prAisBssInfo &&
+			prAisBssInfo->eConnectionState ==
+			MEDIA_STATE_CONNECTED &&
 			(!p2pFuncIsDualAPMode(prAdapter) ||
 			(p2pFuncIsDualAPMode(prAdapter) &&
 			prAisBssInfo->eBand > BAND_2G4))) {
