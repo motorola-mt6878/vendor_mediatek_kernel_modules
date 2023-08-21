@@ -2824,16 +2824,34 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 			&& prBssDesc->fgIsConnecting == FALSE) {
 			u_int8_t fgIsConnected, fgIsConnecting;
 			struct AIS_BLACKLIST_ITEM *prBlack;
+			uint32_t u4PairwiseCipher = 0;
+			uint32_t u4GroupCipher = 0;
+			uint32_t u4GroupMgmtCipher = 0;
+			uint32_t u4AkmSuite = 0;
+			uint8_t u4MgmtProtection = 0;
+			enum ENUM_PARAM_AUTH_MODE eAuthMode;
+
+			DBGLOG_LIMITED(SCN, INFO, "Reset BssDesc "MACSTR
+				"AP Timestamp: %llu BssDesc Timestamp: %llu\n",
+				MAC2STR(prBssDesc->aucBSSID),
+				u8Timestamp,
+				prBssDesc->u8TimeStamp.QuadPart);
 
 			/* set flag for indicating this is a new BSS-DESC */
 			fgIsNewBssDesc = TRUE;
 
-			/* backup 2 flags for APs which reset
-			 * timestamp unexpectedly
-			 */
+			/* backup for APs which reset timestamp unexpectedly */
 			fgIsConnected = prBssDesc->fgIsConnected;
 			fgIsConnecting = prBssDesc->fgIsConnecting;
 			prBlack = prBssDesc->prBlack;
+			u4PairwiseCipher
+				= prBssDesc->u4RsnSelectedPairwiseCipher;
+			u4GroupCipher = prBssDesc->u4RsnSelectedGroupCipher;
+			u4GroupMgmtCipher
+				= prBssDesc->u4RsnSelectedGroupMgmtCipher;
+			u4AkmSuite = prBssDesc->u4RsnSelectedAKMSuite;
+			eAuthMode = prBssDesc->eRsnSelectedAuthMode;
+			u4MgmtProtection = prBssDesc->u4RsnSelectedPmf;
 
 			/* Connected BSS descriptor still be used by other
 			 * functions. Thus, we should re-initialize the BSS_DESC
@@ -2846,6 +2864,14 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 			prBssDesc->fgIsConnected = fgIsConnected;
 			prBssDesc->fgIsConnecting = fgIsConnecting;
 			prBssDesc->prBlack = prBlack;
+			prBssDesc->u4RsnSelectedPairwiseCipher
+						= u4PairwiseCipher;
+			prBssDesc->u4RsnSelectedGroupCipher = u4GroupCipher;
+			prBssDesc->u4RsnSelectedGroupMgmtCipher
+						= u4GroupMgmtCipher;
+			prBssDesc->u4RsnSelectedAKMSuite = u4AkmSuite;
+			prBssDesc->eRsnSelectedAuthMode = eAuthMode;
+			prBssDesc->u4RsnSelectedPmf = u4MgmtProtection;
 		}
 	}
 
