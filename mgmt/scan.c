@@ -2957,7 +2957,8 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 	prBssDesc->fgExistBssLoadIE = FALSE;
 	prBssDesc->fgMultiAnttenaAndSTBC = FALSE;
 	prBssDesc->u2MaximumMpdu = 0;
-#if CFG_SUPPORT_MBO
+	prBssDesc->fgExistTxPwr = FALSE;
+	prBssDesc->cTransmitPwr = 0;
 	prBssDesc->fgIsDisallowed = FALSE;
 	prBssDesc->fgExistEspIE = FALSE;
 	prBssDesc->fgExistEspOutIE = FALSE;
@@ -2965,7 +2966,6 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 	memset(prBssDesc->ucEspOutInfo, 0, sizeof(prBssDesc->ucEspOutInfo));
 	prBssDesc->fgIsRWMValid = FALSE;
 	prBssDesc->u2ReducedWanMetrics = 0;
-#endif
 
 	if (fgIsProbeResp == FALSE) {
 		/* Probe response doesn't have TIM IE. Thus, we should
@@ -3338,6 +3338,7 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 					(struct IE_MBO_OCE *)pucIE;
 				const uint8_t *disallow = NULL;
 				const uint8_t *rwm = NULL;
+				const uint8_t *txpwr = NULL;
 				uint32_t u4lenParam = mbo->ucLength - 4;
 
 				if (u4lenParam <= u2IELength) {
@@ -3349,6 +3350,12 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 
 					rwm = kalFindIeMatchMask(
 						OCE_ATTR_ID_REDUCED_WAN_METRICS,
+						mbo->aucSubElements,
+						u4lenParam,
+						NULL, 0, 0, NULL);
+
+					txpwr = kalFindIeMatchMask(
+						OCE_ATTR_ID_TRANSMIT_POWER,
 						mbo->aucSubElements,
 						u4lenParam,
 						NULL, 0, 0, NULL);
@@ -3366,6 +3373,14 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 					prBssDesc->u2ReducedWanMetrics =
 					(rwm[2] &
 					OCE_ATTIBUTE_REDUCED_WAN_METRICS_MASK);
+				}
+				if (txpwr && txpwr[1] >= 1) {
+					prBssDesc->fgExistTxPwr = TRUE;
+					prBssDesc->cTransmitPwr = txpwr[2];
+					DBGLOG(SCN, INFO,
+						MACSTR " Transmit power %d\n",
+						MAC2STR(prBssDesc->aucBSSID),
+						prBssDesc->cTransmitPwr);
 				}
 			}
 #endif
