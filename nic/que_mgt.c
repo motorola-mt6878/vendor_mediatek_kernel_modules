@@ -601,10 +601,10 @@ void qmDeactivateStaRec(struct ADAPTER *prAdapter,
 	if (!prStaRec)
 		return;
 
-#if CFG_SUPPORT_FRAG_AGG_ATTACK_DETECTION
+#if CFG_SUPPORT_FRAG_AGG_VALIDATION
 	/* clear fragment cache when reconnect, reassoc, disconnect */
 	nicRxClearFrag(prAdapter, prStaRec);
-#endif /* CFG_SUPPORT_FRAG_AGG_ATTACK_DETECTION */
+#endif /* CFG_SUPPORT_FRAG_AGG_VALIDATION */
 
 	/* 4 <1> Flush TX queues */
 	if (HAL_IS_TX_DIRECT(prAdapter)) {
@@ -3841,11 +3841,11 @@ struct SW_RFB *qmHandleRxPackets(struct ADAPTER *prAdapter,
 		STATS_RX_PKT_INFO_DISPLAY(prCurrSwRfb);
 #endif
 
-#if CFG_SUPPORT_FRAG_AGG_ATTACK_DETECTION
+#if CFG_SUPPORT_FRAG_AGG_VALIDATION
 		if (prCurrSwRfb->fgDataFrame && prCurrSwRfb->prStaRec &&
-			qmAmsduAttackDetection(prAdapter, prCurrSwRfb)) {
+			qmAmsduValidation(prAdapter, prCurrSwRfb)) {
 			prCurrSwRfb->eDst = RX_PKT_DESTINATION_NULL;
-			DBGLOG(QM, INFO, "drop AMSDU attack packet\n");
+			DBGLOG(QM, INFO, "drop Abnormal AMSDU packet\n");
 		}
 
 		if (prCurrSwRfb->fgDataFrame && prCurrSwRfb->prStaRec &&
@@ -3854,7 +3854,7 @@ struct SW_RFB *qmHandleRxPackets(struct ADAPTER *prAdapter,
 			DBGLOG(QM, INFO,
 				"drop EAPOL packet not in sec mode\n");
 		}
-#endif /* CFG_SUPPORT_FRAG_AGG_ATTACK_DETECTION */
+#endif /* CFG_SUPPORT_FRAG_AGG_VALIDATION */
 
 #if CFG_SUPPORT_WAPI
 		if (prCurrSwRfb->u2PacketLen > ETHER_HEADER_LEN) {
@@ -4027,7 +4027,7 @@ struct SW_RFB *qmHandleRxPackets(struct ADAPTER *prAdapter,
 
 }
 
-#if CFG_SUPPORT_FRAG_AGG_ATTACK_DETECTION
+#if CFG_SUPPORT_FRAG_AGG_VALIDATION
 /*----------------------------------------------------------------------------*/
 /*!
  * \brief qmDetectRxInvalidEAPOL() is used for fake EAPOL checking.
@@ -4103,14 +4103,14 @@ u_int8_t qmDetectRxInvalidEAPOL(struct ADAPTER *prAdapter,
 
 /*----------------------------------------------------------------------------*/
 /*!
- * \brief AMSDU Attack Detection
+ * \brief AMSDU Validation
  *
  * \param[in] prSwRfb The RX packet to process
  *
- * \return TRUE when we find an amsdu attack
+ * \return TRUE when we find an abnormal amsdu
  */
 /*----------------------------------------------------------------------------*/
-u_int8_t qmAmsduAttackDetection(struct ADAPTER *prAdapter,
+u_int8_t qmAmsduValidation(struct ADAPTER *prAdapter,
 	struct SW_RFB *prSwRfb)
 {
 	u_int8_t fgDrop = FALSE;
@@ -4199,7 +4199,7 @@ u_int8_t qmAmsduAttackDetection(struct ADAPTER *prAdapter,
 		if (prSwRfb->fgIsFirstSubAMSDULLCMS) {
 			fgDrop = TRUE;
 			DBGLOG(QM, TRACE,
-				"QM: AMSDU Attack LLC Mismatch.");
+				"QM: Abnormal AMSDU LLC Mismatch.");
 		} else {
 			if (prSwRfb->fgHdrTran) {
 				if (prSwRfb->u2PacketLen <= ETH_HLEN)
@@ -4212,7 +4212,7 @@ u_int8_t qmAmsduAttackDetection(struct ADAPTER *prAdapter,
 
 			if (fgDrop == TRUE)
 				DBGLOG(QM, TRACE,
-					"QM: AMSDU Attack Unexpected HLen.");
+					"QM: Abnormal AMSDU Unexpected HLen.");
 		}
 
 		if (fgDrop == FALSE &&
@@ -4242,12 +4242,12 @@ u_int8_t qmAmsduAttackDetection(struct ADAPTER *prAdapter,
 		prStaRec->afgIsAmsduInvalid[ucTid] = fgDrop;
 		prStaRec->au2AmsduInvalidSN[ucTid] = u2SSN;
 	} else {
-		/* drop it if find an asmdu attack in station record */
+		/* drop it if find an abnormal asmdu in station record */
 		if (prStaRec->afgIsAmsduInvalid[ucTid] == TRUE
 			&& prStaRec->au2AmsduInvalidSN[ucTid] == u2SSN) {
 			fgDrop = TRUE;
 			DBGLOG(QM, TRACE,
-				"QM: AMSDU Attack TID:%u SN:%u PF:%u",
+				"QM: Abnormal AMSDU TID:%u SN:%u PF:%u",
 				ucTid, prSwRfb->u2SSN,
 				prSwRfb->ucPayloadFormat);
 		}
@@ -4262,7 +4262,7 @@ u_int8_t qmAmsduAttackDetection(struct ADAPTER *prAdapter,
 
 	return fgDrop;
 }
-#endif /* CFG_SUPPORT_FRAG_AGG_ATTACK_DETECTION */
+#endif /* CFG_SUPPORT_FRAG_AGG_VALIDATION */
 
 /*----------------------------------------------------------------------------*/
 /*!
