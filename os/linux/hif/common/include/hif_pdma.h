@@ -58,9 +58,9 @@
 #define NUM_OF_TX_RING				(8 + NUM_OF_WFDMA1_TX_RING)
 #define NUM_OF_RX_RING				(2 + NUM_OF_WFDMA1_RX_RING)
 
-#define RX_RING_MAX_SIZE			4095
 
 #if defined(CONFIG_MTK_WIFI_BW320)
+#define RX_RING_MAX_SIZE			4095
 #ifdef BELLWETHER
 #define TX_RING_SIZE				1024
 #else
@@ -90,6 +90,7 @@
 #endif
 /* ToDo fine tune for owl EHT160 */
 #elif defined(CONFIG_MTK_WIFI_HE160) || defined(CONFIG_MTK_WIFI_EHT160)
+#define RX_RING_MAX_SIZE			1024
 #define TX_RING_SIZE				1024
 #define TX_RING_DATA_SIZE			1024
 #if defined(MT7925)
@@ -101,6 +102,7 @@
 #define HIF_TX_MSDU_TOKEN_NUM			(TX_RING_DATA_SIZE * 4)
 
 #elif defined(CONFIG_MTK_WIFI_HE80)
+#define RX_RING_MAX_SIZE			1024
 #define TX_RING_SIZE				1024
 #define TX_RING_DATA_SIZE			1024
 #if defined(MT7925)
@@ -112,6 +114,7 @@
 #define HIF_TX_MSDU_TOKEN_NUM			(TX_RING_DATA_SIZE * 2)
 
 #elif defined(CONFIG_MTK_WIFI_VHT80)
+#define RX_RING_MAX_SIZE			512
 #define TX_RING_SIZE				512
 #define TX_RING_DATA_SIZE			512
 #if defined(MT7925)
@@ -123,6 +126,7 @@
 #define HIF_TX_MSDU_TOKEN_NUM			(TX_RING_DATA_SIZE * 3)
 
 #else
+#define RX_RING_MAX_SIZE			512
 #define TX_RING_SIZE				256
 #define TX_RING_DATA_SIZE			256
 #if defined(MT7925)
