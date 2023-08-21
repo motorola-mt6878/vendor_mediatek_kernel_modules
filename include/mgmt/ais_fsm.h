@@ -302,7 +302,7 @@ struct CONNECTION_SETTINGS {
 
 	enum ENUM_BAND eAdHocBand;	/* For AdHoc */
 
-	uint32_t u4FreqInKHz;	/* Center frequency */
+	uint32_t u4FreqInMHz;	/* Center frequency */
 
 	/* ATIM windows using for IBSS power saving function */
 	uint16_t u2AtimWindow;
@@ -552,6 +552,9 @@ struct AIS_FSM_INFO {
 	uint8_t ucMlProbeSendCount;
 	uint8_t ucMlProbeEnable;
 	struct BSS_DESC *prMlProbeBssDesc;
+#if (CFG_SUPPORT_ML_RECONFIG == 1)
+	struct TIMER rApRemovalTimer;
+#endif /* CFG_SUPPORT_ML_RECONFIG */
 #endif
 
 #if CFG_STAINFO_FEATURE
@@ -804,6 +807,10 @@ void aisFsmRunEventSecModeChangeTimeout(struct ADAPTER
 					*prAdapter, uintptr_t ulParamPtr);
 #endif
 
+#if (CFG_SUPPORT_802_11BE_MLO == 1)
+void aisFsmRunApRemovalTimeout(struct ADAPTER *prAdapter, uintptr_t ulParamPtr);
+#endif /* CFG_SUPPORT_802_11BE_MLO */
+
 /*----------------------------------------------------------------------------*/
 /* OID/IOCTL Handling                                                         */
 /*----------------------------------------------------------------------------*/
@@ -895,6 +902,8 @@ struct MLD_BLOCKLIST_ITEM *aisQueryMldBlockList(struct ADAPTER *prAdapter,
 
 /* Support 11K */
 #if CFG_SUPPORT_802_11K
+struct NEIGHBOR_AP *aisGetNeighborAPEntry(
+	struct ADAPTER *prAdapter, struct BSS_DESC *bss, uint8_t ucBssIndex);
 uint32_t aisCollectNeighborAP(struct ADAPTER *prAdapter, uint8_t *pucApBuf,
 			  uint16_t u2ApBufLen, uint8_t ucValidInterval,
 			  uint8_t ucBssIndex);
@@ -914,6 +923,10 @@ void aisCheckPmkidCache(struct ADAPTER *prAdapter,
 struct PMKID_ENTRY *aisSearchPmkidEntry(struct ADAPTER *prAdapter,
 			struct STA_RECORD *prStaRec, uint8_t ucBssIndex);
 
+#if (CFG_SUPPORT_802_11BE_MLO == 1)
+void aisCheckApRemoval(struct ADAPTER *prAdapter,
+	struct STA_RECORD *prStaRec, uint16_t u2ApRemovalTimer);
+#endif /* CFG_SUPPORT_802_11BE_MLO */
 
 /*******************************************************************************
  *                              F U N C T I O N S

@@ -774,16 +774,9 @@ uint32_t mldGenerateMlProbeReqIE(struct BSS_DESC *prBssDesc, uint8_t *pucIE,
 	uint16_t ie_len;
 	struct MULTI_LINK_INFO parse, *info = &parse;
 	struct IE_RNR *rnr;
-	uint8_t *ml, *pos;
+	uint8_t *pos;
 	struct IE_MULTI_LINK_CONTROL *common;
 	uint8_t i;
-
-	ml = (uint8_t *) mldFindMlIE(prBssDesc->pucIeBuf,
-		prBssDesc->u2IELength, ML_CTRL_TYPE_BASIC);
-	if (!ml) {
-		DBGLOG(ML, INFO, "no ml\n");
-		return 0;
-	}
 
 	/* parsing rnr & ml */
 	kalMemSet(info, 0, sizeof(*info));
@@ -829,6 +822,11 @@ uint32_t mldGenerateMlProbeReqIE(struct BSS_DESC *prBssDesc, uint8_t *pucIE,
 		struct IE_ML_STA_CONTROL *sta_ctrl;
 		struct STA_PROFILE *prProfile = &info->rStaProfiles[i];
 
+		if (prProfile->rChnlInfo.eBand == prBssDesc->eBand &&
+		    prProfile->rChnlInfo.ucChannelNum ==
+			prBssDesc->ucChannelNum)
+			continue;
+
 		sta_ctrl = (struct IE_ML_STA_CONTROL *)pos;
 		/* Subelement ID 0: Per-STA Profile */
 		sta_ctrl->ucSubID = 0;
@@ -866,8 +864,7 @@ uint8_t mldDupProfileSkipIE(uint8_t *pucBuf)
 {
 	return IE_ID(pucBuf) == ELEM_ID_MBSSID ||
 	       IE_ID(pucBuf) == ELEM_ID_MBSSID_INDEX ||
-	       (IE_ID(pucBuf) == ELEM_ID_RESERVED &&
-		IE_ID_EXT(pucBuf) == ELEM_EXT_ID_MLD);
+	       BE_IS_ML_CTRL_TYPE(pucBuf, ML_CTRL_TYPE_BASIC);
 }
 
 uint8_t mldDupStaProfileSkipIE(uint8_t *pucBuf)
@@ -1884,7 +1881,7 @@ void mldParseReconfigMlIE(struct MULTI_LINK_INFO *prMlInfo,
 	prMlInfo->ucCommonInfoLength = *pos++;
 
 	/* Check ML control that which common info exist */
-	if (ucMlCtrlPreBmp & ML_RECFG_PRBREQ_MLD_ADDR_PRESENT) {
+	if (ucMlCtrlPreBmp & ML_RECFG_MLD_ADDR_PRESENT) {
 		COPY_MAC_ADDR(prMlInfo->aucMldAddr, pos);
 		if (show_info)
 			DBGLOG(ML, INFO,
@@ -1892,15 +1889,28 @@ void mldParseReconfigMlIE(struct MULTI_LINK_INFO *prMlInfo,
 			MAC2STR(prMlInfo->aucMldAddr), MAC2STR(paucBssId));
 		pos += MAC_ADDR_LEN;
 	}
+	if (ucMlCtrlPreBmp & ML_RECFG_EML_CAP_PRESENT) {
+		kalMemCopy(&prMlInfo->u2EmlCap, pos, 2);
+		if (show_info)
+			DBGLOG(ML, INFO, "\tML common Info EML capa = 0x%x\n",
+				prMlInfo->u2EmlCap);
+		pos += 2;
+	}
+	if (ucMlCtrlPreBmp & ML_RECFG_MLD_CAP_OP_PRESENT) {
+		kalMemCopy(&prMlInfo->u2MldCap, pos, 2);
+		if (show_info)
+			DBGLOG(ML, INFO, "\tML common Info MLD capa = 0x%x\n",
+				prMlInfo->u2MldCap);
+		pos += 2;
+	}
 
 	if (pos - prMlInfoIe->aucCommonInfo !=
 			prMlInfo->ucCommonInfoLength) {
-		prMlInfo->ucValid = FALSE;
 		DBGLOG(ML, WARN,
 			"invalid ML control len: real %ld != expected %d\n",
 			pos - prMlInfoIe->aucCommonInfo,
 			prMlInfo->ucCommonInfoLength);
-		return;
+		pos = prMlInfoIe->aucCommonInfo + prMlInfo->ucCommonInfoLength;
 	}
 
 	/* pos point to link info, recusive parse it */
@@ -1912,6 +1922,9 @@ void mldParseReconfigMlIE(struct MULTI_LINK_INFO *prMlInfo,
 		struct STA_PROFILE *prStaProfile;
 		uint8_t ucLinkId, ucStaInfoLen;
 		uint16_t u2StaControl;
+		const uint8_t *opTypeStr[] = {"AP_REMOVVAL", "OP_UPDATE",
+			"ADD_LINK", "DEL_LINK"};
+
 
 		if (prIeSta->ucSubID != SUB_IE_MLD_PER_STA_PROFILE ||
 		    IE_SIZE(prIeSta) < sizeof(struct IE_ML_STA_CONTROL) ||
@@ -1932,13 +1945,19 @@ void mldParseReconfigMlIE(struct MULTI_LINK_INFO *prMlInfo,
 		prStaProfile->u2StaCtrl = u2StaControl;
 		prStaProfile->ucComplete =
 			!!(u2StaControl & ML_RECFG_STA_CTRL_COMPLETE_PROFILE);
+		prStaProfile->ucOpType =
+			(u2StaControl & ML_RECFG_STA_CTRL_OP_TYPE_MASK) >>
+				ML_RECFG_STA_CTRL_OP_TYPE_SHIFT;
 
 		if (show_info)
 			DBGLOG(ML, INFO,
-				"\tLinkID=%d Ctrl=0x%x(%s) Total=%d\n",
+				"\tLinkID=%d Ctrl=0x%x(%s,%s) Total=%d\n",
 				ucLinkId, u2StaControl,
 				prStaProfile->ucComplete ?
 				"COMPLETE" : "PARTIAL",
+				prStaProfile->ucOpType < 4 ?
+				opTypeStr[prStaProfile->ucOpType] :
+				(const uint8_t *)"UNKNOWN",
 				prMlInfo->ucProfNum);
 
 		pos = prIeSta->aucStaInfo;
@@ -1954,12 +1973,20 @@ void mldParseReconfigMlIE(struct MULTI_LINK_INFO *prMlInfo,
 			pos += MAC_ADDR_LEN;
 		}
 		if (u2StaControl & ML_RECFG_STA_CTRL_DELETE_TIMER_PRESENT) {
-			kalMemCopy(&prStaProfile->u2DeleteTimer, pos, 2);
+			kalMemCopy(&prStaProfile->u2ApRemovalTimer, pos, 2);
 			if (show_info)
 				DBGLOG(ML, INFO,
-					"\tLinkID=%d, DELETE_TIMER = %d\n",
-					ucLinkId, prStaProfile->u2DeleteTimer);
+				      "\tLinkID=%d, AP_REMOVAL_TIMER = %d\n",
+				      ucLinkId, prStaProfile->u2ApRemovalTimer);
 			pos += 2;
+		}
+		if (u2StaControl & ML_RECFG_STA_CTRL_OP_PARAM_PRESENT) {
+			kalMemCopy(&prStaProfile->u4OpParam, pos, 3);
+			if (show_info)
+				DBGLOG(ML, INFO,
+					"\tLinkID=%d, OP_PARAM = 0x%x\n",
+					ucLinkId, prStaProfile->u4OpParam);
+			pos += 3;
 		}
 
 		if (pos > tail) {
@@ -2182,7 +2209,7 @@ const uint8_t *mldFindMlIE(const uint8_t *ies, uint16_t len, uint8_t type)
 					continue;
 
 				IE_FOR_EACH(sub, sub_len, sub_offset) {
-					if (IE_ID_EXT(sub) == ELEM_EXT_ID_MLD)
+					if (BE_IS_ML_CTRL_TYPE(ies, type))
 						return sub;
 				}
 			}
@@ -2535,7 +2562,8 @@ uint32_t mldDupByMlStaProfile(struct ADAPTER *prAdapter,
 {
 	int offset;
 	struct WLAN_MAC_MGMT_HEADER *mgmt;
-	uint8_t i, ie_count, *ie = NULL, *ies[MAX_DUP_IE_COUNT], *pos;
+	uint8_t i, *pos = NULL;
+	uint8_t ie_count, *ie = NULL, *ies[MAX_DUP_IE_COUNT] = {0};
 	uint16_t fctrl, ie_len;
 	uint8_t *addr;
 
@@ -2916,9 +2944,11 @@ int mldDump(struct ADAPTER *prAdapter, uint8_t ucIndex,
 
 	i4BytesWritten += kalSnprintf(
 		pcCommand + i4BytesWritten, i4TotalLen - i4BytesWritten,
-		"T2LMNegotiationSupport:%d\nu4T2LMMarginMs:%d\n",
+		"T2LMNegotiationSupport:%d\nT2LMMarginMs:%d\nApRemovalByT2LM:%d\nApRemovalMarginMs:%d\n",
 		prAdapter->rWifiVar.ucT2LMNegotiationSupport,
-		prAdapter->rWifiVar.u4T2LMMarginMs);
+		prAdapter->rWifiVar.u4T2LMMarginMs,
+		prAdapter->rWifiVar.fgApRemovalByT2LM,
+		prAdapter->rWifiVar.u4ApRemovalMarginMs);
 
 	i4BytesWritten += kalSnprintf(
 		pcCommand + i4BytesWritten, i4TotalLen - i4BytesWritten,
@@ -3736,6 +3766,10 @@ int8_t mldStarecRegister(struct ADAPTER *prAdapter,
 		DBGLOG(ML, WARN, "starec(idx=%d, widx=%d) not in use",
 			prStarec->ucIndex, prStarec->ucWlanIndex);
 		return -EINVAL;
+	} else if (ucLinkId >= MLD_MAX_NUM_LINKS) {
+		DBGLOG(ML, WARN, "wrong linkid=%d >= %d",
+			ucLinkId, MLD_MAX_NUM_LINKS);
+		return -EINVAL;
 	}
 
 	if (prMldStarec->u4StaBitmap & BIT(prStarec->ucIndex)) {
@@ -3757,6 +3791,7 @@ int8_t mldStarecRegister(struct ADAPTER *prAdapter,
 	prStarecList = &prMldStarec->rStarecList;
 	LINK_INSERT_TAIL(prStarecList, &prStarec->rLinkEntryMld);
 	prMldStarec->u4StaBitmap |= BIT(prStarec->ucIndex);
+	prMldStarec->u2ValidLinks |= BIT(ucLinkId);
 
 	mldStarecUpdateMldId(prAdapter, prMldStarec);
 
@@ -3813,6 +3848,7 @@ void mldStarecUnregister(struct ADAPTER *prAdapter,
 	mldStarecUpdateMldId(prAdapter, prMldStarec);
 
 	prMldStarec->u4StaBitmap &= ~BIT(prStarec->ucIndex);
+	prMldStarec->u2ValidLinks &= ~BIT(prStarec->ucLinkIndex);
 
 	if (LINK_IS_EMPTY(prStarecList))
 		mldStarecFree(prAdapter, prMldStarec);
@@ -4236,7 +4272,7 @@ uint8_t mldIsMultiLinkFormed(struct ADAPTER *prAdapter,
 		mld_starec->rStarecList.u4NumElem >= 1);
 }
 
-uint8_t mldIsMloFeatureEnabled(
+uint8_t mldIsMultiLinkEnabled(
 	struct ADAPTER *prAdapter,
 	enum ENUM_NETWORK_TYPE eNetworkType,
 	uint8_t ucParam)
@@ -4244,30 +4280,21 @@ uint8_t mldIsMloFeatureEnabled(
 	struct WIFI_VAR *prWifiVar = &prAdapter->rWifiVar;
 	uint8_t ret = TRUE;
 	uint8_t linkMax = 0;
-	uint8_t ucEhtOption = FEATURE_ENABLED;
 	uint8_t fgIsApMode = FALSE;
 
 	if (eNetworkType == NETWORK_TYPE_AIS) {
-		uint8_t ucBssIndex = ucParam;
-
 		linkMax = kal_min_t(uint8_t,
-			prAdapter->rWifiVar.ucMldLinkMax,
-			prAdapter->rWifiVar.ucStaMldLinkMax);
-
-		if (AIS_INDEX(prAdapter, ucBssIndex) <
-		    prWifiVar->u4AisEHTNumber)
-			ucEhtOption = prWifiVar->ucStaEht;
-		else
-			ucEhtOption = FEATURE_DISABLED;
+				prWifiVar->ucMldLinkMax,
+				prWifiVar->ucStaMldLinkMax);
 	} else if (eNetworkType == NETWORK_TYPE_P2P &&
 		   p2pGetMode() == RUNNING_P2P_DEV_MODE) {
 		fgIsApMode = ucParam;
 		if (fgIsApMode) {
-			linkMax = prAdapter->rWifiVar.ucMldLinkMax;
+			linkMax = prWifiVar->ucMldLinkMax;
 		} else {
 			linkMax = kal_min_t(uint8_t,
-				prAdapter->rWifiVar.ucMldLinkMax,
-				prAdapter->rWifiVar.ucP2pMldLinkMax);
+					prWifiVar->ucMldLinkMax,
+					prWifiVar->ucP2pMldLinkMax);
 		}
 	}
 
@@ -4278,8 +4305,43 @@ uint8_t mldIsMloFeatureEnabled(
 	 * 3. EnableMlo 0 (disabled)
 	 * 4. SAP but EnableMlo is not 2 (force enabled)
 	 */
+	if (!mldIsSingleLinkEnabled(prAdapter, eNetworkType, ucParam) ||
+	    linkMax < 2)
+		ret = FALSE;
+
+	return ret;
+}
+
+uint8_t mldIsSingleLinkEnabled(
+	struct ADAPTER *prAdapter,
+	enum ENUM_NETWORK_TYPE eNetworkType,
+	uint8_t ucParam)
+{
+	struct WIFI_VAR *prWifiVar = &prAdapter->rWifiVar;
+	uint8_t ret = TRUE;
+	uint8_t ucEhtOption = FEATURE_ENABLED;
+	uint8_t fgIsApMode = FALSE;
+
+	if (eNetworkType == NETWORK_TYPE_AIS) {
+		uint8_t ucBssIndex = ucParam;
+
+		if (AIS_INDEX(prAdapter, ucBssIndex) <
+		    prWifiVar->u4AisEHTNumber)
+			ucEhtOption = prWifiVar->ucStaEht;
+		else
+			ucEhtOption = FEATURE_DISABLED;
+	} else if (eNetworkType == NETWORK_TYPE_P2P &&
+		   p2pGetMode() == RUNNING_P2P_DEV_MODE) {
+		fgIsApMode = ucParam;
+	}
+
+
+	/* mlo is disable when one of these is true
+	 * 1. eht disabled
+	 * 2. EnableMlo 0 (disabled)
+	 * 3. SAP but EnableMlo is not 2 (force enabled)
+	 */
 	if (IS_FEATURE_DISABLED(ucEhtOption) ||
-	    linkMax < 2 ||
 	    IS_FEATURE_DISABLED(prWifiVar->ucEnableMlo) ||
 	   (fgIsApMode &&
 	    !IS_FEATURE_FORCE_ENABLED(prWifiVar->ucEnableMlo))) {
@@ -4563,6 +4625,32 @@ void mldCheckStarecList(struct ADAPTER *prAdapter)
 		if (fgError)
 			mldDumpStarecList(prAdapter, prMldStarec);
 	}
+}
+
+void mldCheckApRemoval(struct ADAPTER *prAdapter,
+	struct STA_RECORD *prStaRec, const uint8_t *pucIE)
+{
+#if (CFG_SUPPORT_ML_RECONFIG == 1)
+	struct MULTI_LINK_INFO rMlInfo;
+	struct MULTI_LINK_INFO *prMlInfo = &rMlInfo;
+	uint8_t ucBssIndex, i;
+
+	ucBssIndex = prStaRec->ucBssIndex;
+
+	if (!IS_BSS_INDEX_AIS(prAdapter, ucBssIndex) ||
+	    !mldSingleLink(prAdapter, prStaRec, prStaRec->ucBssIndex))
+		return;
+
+	MLD_PARSE_RECONFIG_MLIE(prMlInfo, pucIE, prStaRec->aucMacAddr);
+
+	for (i = 0; i < prMlInfo->ucProfNum; i++) {
+		struct STA_PROFILE *sta = &prMlInfo->rStaProfiles[i];
+
+		if (prStaRec->ucLinkIndex == sta->ucLinkId)
+			aisCheckApRemoval(prAdapter, prStaRec,
+					  sta->u2ApRemovalTimer);
+	}
+#endif /* CFG_SUPPORT_ML_RECONFIG */
 }
 
 #endif /* CFG_SUPPORT_802_11BE_MLO == 1 */
