@@ -35,7 +35,7 @@
 /* KBASE_PLATFORM_SUSPEND_DELAY, the ms for autosuspend timeout */
 #define KBASE_PLATFORM_SUSPEND_DELAY (100) /* ms */
 
-#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
+#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ) || IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ_LEGACY)
 static int gIsDsuRequested = 0;
 spinlock_t g_dsu_request_lock;
 #endif
@@ -174,6 +174,11 @@ static int pm_callback_power_on(struct kbase_device *kbdev)
 		WARN_ON(kbdev->pm.runtime_active);
 	}
 	spin_unlock_irqrestore(&kbdev->hwaccess_lock, flags);
+
+#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ_LEGACY)
+	mtk_platform_cpu_cache_request(kbdev, REQ_DSU_POWER_ON);
+#endif
+
 	mutex_lock(&g_mfg_lock);
 	ret = pm_callback_power_on_nolock(kbdev);
 	mtk_notify_gpu_power_change(1);
@@ -203,6 +208,9 @@ static void pm_callback_power_off(struct kbase_device *kbdev)
 	mtk_notify_gpu_power_change(0);
 	pm_callback_power_off_nolock(kbdev);
 	mutex_unlock(&g_mfg_lock);
+#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ_LEGACY)
+	mtk_platform_cpu_cache_request(kbdev, REQ_DSU_POWER_OFF);
+#endif
 }
 
 static void pm_callback_runtime_gpu_active(struct kbase_device *kbdev)
@@ -354,9 +362,9 @@ int mtk_platform_pm_init(struct kbase_device *kbdev)
 	if (IS_ERR_OR_NULL(kbdev))
 		return -1;
 
-#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
+#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ) || IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ_LEGACY)
 	spin_lock_init(&g_dsu_request_lock);
-#endif /* CONFIG_MALI_MTK_ACP_DSU_REQ */
+#endif /* CONFIG_MALI_MTK_ACP_DSU_REQ || CONFIG_MALI_MTK_ACP_DSU_REQ_LEGACY */
 
 	if (!of_property_read_u32(np, "sleep-mode-enable", &sleep_mode_enable)) {
 		dev_info(kbdev->dev, "Sleep mode %s", (sleep_mode_enable)? "enabled": "disabled");
@@ -384,7 +392,7 @@ void mtk_platform_pm_term(struct kbase_device *kbdev)
 	if (IS_ERR_OR_NULL(kbdev))
 		return;
 }
-#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ)
+#if IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ) || IS_ENABLED(CONFIG_MALI_MTK_ACP_DSU_REQ_LEGACY)
 void mtk_platform_cpu_cache_request(struct kbase_device *kbdev, int request)
 {
 	struct arm_smccc_res res;
