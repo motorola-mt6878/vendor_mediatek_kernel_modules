@@ -524,11 +524,13 @@ uint8_t *mldGenerateBasicCommonInfo(
 	uint8_t *cp;
 	struct MLD_BSS_INFO *mld_bssinfo;
 	struct BSS_INFO *bss;
+	struct WIFI_VAR *prWifiVar;
 	struct IE_MULTI_LINK_CONTROL *common;
 	uint16_t present = 0;
 
 	bss = GET_BSS_INFO_BY_INDEX(prAdapter, prMsduInfo->ucBssIndex);
 	mld_bssinfo = mldBssGetByBss(prAdapter, bss);
+	prWifiVar = &prAdapter->rWifiVar;
 
 	if (!bss && !mld_bssinfo)
 		return NULL;
@@ -615,7 +617,10 @@ uint8_t *mldGenerateBasicCommonInfo(
 		if (mld_bssinfo) {
 			BE_SET_MLD_CAP_MAX_SIMULTANEOUS_LINKS(mld_cap,
 				mld_bssinfo->ucMaxSimuLinks);
-			BE_SET_MLD_CAP_TID_TO_LINK_NEGO(mld_cap, 1);
+#if (CFG_SUPPORT_802_11BE_T2LM == 1)
+			BE_SET_MLD_CAP_TID_TO_LINK_NEGO(mld_cap,
+				prWifiVar->ucT2LMNegotiationSupport);
+#endif
 		} else if (bss) {
 			BE_SET_MLD_CAP_MAX_SIMULTANEOUS_LINKS(mld_cap, 0);
 			BE_SET_MLD_CAP_TID_TO_LINK_NEGO(mld_cap, 0);
@@ -2140,180 +2145,6 @@ void mldParsePriorityAccessMlIE(struct ADAPTER *prAdapter,
 }
 #endif
 
-void mldParseT2LMIE(struct ADAPTER *prAdapter,
-	struct STA_RECORD *prStaRec, const uint8_t *pucIE)
-{
-	struct MLD_STA_RECORD *prMldStarec;
-	struct STA_RECORD *prCurrStarec;
-	struct LINK *prStarecList;
-	struct IE_TID_TO_LINK_MAPPING *prT2LM;
-
-	const uint8_t *pos, *tid_profile_pos;
-	uint8_t ucLMPresenceIndication;
-	uint8_t ucTidBitmap;
-	uint8_t ucDirection;
-	int i;
-
-	DBGLOG_MEM8(ML, LOUD, pucIE, IE_LEN(pucIE));
-
-	prT2LM = (struct IE_TID_TO_LINK_MAPPING *) pucIE;
-	pos = prT2LM->ucOptCtrl;
-
-	prMldStarec = mldStarecGetByStarec(prAdapter, prStaRec);
-
-	if (!prMldStarec) {
-		DBGLOG(ML, ERROR,
-			"No Mld Starec, should not have T2LM ie\n");
-		return;
-	}
-
-	/* T2LM control bits[0, 1] is derection */
-	ucDirection = BE_IS_T2LM_CTRL_DIRECTION(prT2LM->ucCtrl);
-	if (ucDirection != T2LM_DIRECTION_UL
-		&& ucDirection != T2LM_DIRECTION_DL_UL) {
-		DBGLOG(ML, WARN, "direction isn't set to uplink\n");
-		return;
-	}
-
-	/* T2LM control bit[2] is default link mapping */
-	if (BE_IS_T2LM_CTRL_DEFAULT_LINK(prT2LM->ucCtrl) == 0) {
-		ucLMPresenceIndication = *pos;
-		DBGLOG(ML, LOUD, "default link mapping = %d\n",
-			ucLMPresenceIndication);
-		pos += 1;
-	}
-
-	/* T2LM control bit[3] is mapping switch time present */
-	if (BE_IS_T2LM_CTRL_SWITCH_TIME(prT2LM->ucCtrl)) {
-		WLAN_GET_FIELD_BE16(pos, &prMldStarec->u2T2LMSwitchTime);
-		DBGLOG(ML, LOUD, "mapping switch time = %d\n",
-			prMldStarec->u2T2LMSwitchTime);
-		pos += 2;
-	} else {
-		prMldStarec->fgT2LMNewState = TRUE;
-		DBGLOG(ML, LOUD,
-			"This IE is currently establised T2LM elemnent\n");
-		return;
-	}
-
-	/* T2LM control bit[4] is expected duration present */
-	if (BE_IS_T2LM_CTRL_DURATION(prT2LM->ucCtrl)) {
-		WLAN_GET_FIELD_BE24(pos, &prMldStarec->u4T2LMDuration);
-		DBGLOG(ML, LOUD, "expected duration = %d\n",
-			prMldStarec->u4T2LMDuration);
-
-		pos += 3;
-	}
-
-	tid_profile_pos = pos;
-	prStarecList = &prMldStarec->rStarecList;
-	LINK_FOR_EACH_ENTRY(prCurrStarec, prStarecList, rLinkEntryMld,
-		    struct STA_RECORD) {
-		ucTidBitmap = 0xff;
-
-		if (prCurrStarec->ucLinkIndex >= 16) {
-			DBGLOG(ML, ERROR,
-				"Linkid = %d, sta idx %d is invalid\n",
-				prCurrStarec->ucLinkIndex,
-				prCurrStarec->ucIndex);
-			continue;
-		}
-
-		/* T2LM control bit[5] is link mapping size */
-		if (BE_IS_T2LM_CTRL_DEFAULT_LINK(prT2LM->ucCtrl) == 0
-			&& BE_IS_T2LM_CTRL_LM_SIZE(prT2LM->ucCtrl)) {
-			uint8_t ucTidLinkMapping;
-
-			/*Link Mapping of Tid n, size is 1 octet*/
-			for (i = 0; i < MAX_NUM_T2LM_TIDS; i++) {
-				if (ucLMPresenceIndication & BIT(i)) {
-					ucTidLinkMapping = *pos;
-					if (ucTidLinkMapping
-						& BIT(prCurrStarec
-							->ucLinkIndex))
-						ucTidBitmap |= BIT(i);
-					else
-						ucTidBitmap &= ~(BIT(i));
-					pos += 1;
-				}
-			}
-		} else if (BE_IS_T2LM_CTRL_DEFAULT_LINK(prT2LM->ucCtrl) == 0
-			&& (BE_IS_T2LM_CTRL_LM_SIZE(prT2LM->ucCtrl) == 0)) {
-			uint16_t u2TidLinkMapping;
-
-			/*Link Mapping of Tid n, size is 2 octet*/
-			for (i = 0; i < MAX_NUM_T2LM_TIDS; i++) {
-				if (ucLMPresenceIndication & BIT(i)) {
-					WLAN_GET_FIELD_BE16(pos,
-						&u2TidLinkMapping);
-					if (u2TidLinkMapping
-						& BIT(prCurrStarec
-							->ucLinkIndex))
-						ucTidBitmap |= BIT(i);
-					else
-						ucTidBitmap &= ~(BIT(i));
-					pos += 2;
-				}
-			}
-		}
-
-		DBGLOG(ML, TRACE, "Linkid = %d, ucTidBitmap = 0x%02x\n",
-			prCurrStarec->ucLinkIndex,
-			ucTidBitmap);
-		prCurrStarec->ucPendingTidBitmap = ucTidBitmap;
-		pos = tid_profile_pos;
-	}
-
-	if (!prMldStarec->fgT2LMEnable
-		|| prMldStarec->fgT2LMNewState) {
-		cnmTimerStopTimer(prAdapter,
-			&prMldStarec->rT2LMTimer);
-		cnmTimerStartTimer(prAdapter,
-			&prMldStarec->rT2LMTimer,
-			prMldStarec->u2T2LMSwitchTime);
-	}
-	prMldStarec->fgT2LMNewState = FALSE;
-}
-
-void mldT2LMTimeout(struct ADAPTER *prAdapter, uintptr_t ulParamPtr)
-{
-	struct MLD_STA_RECORD *prMldStarec;
-	struct STA_RECORD *prCurrStarec;
-	struct LINK *prStarecList;
-
-	prMldStarec = (struct MLD_STA_RECORD *) ulParamPtr;
-	prStarecList = &prMldStarec->rStarecList;
-
-	if (prMldStarec->fgT2LMEnable) {
-		LINK_FOR_EACH_ENTRY(prCurrStarec, prStarecList,
-			rLinkEntryMld, struct STA_RECORD) {
-			prCurrStarec->ucTidBitmap = 0xff;
-			cnmStaSendUpdateCmd(prAdapter,
-				prCurrStarec, NULL, FALSE);
-		}
-
-		prMldStarec->fgT2LMEnable = FALSE;
-
-		DBGLOG(ML, LOUD, "Duration timeout\n");
-	} else {
-		LINK_FOR_EACH_ENTRY(prCurrStarec, prStarecList,
-			rLinkEntryMld, struct STA_RECORD) {
-			prCurrStarec->ucTidBitmap = prCurrStarec
-				->ucPendingTidBitmap;
-			cnmStaSendUpdateCmd(prAdapter,
-				prCurrStarec, NULL, FALSE);
-		}
-
-		prMldStarec->fgT2LMEnable = TRUE;
-
-		cnmTimerStartTimer(prAdapter,
-			&prMldStarec->rT2LMTimer,
-			prMldStarec->u4T2LMDuration);
-
-		DBGLOG(ML, LOUD, "Switch timeout\n");
-	}
-}
-
 const uint8_t *mldFindMlIE(const uint8_t *ies, uint16_t len, uint8_t type)
 {
 	uint16_t u2Offset = 0;
@@ -3082,6 +2913,12 @@ int mldDump(struct ADAPTER *prAdapter, uint8_t ucIndex,
 		prAdapter->rWifiVar.ucApEht,
 		prAdapter->rWifiVar.ucP2pGoEht,
 		prAdapter->rWifiVar.ucP2pGcEht);
+
+	i4BytesWritten += kalSnprintf(
+		pcCommand + i4BytesWritten, i4TotalLen - i4BytesWritten,
+		"T2LMNegotiationSupport:%d\nu4T2LMMarginMs:%d\n",
+		prAdapter->rWifiVar.ucT2LMNegotiationSupport,
+		prAdapter->rWifiVar.u4T2LMMarginMs);
 
 	i4BytesWritten += kalSnprintf(
 		pcCommand + i4BytesWritten, i4TotalLen - i4BytesWritten,
@@ -4013,15 +3850,13 @@ struct MLD_STA_RECORD *mldStarecAlloc(struct ADAPTER *prAdapter,
 				(PFN_MGMT_TIMEOUT_FUNC) epcsTimeout,
 				(uintptr_t) prMldStarec);
 #endif
-		prMldStarec->fgT2LMEnable = FALSE;
-		prMldStarec->fgT2LMNewState = FALSE;
-		prMldStarec->u2T2LMSwitchTime = 0;
-		prMldStarec->u4T2LMDuration = 0;
+#if (CFG_SUPPORT_802_11BE_T2LM == 1)
+		prMldStarec->eT2LMState = T2LM_STATE_IDLE;
 		cnmTimerInitTimer(prAdapter,
 			&prMldStarec->rT2LMTimer,
-			(PFN_MGMT_TIMEOUT_FUNC) mldT2LMTimeout,
+			(PFN_MGMT_TIMEOUT_FUNC) t2lmTimeout,
 			(uintptr_t) prMldStarec);
-
+#endif
 		mldBssAddClient(prAdapter, prMldBssInfo, prMldStarec);
 		DBGLOG(ML, INFO, "ucIdx: %d, aucMacAddr: " MACSTR "\n",
 				prMldStarec->ucIdx,
@@ -4063,9 +3898,9 @@ void mldStarecFree(struct ADAPTER *prAdapter,
 				&prCurrStarec->rLinkEntryMld);
 		}
 	}
-
+#if (CFG_SUPPORT_802_11BE_T2LM == 1)
 	cnmTimerStopTimer(prAdapter, &prMldStarec->rT2LMTimer);
-
+#endif
 	mldBssRemoveClient(prAdapter, prMldBssInfo, prMldStarec);
 	kalMemZero(prMldStarec, sizeof(struct MLD_STA_RECORD));
 }
@@ -4128,6 +3963,82 @@ int8_t mldStarecSetSetupIdx(struct ADAPTER *prAdapter,
 	prMldStarec->u2SetupWlanId = prStaRec->ucWlanIndex;
 
 	return 0;
+}
+
+uint32_t mldUpdateTidBitmap(struct ADAPTER *prAdapter,
+	 struct MLD_STA_RECORD *prMldStaRec)
+{
+#ifdef CFG_SUPPORT_UNIFIED_COMMAND
+	uint32_t status = WLAN_STATUS_SUCCESS;
+	struct UNI_CMD_STAREC *uni_cmd;
+	struct UNI_CMD_STAREC_T2LM *tag;
+	struct UNI_CMD_STAREC_LINK_INFO *link;
+	uint32_t max_cmd_len = sizeof(struct UNI_CMD_STAREC) +
+			       sizeof(struct UNI_CMD_STAREC_T2LM);
+	struct LINK *prStarecList = &prMldStaRec->rStarecList;
+	struct STA_RECORD *prStaRec;
+	uint16_t widx = 0;
+
+	prStaRec = LINK_PEEK_HEAD(prStarecList,
+			struct STA_RECORD, rLinkEntryMld);
+	if (!prStaRec) {
+		DBGLOG(ML, ERROR,
+		       "prStaRec is Null ==> FAILED.\n");
+		return WLAN_STATUS_FAILURE;
+	}
+
+	max_cmd_len += sizeof(*link) * prStarecList->u4NumElem;
+	uni_cmd = (struct UNI_CMD_STAREC *) cnmMemAlloc(prAdapter,
+				RAM_TYPE_MSG, max_cmd_len);
+	if (!uni_cmd) {
+		DBGLOG(ML, ERROR,
+		       "Allocate UNI_CMD_STAREC ==> FAILED.\n");
+		return WLAN_STATUS_FAILURE;
+	}
+
+	uni_cmd->ucBssInfoIdx = prStaRec->ucBssIndex;
+	widx = (uint16_t) prStaRec->ucWlanIndex;
+	WCID_SET_H_L(uni_cmd->ucWlanIdxHnVer, uni_cmd->ucWlanIdxL, widx);
+
+	tag = (struct UNI_CMD_STAREC_T2LM *) uni_cmd->aucTlvBuffer;
+	tag->u2Tag = UNI_CMD_STAREC_TAG_T2LM;
+	tag->u2Length = sizeof(*tag) + sizeof(*link) * prStarecList->u4NumElem;
+	tag->ucLinkNumber = prStarecList->u4NumElem;
+
+	DBGLOG(ML, INFO, "[%d] bssidx=%d,widx=%d,num=%d,mac=" MACSTR "\n",
+		prStaRec->ucIndex,
+		prStaRec->ucBssIndex,
+		prStaRec->ucWlanIndex,
+		tag->ucLinkNumber,
+		MAC2STR(prMldStaRec->aucPeerMldAddr));
+
+	link = (struct UNI_CMD_STAREC_LINK_INFO *)tag->aucLinkInfo;
+	LINK_FOR_EACH_ENTRY(prStaRec, prStarecList, rLinkEntryMld,
+			struct STA_RECORD) {
+		link->ucBssIdx = prStaRec->ucBssIndex;
+		link->u2WlanIdx = prStaRec->ucWlanIndex;
+		link->ucTidBitmap = prStaRec->ucULTidBitmap;
+		DBGLOG(ML, INFO, "\tbss=%d,wlan_idx=%d,tid=0x%x\n",
+			link->ucBssIdx, link->u2WlanIdx, link->ucTidBitmap);
+		link++;
+	}
+
+	status = wlanSendSetQueryUniCmd(prAdapter,
+			     UNI_CMD_ID_STAREC_INFO,
+			     TRUE,
+			     FALSE,
+			     FALSE,
+			     nicUniCmdEventSetCommon,
+			     nicUniCmdTimeoutCommon,
+			     max_cmd_len,
+			     (void *)uni_cmd, NULL, 0);
+
+	cnmMemFree(prAdapter, uni_cmd);
+	return status;
+#else
+	return WLAN_STATUS_NOT_SUPPORTED;
+#endif
+
 }
 
 #if (CFG_MLD_INFO_PRESETUP == 1)

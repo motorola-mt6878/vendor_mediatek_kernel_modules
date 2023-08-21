@@ -161,21 +161,6 @@ struct SUB_IE_MULTI_LINK_CONTROL {
 #define BE_IS_ML_STA_CTRL_PRESENCE_NSTR(_u2ctrl) \
 	(_u2ctrl & ML_STA_CTRL_NSTR_LINK_PAIR_PRESENT)
 
-#define BE_IS_T2LM_CTRL_DIRECTION(_u2ctrl) \
-	(_u2ctrl & T2LM_CTRL_DIRECTION)
-
-#define BE_IS_T2LM_CTRL_DEFAULT_LINK(_u2ctrl) \
-	(_u2ctrl & T2LM_CTRL_DEFAULT_LINK_MAPPING)
-
-#define BE_IS_T2LM_CTRL_SWITCH_TIME(_u2ctrl) \
-	(_u2ctrl & T2LM_CTRL_MAPPING_SWITCH_TIME_PRESENT)
-
-#define BE_IS_T2LM_CTRL_DURATION(_u2ctrl) \
-	(_u2ctrl & T2LM_CTRL_EXPECTED_DURATION_PRESENT)
-
-#define BE_IS_T2LM_CTRL_LM_SIZE(_u2ctrl) \
-	(_u2ctrl & T2LM_CTRL_LINK_MAPPING_SIZE)
-
 /* BE D3.0 Figure 9-1002n - STA Control field format of the Basic Multi-Link
  * Element
  */
@@ -332,11 +317,6 @@ void mldParseStaProfilePriorityAccess(struct ADAPTER *prAdapter,
 		uint8_t ucLinkId, uint16_t u2StaControl, const uint8_t *pos,
 		uint16_t u2IELength);
 
-void mldParseT2LMIE(struct ADAPTER *prAdapter,
-	struct STA_RECORD *prStaRec, const uint8_t *pucIE);
-
-void mldT2LMTimeout(struct ADAPTER *prAdapter, uintptr_t ulParamPtr);
-
 const uint8_t *mldFindMlIE(const uint8_t *ies, uint16_t len, uint8_t type);
 
 void mldProcessBeaconAndProbeResp(
@@ -439,6 +419,9 @@ struct MLD_STA_RECORD *mldStarecGetByLinkAddr(struct ADAPTER *prAdapter,
 
 int8_t mldStarecSetSetupIdx(struct ADAPTER *prAdapter,
 	struct STA_RECORD *prStaRec);
+
+uint32_t mldUpdateTidBitmap(struct ADAPTER *prAdapter,
+	 struct MLD_STA_RECORD *prMldStaRec);
 
 #if (CFG_MLD_INFO_PRESETUP == 1)
 int8_t mldSetupMlInfo(struct ADAPTER *prAdapter,

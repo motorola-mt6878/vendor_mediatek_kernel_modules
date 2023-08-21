@@ -3421,10 +3421,10 @@ static uint8_t rlmRecIeInfoForClient(struct ADAPTER *prAdapter,
 				ehtRlmRecOperation(prAdapter, prStaRec,
 					prBssInfo, pucIE);
 #endif
-#if (CFG_SUPPORT_802_11BE_MLO == 1)
+#if (CFG_SUPPORT_802_11BE_T2LM == 1)
 			if (IE_ID_EXT(pucIE) == ELEM_EXT_ID_TID2LNK_MAP)
-				mldParseT2LMIE(prAdapter, prStaRec, pucIE);
-#endif /* CFG_SUPPORT_802_11BE_MLO */
+				t2lmParseT2LMIE(prAdapter, prStaRec, pucIE);
+#endif /* CFG_SUPPORT_802_11BE_T2LM */
 #endif /* CFG_SUPPORT_802_11AX */
 			break;
 
@@ -4450,14 +4450,12 @@ void rlmProcessBcn(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb,
 		   uint8_t *pucIE, uint16_t u2IELength)
 {
 	struct BSS_INFO *prBssInfo;
+	struct WLAN_BEACON_FRAME *prWlanBeacon = NULL;
 	u_int8_t fgNewParameter;
 #if (CFG_SUPPORT_802_11AX == 1)
 	u_int8_t fgNewSRParam = FALSE;
 #endif
 	uint8_t i;
-#if (CFG_SUPPORT_BTWT == 1)
-	struct WLAN_BEACON_FRAME *prWlanBeacon = NULL;
-#endif
 
 	ASSERT(prAdapter);
 	ASSERT(prSwRfb);
@@ -4496,20 +4494,19 @@ void rlmProcessBcn(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb,
 					    ((struct WLAN_MAC_MGMT_HEADER
 						      *)(prSwRfb->pvHeader))
 						    ->aucBSSID)) {
-#if (CFG_SUPPORT_BTWT == 1)
-				prWlanBeacon = (struct WLAN_BEACON_FRAME *)
-								(prSwRfb->pvHeader);
 
-				if (prBssInfo->prStaRecOfAP) {
-					(prBssInfo->prStaRecOfAP
-						->au4Timestamp[0]) =
-					prWlanBeacon->au4Timestamp[0];
-					(prBssInfo->prStaRecOfAP
-						->au4Timestamp[1]) =
-					prWlanBeacon->au4Timestamp[1];
-				}
-#endif
+					prWlanBeacon =
+						(struct WLAN_BEACON_FRAME *)
+							(prSwRfb->pvHeader);
 
+					if (prBssInfo->prStaRecOfAP) {
+						(prBssInfo->prStaRecOfAP
+							->au4Timestamp[0]) =
+						prWlanBeacon->au4Timestamp[0];
+						(prBssInfo->prStaRecOfAP
+							->au4Timestamp[1]) =
+						prWlanBeacon->au4Timestamp[1];
+					}
 
 					fgNewParameter = rlmRecBcnInfoForClient(
 						prAdapter, prBssInfo, prSwRfb,

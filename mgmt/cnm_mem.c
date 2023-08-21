@@ -691,7 +691,8 @@ struct STA_RECORD *cnmStaRecAlloc(struct ADAPTER *prAdapter,
 
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
 			prStaRec->ucMldStaIndex = MLD_GROUP_NONE;
-			prStaRec->ucTidBitmap = 0xff;
+			prStaRec->ucULTidBitmap = 0xff;
+			prStaRec->ucDLTidBitmap = 0xff;
 #endif
 			break;
 		}
@@ -1598,7 +1599,7 @@ int cnmShowStaRec(struct ADAPTER *prAdapter, struct STA_RECORD *prStaRec,
 		"\tMLD_STA/LINK_ID/TID_BMAP/MLD_ADDR: %u/%u/0x%x/" MACSTR "\n",
 		prStaRec->ucMldStaIndex,
 		prStaRec->ucLinkIndex,
-		prStaRec->ucTidBitmap,
+		prStaRec->ucULTidBitmap,
 		MAC2STR(prStaRec->aucMldAddr));
 #endif
 
@@ -1787,7 +1788,7 @@ void cnmDumpStaRec(struct ADAPTER *prAdapter, uint8_t ucStaRecIdx)
 	log_dbg(SW4, INFO, "[MldStaIndex][%u], [LinkIndex][%u], [TidBitmap][%u], [MldAddr][" MACSTR "]\n",
 		prStaRec->ucMldStaIndex,
 		prStaRec->ucLinkIndex,
-		prStaRec->ucTidBitmap,
+		prStaRec->ucULTidBitmap,
 		MAC2STR(prStaRec->aucMldAddr));
 #endif
 #endif
@@ -2369,9 +2370,6 @@ static void cnmStaRecCmdEhtContentFill(
 	struct CMD_UPDATE_STA_RECORD *prCmdContent)
 {
 	prCmdContent->ucVersion = CMD_UPDATE_STAREC_VER1;
-#if (CFG_SUPPORT_802_11BE_MLO == 1)
-	prCmdContent->ucTidBitmap = prStaRec->ucTidBitmap;
-#endif
 	memcpy(prCmdContent->ucEhtMacCapInfo, prStaRec->ucEhtMacCapInfo,
 		EHT_MAC_CAP_BYTE_NUM);
 	memcpy(prCmdContent->ucEhtPhyCapInfo, prStaRec->ucEhtPhyCapInfo,
