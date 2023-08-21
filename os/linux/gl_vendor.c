@@ -4460,7 +4460,8 @@ int mtk_cfg80211_vendor_get_trx_stats(struct wiphy *wiphy,
 		u4TxTlvSize + u4RxTlvSize + u4CgsTlvSize);
 	if (!skb) {
 		DBGLOG(REQ, ERROR, "Allocate skb failed\n");
-		return -ENOMEM;
+		i4Status = -ENOMEM;
+		goto err_handle_label;
 	}
 
 	if (unlikely(nla_put_u8(skb, WIFI_ATTRIBUTE_STATS_VERSION,
