@@ -55,6 +55,8 @@
  *                            P U B L I C   D A T A
  *******************************************************************************
  */
+u_int8_t fgIsDebugSopOnGoing = FALSE;
+
 struct dump_cr_set n45_general_dump_list[] = {
 {
 	FALSE,
@@ -2190,6 +2192,12 @@ void mt6639_DumpBusHangCr(struct ADAPTER *ad)
 		return;
 	}
 
+	if (fgIsDebugSopOnGoing) {
+		DBGLOG(HAL, ERROR, "Debug SOP On-going\n");
+		return;
+	}
+	fgIsDebugSopOnGoing = TRUE;
+
 	chip_info = ad->chip_info;
 	debug_ops = chip_info->prDebugOps;
 
@@ -2290,6 +2298,7 @@ start_dump_via_scp:
 	msleep(200);
 #endif
 	fgTriggerDebugSop = FALSE;
+	fgIsDebugSopOnGoing = FALSE;
 }
 #endif
 
