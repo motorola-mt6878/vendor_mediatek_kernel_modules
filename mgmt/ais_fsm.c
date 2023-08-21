@@ -3737,16 +3737,21 @@ void aisFsmStateAbort(struct ADAPTER *prAdapter,
 
 #if CFG_ENABLE_WIFI_DIRECT
 	if (fgDelayIndication) {
-		uint8_t p2p = cnmP2pIsActive(prAdapter);
 		uint8_t join = timerPendingTimer(
 				&prAisFsmInfo->rJoinTimeoutTimer);
-
-		if (p2p || join) {
+		if (join) {
 			fgDelayIndication = FALSE;
 			DBGLOG(AIS, INFO,
-				"delay indication not allowed due to p2p=%d, join=%d",
-				p2p, join);
+				"delay indication not allowed due to join");
 		}
+
+#if (CFG_TC10_FEATURE == 1)
+		if (cnmP2pIsActive(prAdapter)) {
+			fgDelayIndication = FALSE;
+			DBGLOG(AIS, INFO,
+				"delay indication not allowed due to p2p");
+		}
+#endif
 	}
 #endif
 
