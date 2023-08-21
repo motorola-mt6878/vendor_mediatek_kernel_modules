@@ -20,6 +20,12 @@ enum _ENUM_DFS_STATE_T {
 };
 #endif
 
+enum ENUM_P2P_MGMT_TX_TYPE {
+	P2P_MGMT_OFF_CH_TX = 0,
+	P2P_MGMT_REMAIN_ON_CH_TX,
+	P2P_MGMT_TX_TYPE_NUM
+};
+
 /******************************************************************************
  *                                 M A C R O S
  ******************************************************************************
@@ -81,6 +87,18 @@ p2pFuncUpdateBssInfoForJOIN(struct ADAPTER *prAdapter,
 		struct STA_RECORD *prStaRec,
 		struct BSS_INFO *prP2pBssInfo,
 		struct SW_RFB *prAssocRspSwRfb);
+
+void
+p2pFuncAddPendingMgmtLinkEntry(struct ADAPTER *prAdapter,
+	struct MSG_MGMT_TX_REQUEST *prMgmtTxMsg);
+
+void
+p2pFuncRemovePendingMgmtLinkEntry(struct ADAPTER *prAdapter,
+	uint8_t ucBssIdx, uint64_t u8Cookie);
+
+uint32_t
+p2pFuncIsPendingTxMgmtNeedWait(struct ADAPTER *prAdapter, uint8_t ucRoleIndex,
+	enum ENUM_P2P_MGMT_TX_TYPE eP2pMgmtTxType);
 
 void p2pFuncAcquireCh(struct ADAPTER *prAdapter,
 		uint8_t ucBssIdx,
