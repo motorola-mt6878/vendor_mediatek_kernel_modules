@@ -2064,6 +2064,10 @@ uint8_t aisNeedTargetScan(struct ADAPTER *prAdapter, uint8_t ucBssIndex)
 		issued = TRUE;
 #endif
 
+	/* For OCE certification, we need to perform full scan in all cases*/
+	if (prAdapter->rWifiVar.u4SwTestMode == ENUM_SW_TEST_MODE_SIGMA_OCE)
+		return FALSE;
+
 	return (discovering && issued) ||
 		(postponing && trial < AIS_ROAMING_CONNECTION_TRIAL_LIMIT);
 }
