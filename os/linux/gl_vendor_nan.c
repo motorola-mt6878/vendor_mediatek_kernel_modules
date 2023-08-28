@@ -976,7 +976,7 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 
 		kalMemZero(&nanEnableReq, sizeof(struct NanEnableRequest));
 		kalMemZero(&nanEnableRsp, sizeof(struct NanEnableRspMsg));
-		while ((remainingLen > 0) &&
+		while ((remainingLen >= 4) &&
 		       (0 !=
 			(readLen = nan_read_tlv((u8 *)data, &outputTlv)))) {
 			switch (outputTlv.type) {
@@ -1142,7 +1142,7 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 		kalMemZero(&nanConfigReq, sizeof(struct NanConfigRequest));
 		kalMemZero(&nanConfigRsp, sizeof(struct NanConfigRspMsg));
 
-		while ((remainingLen > 0) &&
+		while ((remainingLen >= 4) &&
 		       (0 !=
 			(readLen = nan_read_tlv((u8 *)data, &outputTlv)))) {
 			switch (outputTlv.type) {
@@ -1262,7 +1262,7 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 		remainingLen -= readLen;
 		data += readLen;
 
-		while ((remainingLen > 0) &&
+		while ((remainingLen >= 4) &&
 		       (0 !=
 			(readLen = nan_read_tlv((u8 *)data, &outputTlv)))) {
 			switch (outputTlv.type) {
@@ -1629,7 +1629,7 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 			nanMapSubscribeReqParams((u16 *)data, pNanSubscribeReq);
 		remainingLen -= readLen;
 		data += readLen;
-		while ((remainingLen > 0) &&
+		while ((remainingLen >= 4) &&
 		       (0 !=
 			(readLen = nan_read_tlv((u8 *)data, &outputTlv)))) {
 			switch (outputTlv.type) {
@@ -1755,10 +1755,12 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 					kfree(pNanSubscribeRsp);
 					return -EFAULT;
 				}
-				/* Get column neumbers */
-				memcpy(pNanSubscribeReq->intf_addr[i],
-				       outputTlv.value, outputTlv.length);
-				i++;
+				if (i < NAN_MAX_SUBSCRIBE_MAX_ADDRESS) {
+					/* Get column neumbers */
+					memcpy(pNanSubscribeReq->intf_addr[i],
+					     outputTlv.value, outputTlv.length);
+					i++;
+				}
 				break;
 			case NAN_TLV_TYPE_NAN_CSID:
 				pNanSubscribeReq->cipher_type =
@@ -2085,7 +2087,7 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 		data += readLen;
 		pNanXmitFollowupReq->publish_subscribe_id = nanMsgHdr.handle;
 
-		while ((remainingLen > 0) &&
+		while ((remainingLen >= 4) &&
 		       (0 !=
 			(readLen = nan_read_tlv((u8 *)data, &outputTlv)))) {
 			switch (outputTlv.type) {
@@ -2221,7 +2223,7 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 			return -ENOMEM;
 		}
 
-		while ((remainingLen > 0) &&
+		while ((remainingLen >= 4) &&
 		       (0 !=
 			(readLen = nan_read_tlv((u8 *)data, &outputTlv)))) {
 			switch (outputTlv.type) {
@@ -2312,7 +2314,7 @@ int mtk_cfg80211_vendor_nan(struct wiphy *wiphy,
 		kalMemZero(pNanDebug, sizeof(struct NanDebugParams));
 		DBGLOG(REQ, INFO, "NAN_MSG_ID_TESTMODE_REQ\n");
 
-		while ((remainingLen > 0) &&
+		while ((remainingLen >= 4) &&
 			(0 != (readLen = nan_read_tlv((u8 *)data,
 			&outputTlv)))) {
 			DBGLOG(REQ, INFO, "outputTlv.type= %d\n",

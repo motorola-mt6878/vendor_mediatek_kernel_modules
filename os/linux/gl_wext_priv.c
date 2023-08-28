@@ -1565,7 +1565,7 @@ __priv_nan_struct(struct net_device *prNetDev,
 
 	u4SubCmd = (uint32_t)prIwReqData->data.flags;
 	DBGLOG(INIT, INFO, "DATA len from user %d\n", prIwReqData->data.length);
-	if (prIwReqData->data.length > 8000)
+	if (prIwReqData->data.length > CMD_OID_BUF_LENGTH)
 		return -EFAULT;
 	if (copy_from_user(&aucOidBuf[0], prIwReqData->data.pointer,
 			   prIwReqData->data.length))
@@ -1582,6 +1582,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 
 		struct NanPublishRequest *publishReq =
 			(struct NanPublishRequest *)&aucOidBuf[0];
+
+		if (prIwReqData->data.length <
+			sizeof(struct NanPublishRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_PUBLISH not have enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		DBGLOG(NAN, INFO, "[Publish Request]\n");
 		DBGLOG(NAN, INFO, "Type: %d\n", publishReq->publish_type);
@@ -1618,8 +1626,10 @@ __priv_nan_struct(struct net_device *prNetDev,
 		DBGLOG(NAN, INFO, "Cipher Type: %d\n", publishReq->cipher_type);
 		DBGLOG(NAN, INFO, "Key: %s\n",
 		       publishReq->key_info.body.passphrase_info.passphrase);
-		nanUtilDump(prGlueInfo->prAdapter, "Publish SCID",
-			    publishReq->scid, publishReq->scid_len);
+
+		if (publishReq->scid_len <= NAN_MAX_SCID_BUF_LEN)
+			nanUtilDump(prGlueInfo->prAdapter, "Publish SCID",
+				publishReq->scid, publishReq->scid_len);
 
 		pid = (uint16_t)nanPublishRequest(prGlueInfo->prAdapter,
 						 publishReq);
@@ -1654,6 +1664,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 		struct NanPublishCancelRequest *cslPublish =
 			(struct NanPublishCancelRequest *)&aucOidBuf[0];
 
+		if (prIwReqData->data.length <
+			sizeof(struct NanPublishCancelRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_CANCEL_PUBLISH not have enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
+
 		DBGLOG(NAN, INFO, "CANCEL Publish Enter\n");
 		DBGLOG(NAN, INFO, "PID %d\n", cslPublish->publish_id);
 		rStatus = nanCancelPublishRequest(prGlueInfo->prAdapter,
@@ -1670,6 +1688,13 @@ __priv_nan_struct(struct net_device *prNetDev,
 		UINT_8  *pu1DummyAttrBuf = NULL;
 		UINT_32 u4DummyAttrLen = 0;
 #endif
+		if (prIwReqData->data.length <
+			sizeof(struct NanSubscribeRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_SUBSCIRBE not have enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		DBGLOG(NAN, INFO, "subReq->ttl %d\n", subReq->ttl);
 		DBGLOG(NAN, INFO, "subReq->period  %d\n", subReq->period);
@@ -1727,6 +1752,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 		struct NanSubscribeCancelRequest *cslsubreq =
 			(struct NanSubscribeCancelRequest *)&aucOidBuf[0];
 
+		if (prIwReqData->data.length <
+			sizeof(struct NanSubscribeCancelRequest)) {
+			DBGLOG(INIT, INFO,
+				"EMUM_NAN_CANCEL_SUBSCRIBE no enough length(%d)",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
+
 		DBGLOG(NAN, INFO, "Cancel Subscribe Enter\n");
 		DBGLOG(NAN, INFO, "subid %d\n", cslsubreq->subscribe_id);
 
@@ -1743,6 +1776,13 @@ __priv_nan_struct(struct net_device *prNetDev,
 			(struct NanTransmitFollowupRequest *)&aucOidBuf[0];
 
 		DBGLOG(NAN, INFO, "Transmit Enter\n");
+		if (prIwReqData->data.length <
+			sizeof(struct NanTransmitFollowupRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_TRANSMIT not have enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		nanTransmitRequest(prGlueInfo->prAdapter, followupreq);
 		break;
@@ -1752,6 +1792,13 @@ __priv_nan_struct(struct net_device *prNetDev,
 			(struct NanPublishRequest *)&aucOidBuf[0];
 
 		DBGLOG(NAN, INFO, "Update Publish\n");
+		if (prIwReqData->data.length <
+			sizeof(struct NanPublishRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_UPDATE_PUBLISH no enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 		nanUpdatePublishRequest(prGlueInfo->prAdapter, publishReq);
 	} break;
 	case ENUM_NAN_GAS_SCHEDULE_REQ:
@@ -1763,6 +1810,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 		struct NanDataReqReceive rDataRcv;
 		struct _NAN_CMD_DATA_REQUEST rNanCmdDataRequest;
 		uint32_t rStatus;
+
+		if (prIwReqData->data.length <
+			sizeof(struct NanDataPathInitiatorRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_DATA_REQ no enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		kalMemZero(&rNanCmdDataRequest, sizeof(rNanCmdDataRequest));
 
@@ -1786,7 +1841,10 @@ __priv_nan_struct(struct net_device *prNetDev,
 			}
 			kalMemCopy(rNanCmdDataRequest.aucScid, prDataReq->scid,
 				   NAN_SCID_DEFAULT_LEN);
-
+			if (prDataReq->key_info.body.pmk_info.pmk_len >
+				NAN_PMK_INFO_LEN)
+				prDataReq->key_info.body.pmk_info.pmk_len =
+				NAN_PMK_INFO_LEN;
 			kalMemCopy(rNanCmdDataRequest.aucPMK,
 				   prDataReq->key_info.body.pmk_info.pmk,
 				   prDataReq->key_info.body.pmk_info.pmk_len);
@@ -1811,6 +1869,10 @@ __priv_nan_struct(struct net_device *prNetDev,
 
 		rNanCmdDataRequest.u2SpecificInfoLength =
 			prDataReq->app_info.ndp_app_info_len;
+		if (rNanCmdDataRequest.u2SpecificInfoLength >
+			NAN_DP_MAX_APP_INFO_LEN)
+			rNanCmdDataRequest.u2SpecificInfoLength =
+			NAN_DP_MAX_APP_INFO_LEN;
 		kalMemCopy(rNanCmdDataRequest.aucSpecificInfo,
 			   prDataReq->app_info.ndp_app_info,
 			   prDataReq->app_info.ndp_app_info_len);
@@ -1835,6 +1897,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 		struct _NAN_CMD_DATA_RESPONSE rNanCmdDataResponse;
 		uint32_t rStatus;
 
+		if (prIwReqData->data.length <
+			sizeof(struct NanDataPathIndicationResponse)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_DATA_RESP no enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
+
 		rNanCmdDataResponse.ucType = prDataRes->type;
 		rNanCmdDataResponse.ucDecisionStatus = NAN_DP_REQUEST_ACCEPT;
 		rNanCmdDataResponse.ucNDPId = prDataRes->ndp_instance_id;
@@ -1852,10 +1922,18 @@ __priv_nan_struct(struct net_device *prNetDev,
 
 		kalMemCopy(rNanCmdDataResponse.aucInitiatorDataAddress,
 			   prDataRes->initiator_mac_addr, MAC_ADDR_LEN);
+		if (prDataRes->key_info.body.pmk_info.pmk_len >
+			NAN_PMK_INFO_LEN)
+			prDataRes->key_info.body.pmk_info.pmk_len =
+			NAN_PMK_INFO_LEN;
 		kalMemCopy(rNanCmdDataResponse.aucPMK,
 			   prDataRes->key_info.body.pmk_info.pmk,
 			   prDataRes->key_info.body.pmk_info.pmk_len);
 
+		if (rNanCmdDataResponse.u2SpecificInfoLength >
+			NAN_DP_MAX_APP_INFO_LEN)
+			rNanCmdDataResponse.u2SpecificInfoLength =
+			NAN_DP_MAX_APP_INFO_LEN;
 		kalMemCopy(rNanCmdDataResponse.aucSpecificInfo,
 			   prDataRes->app_info.ndp_app_info,
 			   prDataRes->app_info.ndp_app_info_len);
@@ -1878,6 +1956,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 		struct _NAN_CMD_DATA_END rNanCmdDataEnd;
 		uint32_t rStatus;
 
+		if (prIwReqData->data.length <
+			sizeof(struct NanDataPathEndRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_DATA_END not enough length(%d)",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
+
 		rNanCmdDataEnd.ucType = prDataEnd->type;
 		rNanCmdDataEnd.ucNDPId = prDataEnd->ndp_instance_id;
 		kalMemCopy(rNanCmdDataEnd.aucInitiatorDataAddress,
@@ -1893,6 +1979,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 			(struct NanDataPathInitiatorRequest *)&aucOidBuf[0];
 		struct _NAN_PARAMETER_NDL_SCH rNanUpdateSchParam;
 		uint32_t rStatus;
+
+		if (prIwReqData->data.length <
+			sizeof(struct NanDataPathInitiatorRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_DATA_UPDTAE no enough length(%d)\n",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		rNanUpdateSchParam.ucType = prDataUpd->type;
 		rNanUpdateSchParam.ucRequireQOS = prDataUpd->ndp_cfg.qos_cfg;
@@ -1911,6 +2005,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 			(struct NanRangeRequest *)&aucOidBuf[0];
 		uint16_t rgId = 0;
 		uint32_t rStatus;
+
+		if (prIwReqData->data.length <
+			sizeof(struct NanRangeRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_RG_REQ not enough length(%d)",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		DBGLOG(NAN, INFO, MACSTR
 		       " reso %d intev %d indicat %d ING CM %d ENG CM %d\n",
@@ -1938,6 +2040,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 			(struct NanRangeCancelRequest *)&aucOidBuf[0];
 		uint32_t rStatus;
 
+		if (prIwReqData->data.length <
+			sizeof(struct NanRangeCancelRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_RG_CANCEL not enough length(%d)",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
+
 		rStatus = nanRangingCancel(prGlueInfo->prAdapter, rgend);
 
 		DBGLOG(NAN, INFO, "ret %d " MACSTR "\n", rStatus,
@@ -1948,6 +2058,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 		struct NanRangeResponse *rgrsp =
 			(struct NanRangeResponse *)&aucOidBuf[0];
 		uint32_t rStatus;
+
+		if (prIwReqData->data.length <
+			sizeof(struct NanRangeResponse)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_RG_RESP not enough length(%d)",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		DBGLOG(NAN, INFO, "rgId %d alt %d rpt %d rsp %d\n",
 		       rgrsp->range_id,
@@ -1971,6 +2089,14 @@ __priv_nan_struct(struct net_device *prNetDev,
 		struct NanEnableRequest *prEnableReq =
 			(struct NanEnableRequest *)&aucOidBuf[0];
 		enum NanStatusType nanRetStatus;
+
+		if (prIwReqData->data.length <
+			sizeof(struct NanEnableRequest)) {
+			DBGLOG(INIT, INFO,
+				"ENUM_NAN_ENABLE_REQ not enough length(%d)",
+				prIwReqData->data.length);
+			return -EFAULT;
+		}
 
 		nanRetStatus =
 			nanDevEnableRequest(prGlueInfo->prAdapter, prEnableReq);
