@@ -203,6 +203,9 @@ void heRlmRecHe6GCapInfo(
 void heRlmReqGenerateHe6gBandCapIE(
 	struct ADAPTER *prAdapter,
 	struct MSDU_INFO *prMsduInfo);
+void heRlmRspGenerateHeRnrIE(
+	struct ADAPTER *prAdapter,
+	struct MSDU_INFO *prMsduInfo);
 #endif
 
 #if (CFG_SUPPORT_BTWT == 1)

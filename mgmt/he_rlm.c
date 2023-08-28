@@ -738,6 +738,78 @@ void heRlmRspGenerateHeCapIE(
 		heRlmFillHeCapIE(prAdapter, prBssInfo, prMsduInfo);
 }
 
+uint32_t _addRNRIE_impl(struct ADAPTER *prAdapter,
+	struct MSDU_INFO *prMsduInfo)
+{
+	struct P2P_SPECIFIC_BSS_INFO *prP2pSpecBssInfo;
+	struct BSS_INFO *prBssInfo;
+	uint8_t ucBssIndex;
+
+	ucBssIndex = prMsduInfo->ucBssIndex;
+	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, ucBssIndex);
+
+	if (!prBssInfo)
+		return FALSE;
+
+	/* AP + GO */
+	if (!IS_BSS_APGO(prBssInfo))
+		return FALSE;
+
+	/* AP only */
+	if (!p2pFuncIsAPMode(
+		prAdapter->rWifiVar.
+		prP2PConnSettings[prBssInfo->u4PrivateData]))
+		return FALSE;
+
+	prP2pSpecBssInfo =
+		prAdapter->rWifiVar.
+		prP2pSpecificBssInfo[prBssInfo->u4PrivateData];
+
+	if (prP2pSpecBssInfo &&
+		(prP2pSpecBssInfo->u2RnrIeLen != 0)) {
+		uint8_t *pucBuffer =
+			(uint8_t *) ((uintptr_t)
+			prMsduInfo->prPacket + (uintptr_t)
+			prMsduInfo->u2FrameLength);
+
+		kalMemCopy(pucBuffer,
+			prP2pSpecBssInfo->aucRnrIeBuffer,
+			prP2pSpecBssInfo->u2RnrIeLen);
+		prMsduInfo->u2FrameLength += prP2pSpecBssInfo->u2RnrIeLen;
+
+		DBGLOG(RSN, INFO,
+			"Keep supplicant RNR IE content w/o update\n");
+
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
+void heRlmRspGenerateHeRnrIE(
+	struct ADAPTER *prAdapter,
+	struct MSDU_INFO *prMsduInfo)
+{
+	uint8_t ucBssIndex;
+	struct BSS_INFO *prBssInfo;
+#if (CFG_SUPPORT_802_11BE == 1)
+	struct MLD_BSS_INFO *mld_bssinfo;
+#endif
+
+	/* Todo:: network id */
+	ucBssIndex = prMsduInfo->ucBssIndex;
+	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, ucBssIndex);
+#if (CFG_SUPPORT_802_11BE == 1)
+	/*rnr also composed in mld ie*/
+	mld_bssinfo = mldBssGetByBss(prAdapter, prBssInfo);
+	if (!IS_MLD_BSSINFO_MULTI(mld_bssinfo))
+		return;
+	if (!mld_bssinfo->rBssList.u4NumElem)
+		return;
+#endif
+	_addRNRIE_impl(prAdapter, prMsduInfo);
+}
+
 static void heRlmFillHeOpIE(
 	struct ADAPTER *prAdapter,
 	struct BSS_INFO *prBssInfo,
