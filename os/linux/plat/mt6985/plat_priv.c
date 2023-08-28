@@ -116,6 +116,10 @@ struct BOOST_INFO rBoostInfo[] = {
 			.u4CpuMask = CPU_LITTLE_CORE,
 			.u4Priority = AUTO_PRIORITY
 		},
+		.rRxNapiThreadInfo = {
+			.u4CpuMask = CPU_LITTLE_CORE,
+			.u4Priority = AUTO_PRIORITY
+		},
 		.u4RpsMap = RPS_LITTLE_CORE,
 		.u4ISRMask = CPU_LITTLE_CORE,
 		.i4RxRfbRetWorkCpu = -1,
@@ -143,6 +147,10 @@ struct BOOST_INFO rBoostInfo[] = {
 			.u4Priority = AUTO_PRIORITY
 		},
 		.rRxThreadInfo = {
+			.u4CpuMask = CPU_BIG_CORE,
+			.u4Priority = AUTO_PRIORITY
+		},
+		.rRxNapiThreadInfo = {
 			.u4CpuMask = CPU_BIG_CORE,
 			.u4Priority = AUTO_PRIORITY
 		},
@@ -176,6 +184,10 @@ struct BOOST_INFO rBoostInfo[] = {
 			.u4CpuMask = CPU_BIG_CORE,
 			.u4Priority = HIGH_PRIORITY
 		},
+		.rRxNapiThreadInfo = {
+			.u4CpuMask = CPU_BIG_CORE,
+			.u4Priority = HIGH_PRIORITY
+		},
 		.u4RpsMap = RPS_BIG_CORE,
 		.u4ISRMask = CPU_X_CORE,
 		.i4TxFreeMsduWorkCpu = 5,
@@ -203,6 +215,10 @@ struct BOOST_INFO rBoostInfo[] = {
 			.u4Priority = HIGH_PRIORITY
 		},
 		.rRxThreadInfo = {
+			.u4CpuMask = CPU_BIG_CORE,
+			.u4Priority = HIGH_PRIORITY
+		},
+		.rRxNapiThreadInfo = {
 			.u4CpuMask = CPU_BIG_CORE,
 			.u4Priority = HIGH_PRIORITY
 		},
@@ -443,6 +459,15 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 	kalSetTaskUtilMinPct(prGlueInfo->u4RxThreadPid,
 			prBoostInfo->rRxThreadInfo.u4Priority);
 
+#if CFG_SUPPORT_RX_NAPI_THREADED
+	if (prGlueInfo->napi_thread) {
+		kalSetCpuMask(prGlueInfo->napi_thread,
+			prBoostInfo->rRxNapiThreadInfo.u4CpuMask);
+		kalSetTaskUtilMinPct(prGlueInfo->u4RxNapiThreadPid,
+			prBoostInfo->rRxNapiThreadInfo.u4Priority);
+	}
+#endif /* CFG_SUPPORT_RX_NAPI_THREADED */
+
 	kalSetRpsMap(prGlueInfo, prBoostInfo->u4RpsMap);
 	kalSetISRMask(prAdapter, prBoostInfo->u4ISRMask);
 
@@ -507,8 +532,15 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 #define RX_NAPI_WORK_TEMPLATE ""
 #endif /* CFG_SUPPORT_RX_NAPI_WORK */
 
+#if CFG_SUPPORT_RX_NAPI_THREADED
+#define PLAT_THREAD_INFO "ThreadInfo:[%02x:%02x:%02x:%02x][%u:%u:%u:%u] "
+#else /* CFG_SUPPORT_RX_NAPI_THREADED */
+#define PLAT_THREAD_INFO "ThreadInfo:[%02x:%02x:%02x][%u:%u:%u] "
+#endif /* CFG_SUPPORT_RX_NAPI_THREADED */
+
 #define TEMP_LOG_TEMPLATE \
-	"CPUInfo[%d:%d] ThreadInfo:[%02x:%02x:%02x][%u:%u:%u] " \
+	"CPUInfo[%d:%d] " \
+	PLAT_THREAD_INFO \
 	"Rps:[%02x] ISR:[%02x] D:[%u] Pcie:[%u]" \
 	TX_FREE_MSDU_WORK_TEMPLATE \
 	RETURN_WORK_TEMPLATE \
@@ -524,9 +556,15 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 		prBoostInfo->rHifThreadInfo.u4CpuMask,
 		prBoostInfo->rMainThreadInfo.u4CpuMask,
 		prBoostInfo->rRxThreadInfo.u4CpuMask,
+#if CFG_SUPPORT_RX_NAPI_THREADED
+		prBoostInfo->rRxNapiThreadInfo.u4CpuMask,
+#endif /* CFG_SUPPORT_RX_NAPI_THREADED */
 		prBoostInfo->rHifThreadInfo.u4Priority,
 		prBoostInfo->rMainThreadInfo.u4Priority,
 		prBoostInfo->rRxThreadInfo.u4Priority,
+#if CFG_SUPPORT_RX_NAPI_THREADED
+		prBoostInfo->rRxNapiThreadInfo.u4Priority,
+#endif /* CFG_SUPPORT_RX_NAPI_THREADED */
 		prBoostInfo->u4RpsMap,
 		prBoostInfo->u4ISRMask,
 		prBoostInfo->fgDramBoost,
@@ -541,10 +579,10 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 		prBoostInfo->i4TxWorkCpu,
 #endif /* CFG_SUPPORT_TX_WORK */
 #if CFG_SUPPORT_RX_WORK
-		prBoostInfo->i4RxWorkCpu,
+		prBoostInfo->i4RxWorkCpu
 #endif /* CFG_SUPPORT_RX_WORK */
 #if CFG_SUPPORT_RX_NAPI_WORK
-		prBoostInfo->i4RxNapiWorkCpu
+		, prBoostInfo->i4RxNapiWorkCpu
 #endif /* CFG_SUPPORT_RX_NAPI_WORK */
 		);
 #undef TEMP_LOG_TEMPLATE
