@@ -1185,6 +1185,38 @@ int32_t mt6632_show_stat_info(struct ADAPTER *prAdapter,
 			struct PARAM_GET_STA_STATISTICS *prQueryStaStatistics,
 			uint8_t fgResetCnt, uint32_t u4StatGroup);
 #endif
+
+#ifndef UINT32_MAX
+#define UINT32_MAX	(~0U)
+#endif
+
+#ifndef UINT16_MAX
+#define UINT16_MAX	((uint16_t) ~0U >> 16)
+#endif
+
+#ifndef UINT8_MAX
+#define UINT8_MAX	0xFF
+#endif
+
+#define checkAddOverflow(a, b) ({			\
+	typeof(a) _a = (a);				\
+	typeof(b) _b = (b);				\
+	(sizeof(_a) == sizeof(uint8_t) && _a > UINT8_MAX - _b) || \
+	(sizeof(_a) == sizeof(uint16_t) && _a > UINT16_MAX - _b) || \
+	(sizeof(_a) == sizeof(uint32_t) && _a > UINT32_MAX - _b) ? \
+		TRUE : FALSE;	\
+})
+
+#define checkMulOverflow(a, b) ({			\
+	typeof(a) _a = (a);				\
+	typeof(b) _b = (b);				\
+	 _b != 0 &&					\
+	((sizeof(_a) == sizeof(uint8_t) && _a > UINT8_MAX / _b) || \
+	(sizeof(_a) == sizeof(uint16_t) && _a > UINT16_MAX / _b) || \
+	(sizeof(_a) == sizeof(uint32_t) && _a > UINT32_MAX / _b)) ? \
+	TRUE : FALSE;		\
+})
+
 /*******************************************************************************
  *                              F U N C T I O N S
  *******************************************************************************
