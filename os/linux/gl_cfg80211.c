@@ -1192,70 +1192,68 @@ int mtk_cfg80211_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	/* 6G only need to scan PSC channel, transform channel list first*/
-	for (i = 0; i < request->n_channels; i++) {
-		uint32_t u4channel =
-		nicFreq2ChannelNum(request->channels[i]->center_freq *
-								1000);
-		if (u4channel == 0) {
-			DBGLOG(REQ, WARN, "Wrong Channel[%d] freq=%u\n",
-			       i, request->channels[i]->center_freq);
-			continue;
-		}
-		prScanRequest->arChannel[j].ucChannelNum = u4channel;
-		switch ((request->channels[i])->band) {
-		case KAL_BAND_2GHZ:
-#if (CFG_SUPPORT_WIFI_6G == 1)
-			if (IS_FEATURE_ENABLED(prAdapter->rWifiVar.
-				fgEnOnlyScan6g))
+	/* 6G only need to scan PSC channel, check if channel list >
+	 * MAX support number and transform channel list first.
+	 */
+	if (request->n_channels > MAXIMUM_OPERATION_CHANNEL_LIST) {
+		DBGLOG(REQ, INFO,
+			"Request channel list(size:%u) exceed maximum support.\n",
+			request->n_channels);
+	} else {
+		for (i = 0; i < request->n_channels; i++) {
+			uint32_t u4channel =
+			nicFreq2ChannelNum(request->channels[i]->center_freq *
+									1000);
+			if (u4channel == 0) {
+				DBGLOG(REQ, WARN, "Wrong Channel[%d] freq=%u\n",
+				       i, request->channels[i]->center_freq);
 				continue;
-#endif
-			prScanRequest->arChannel[j].eBand = BAND_2G4;
-			break;
-		case KAL_BAND_5GHZ:
+			}
+			prScanRequest->arChannel[j].ucChannelNum = u4channel;
+			switch ((request->channels[i])->band) {
+			case KAL_BAND_2GHZ:
 #if (CFG_SUPPORT_WIFI_6G == 1)
-			if (IS_FEATURE_ENABLED(prAdapter->rWifiVar.
-				fgEnOnlyScan6g))
-				continue;
-#endif
-			prScanRequest->arChannel[j].eBand = BAND_5G;
-			break;
-#if (CFG_SUPPORT_WIFI_6G == 1)
-		case KAL_BAND_6GHZ:
-			/* 6g only scan PSC channel if OnlyScan6g not enabled */
-			if (IS_FEATURE_DISABLED(prAdapter->rWifiVar.
-				fgEnOnlyScan6g))
-				if (((u4channel - 5) % 16) != 0)
+				if (IS_FEATURE_ENABLED(prAdapter->rWifiVar.
+					fgEnOnlyScan6g))
 					continue;
-
+#endif
+				prScanRequest->arChannel[j].eBand = BAND_2G4;
+				break;
+			case KAL_BAND_5GHZ:
+#if (CFG_SUPPORT_WIFI_6G == 1)
+				if (IS_FEATURE_ENABLED(prAdapter->rWifiVar.
+					fgEnOnlyScan6g))
+					continue;
+#endif
+				prScanRequest->arChannel[j].eBand = BAND_5G;
+				break;
+#if (CFG_SUPPORT_WIFI_6G == 1)
+			/* 6g only scan PSC channel if OnlyScan6g not enabled */
+			case KAL_BAND_6GHZ:
+				if (IS_FEATURE_DISABLED(prAdapter->rWifiVar.
+					fgEnOnlyScan6g))
+					if (((u4channel - 5) % 16) != 0)
+						continue;
 #if WLAN_INCLUDE_SYS
-			/* Special case: cmd to block 6G */
-			if (!prGlueInfo->prAdapter->fgIsHwSupport6G)
-				continue;
+				/* Special case: cmd to block 6G */
+				if (!prGlueInfo->prAdapter->fgIsHwSupport6G)
+					continue;
 #endif
 
-			prScanRequest->arChannel[j].eBand = BAND_6G;
-			break;
+				prScanRequest->arChannel[j].eBand = BAND_6G;
+				break;
 #endif
-		default:
-			DBGLOG(REQ, WARN, "UNKNOWN Band %d(chnl=%u)\n",
-			       request->channels[i]->band,
-			       u4channel);
-			prScanRequest->arChannel[j].eBand = BAND_NULL;
-			break;
+			default:
+				DBGLOG(REQ, WARN, "UNKNOWN Band %d(chnl=%u)\n",
+				       request->channels[i]->band,
+				       u4channel);
+				prScanRequest->arChannel[j].eBand = BAND_NULL;
+				break;
+			}
+			j++;
 		}
-		j++;
 	}
 	prScanRequest->u4ChannelNum = j;
-
-	/* Check if channel list > MAX support number */
-	if (prScanRequest->u4ChannelNum > MAXIMUM_OPERATION_CHANNEL_LIST) {
-		prScanRequest->u4ChannelNum = 0;
-		DBGLOG(REQ, INFO,
-		       "Channel list (%u->%u) exceed maximum support.\n",
-		       request->n_channels,
-		       prScanRequest->u4ChannelNum);
-	}
 
 	if (kalScanParseRandomMac(request->wdev->netdev,
 		request, prScanRequest->aucRandomMac)) {
