@@ -154,6 +154,9 @@ static uint8_t aisFsmUpdateRsnSetting(struct ADAPTER *prAdapter,
 static void aisFsmDisconnectedAction(struct ADAPTER *prAdapter,
 				     uint8_t ucBssIndex);
 
+static void aisRestoreBandIdx(struct ADAPTER *ad,
+	struct BSS_INFO *prBssInfo);
+
 static void aisRestoreAllLink(struct ADAPTER *ad, struct AIS_FSM_INFO *ais);
 
 /*******************************************************************************
@@ -3103,9 +3106,11 @@ send_msg:
 				break;
 
 			if (prAisFsmInfo->ePreviousState ==
-					AIS_STATE_OFF_CHNL_TX)
+					AIS_STATE_OFF_CHNL_TX) {
 				aisFunClearAllTxReq(prAdapter,
 						&(prAisFsmInfo->rMgmtTxInfo));
+				aisRestoreBandIdx(prAdapter, prAisBssInfo);
+			}
 
 			eNewState = aisFsmHandleNextReq_NORMAL_TR(prAdapter,
 				prAisFsmInfo, ucBssIndex);
@@ -4021,6 +4026,17 @@ void aisFsmRunEventJoinComplete(struct ADAPTER *prAdapter,
 	cnmMemFree(prAdapter, prMsgHdr);
 }				/* end of aisFsmRunEventJoinComplete() */
 
+void aisRestoreBandIdx(struct ADAPTER *ad, struct BSS_INFO *prBssInfo)
+{
+	if (!prBssInfo)
+		return;
+
+	prBssInfo->eHwBandIdx = prBssInfo->eBackupHwBandIdx;
+	DBGLOG(AIS, TRACE,
+		"ucBssIdx=%d, ucBandIdx=%d\n",
+		prBssInfo->ucBssIndex, prBssInfo->eHwBandIdx);
+}
+
 void aisRestoreBssInfo(struct ADAPTER *ad, struct BSS_INFO *prBssInfo,
 	struct BSS_DESC *prBssDesc, uint8_t ucLinkIndex)
 {
@@ -4107,7 +4123,7 @@ void aisRestoreAllLink(struct ADAPTER *ad, struct AIS_FSM_INFO *ais)
 		aisSetLinkBssDesc(ais, prBssDesc, i);
 		aisSetLinkStaRec(ais, prAisBssInfo->prStaRecOfAP, i);
 
-		prAisBssInfo->eHwBandIdx = prAisBssInfo->eBackupHwBandIdx;
+		aisRestoreBandIdx(ad, prAisBssInfo);
 
 #if (CFG_SUPPORT_802_11BE_MLO == 1)
 		mldBssUpdateBandIdxBitmap(ad, prAisBssInfo);
@@ -8873,9 +8889,14 @@ void aisFsmRunEventCancelTxWait(struct ADAPTER *prAdapter,
 
 	cnmTimerStopTimer(prAdapter, &prAisFsmInfo->rChannelTimeoutTimer);
 	aisFunClearAllTxReq(prAdapter, &(prAisFsmInfo->rMgmtTxInfo));
+	aisRestoreBandIdx(prAdapter, prAisBssInfo);
 	aisFsmReleaseCh(prAdapter, ucBssIndex);
 
-	if (prAisBssInfo->eConnectionState ==
+	if (timerPendingTimer(&prAisFsmInfo->rDeauthDoneTimer)) {
+		DBGLOG(AIS, INFO,
+			"[AIS%d][%d] DEAUTH frame is transmitting.\n",
+			prAisFsmInfo->ucAisIndex, ucBssIndex);
+	} else if (prAisBssInfo->eConnectionState ==
 			MEDIA_STATE_CONNECTED)
 		aisFsmSteps(prAdapter, AIS_STATE_NORMAL_TR, ucBssIndex);
 	else
