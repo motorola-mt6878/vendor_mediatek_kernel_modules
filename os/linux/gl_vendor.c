@@ -4385,7 +4385,7 @@ int mtk_cfg80211_vendor_get_trx_stats(struct wiphy *wiphy,
 					goto err_handle_label;
 				break;
 			case WIFI_ATTRIBUTE_STATS_TX_TAG_LIST:
-				if (ucTxNum != 0) {
+				if (ucTxNum != 0 && !arIndTx) {
 					arIndTx = (uint32_t *)kalMemAlloc(
 						ucTxNum * sizeof(uint32_t),
 						VIR_MEM_TYPE);
@@ -4405,7 +4405,7 @@ int mtk_cfg80211_vendor_get_trx_stats(struct wiphy *wiphy,
 					goto err_handle_label;
 				break;
 			case WIFI_ATTRIBUTE_STATS_RX_TAG_LIST:
-				if (ucRxNum != 0) {
+				if (ucRxNum != 0 && !arIndRx) {
 					arIndRx = (uint32_t *)kalMemAlloc(
 						ucRxNum * sizeof(uint32_t),
 						VIR_MEM_TYPE);
@@ -4425,7 +4425,7 @@ int mtk_cfg80211_vendor_get_trx_stats(struct wiphy *wiphy,
 					goto err_handle_label;
 				break;
 			case WIFI_ATTRIBUTE_STATS_CGS_TAG_LIST:
-				if (ucCgsNum != 0) {
+				if (ucCgsNum != 0 && !arIndCgs) {
 					arIndCgs = (uint32_t *)kalMemAlloc(
 						ucCgsNum * sizeof(uint32_t),
 						VIR_MEM_TYPE);
