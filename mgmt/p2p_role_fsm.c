@@ -2751,11 +2751,10 @@ void p2pRoleFsmRunEventConnectionAbort(struct ADAPTER *prAdapter,
 						FALSE,
 						prDisconnMsg->u2ReasonCode,
 						TRUE);
-
-					p2pRoleFsmStateTransition(prAdapter,
-						prP2pRoleFsmInfo,
-						P2P_ROLE_STATE_IDLE);
 				}
+				p2pRoleFsmStateTransition(prAdapter,
+					prP2pRoleFsmInfo,
+					P2P_ROLE_STATE_IDLE);
 				goto notify;
 			}
 
