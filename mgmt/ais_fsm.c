@@ -839,6 +839,7 @@ void aisFsmInit(struct ADAPTER *prAdapter,
 	prAisFsmInfo->u4PostponeIndStartTime = 0;
 	/* Support AP Selection */
 	prAisFsmInfo->ucJoinFailCntAfterScan = 0;
+	prAisFsmInfo->ucIsSapCsaPending = FALSE;
 
 	prAisFsmInfo->fgIsScanOidAborted = FALSE;
 
@@ -5098,7 +5099,7 @@ static void aisFsmDisconnectedAction(struct ADAPTER *prAdapter,
 			prAisBssInfo->aucBSSID);
 	}
 #endif
-
+	prAisFsmInfo->ucIsSapCsaPending = FALSE;
 }
 
 /*----------------------------------------------------------------------------*/
@@ -6620,6 +6621,12 @@ void aisFsmReleaseCh(struct ADAPTER *prAdapter, uint8_t ucBssIndex)
 	    || prAisFsmInfo->fgIsChannelRequested == TRUE) {
 		prAisFsmInfo->fgIsChannelRequested = FALSE;
 		prAisFsmInfo->fgIsChannelGranted = FALSE;
+
+		if (prAisFsmInfo->ucIsSapCsaPending == TRUE) {
+			/* Check SAP channel */
+			p2pFuncSwitchSapChannel(prAdapter);
+			prAisFsmInfo->ucIsSapCsaPending = FALSE;
+		}
 
 		/* 1. return channel privilege to CNM immediately */
 		prMsgChAbort =

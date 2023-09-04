@@ -2851,6 +2851,7 @@ void kalIndicateStatusAndComplete(struct GLUE_INFO *prGlueInfo,
 #if (CFG_SUPPORT_TX_PWR_ENV == 1)
 	int8_t aicTxPwrEnvMaxTxPwr[TX_PWR_ENV_MAX_TXPWR_BW_NUM];
 #endif
+	struct AIS_FSM_INFO *prAisFsmInfo;
 
 	GLUE_SPIN_LOCK_DECLARATION();
 
@@ -2864,6 +2865,7 @@ void kalIndicateStatusAndComplete(struct GLUE_INFO *prGlueInfo,
 	prDevHandler = wlanGetNetDev(prGlueInfo, ucBssIndex);
 	prBssDesc = aisGetTargetBssDesc(prAdapter, ucBssIndex);
 	prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, ucBssIndex);
+	prAisFsmInfo = aisGetAisFsmInfo(prAdapter, ucBssIndex);
 
 	if (!prDevHandler || !prBssInfo) {
 		DBGLOG(INIT, ERROR,
@@ -2917,8 +2919,13 @@ void kalIndicateStatusAndComplete(struct GLUE_INFO *prGlueInfo,
 				u4BufLen, ucBssIndex);
 
 #if CFG_ENABLE_WIFI_DIRECT
-			/* Check SAP channel */
-			p2pFuncSwitchSapChannel(prGlueInfo->prAdapter);
+			if (prAisFsmInfo &&
+				timerPendingTimer(
+				&prAisFsmInfo->rJoinTimeoutTimer))
+				prAisFsmInfo->ucIsSapCsaPending = TRUE;
+			else
+				/* Check SAP channel */
+				p2pFuncSwitchSapChannel(prGlueInfo->prAdapter);
 #endif
 		}
 #if (CFG_SUPPORT_802_11AX == 1)
