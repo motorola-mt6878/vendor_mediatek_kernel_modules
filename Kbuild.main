@@ -1427,7 +1427,7 @@ endif
 
 # Disable ASSERT() for user load, enable for others
 ifneq ($(CONFIG_BUILD_NONE_STA), y)
-    ifneq ($(TARGET_BUILD_VARIANT),user)
+    ifeq ($(CONFIG_MTK_WIFI_DEBUG),y)
         ccflags-y += -DBUILD_QA_DBG=1
     else
         ccflags-y += -DBUILD_QA_DBG=0
