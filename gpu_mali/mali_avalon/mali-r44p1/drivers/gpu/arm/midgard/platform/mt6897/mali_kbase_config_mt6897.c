@@ -412,6 +412,10 @@ void mtk_platform_cpu_cache_request(struct kbase_device *kbdev, int request)
 				0, 0, 0, 0, 0, &res);
 			gIsDsuRequested++;
 		}
+		else
+		{
+			KBASE_PLATFORM_LOGE("%s Duplicated request to DSU power on\n", __func__);
+		}
 	}
 	else if (request == REQ_DSU_POWER_OFF)
 	{
@@ -425,6 +429,10 @@ void mtk_platform_cpu_cache_request(struct kbase_device *kbdev, int request)
 				REQ_DSU_POWER_OFF,	       /* a2 */
 				0, 0, 0, 0, 0, &res);
 			gIsDsuRequested--;
+		}
+		else
+		{
+			KBASE_PLATFORM_LOGE("%s Duplicated request to DSU power off\n", __func__);
 		}
 	}
 	else
