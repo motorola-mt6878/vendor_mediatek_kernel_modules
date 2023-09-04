@@ -1864,8 +1864,15 @@ wlanoidSetAuthorized(struct ADAPTER *prAdapter,
 		return WLAN_STATUS_FAILURE;
 
 	if (IS_BSS_AIS(prAisBssInfo) &&
-		prAisBssInfo->prStaRecOfAP && EQUAL_MAC_ADDR(
-		prAisBssInfo->prStaRecOfAP->aucMacAddr, pvSetBuffer)) {
+		prAisBssInfo->prStaRecOfAP &&
+		EQUAL_MAC_ADDR(
+#if (KERNEL_VERSION(6, 0, 0) <= CFG80211_VERSION_CODE) && \
+	(CFG_SUPPORT_802_11BE_MLO == 1)
+		    cnmStaRecAuthAddr(prAdapter, prAisBssInfo->prStaRecOfAP),
+#else
+		    prAisBssInfo->prStaRecOfAP->aucMacAddr,
+#endif
+		    pvSetBuffer)) {
 		prAisFsmInfo = aisGetAisFsmInfo(prAdapter, ucBssIndex);
 
 		if (!timerPendingTimer(&prAisFsmInfo->rJoinTimeoutTimer)) {
