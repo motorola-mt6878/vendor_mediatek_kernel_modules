@@ -1641,6 +1641,11 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 #endif
 	WIPHY_PRIV(wlanGetWiphy(), prGlueInfo);
 	prAdapter = prGlueInfo->prAdapter;
+	if (!prAdapter) {
+		DBGLOG(REQ, WARN, "adapter null, return\n");
+		return 0;
+	}
+
 	prBusInfo = prAdapter->chip_info->bus_info;
 
 	if (drv == CONNV3_DRV_TYPE_CONNV3) {
