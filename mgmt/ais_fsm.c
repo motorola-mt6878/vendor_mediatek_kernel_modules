@@ -8059,6 +8059,10 @@ aisFuncTxMgmtFrame(struct ADAPTER *prAdapter,
 	struct WLAN_MAC_HEADER *prWlanHdr = (struct WLAN_MAC_HEADER *)NULL;
 	struct STA_RECORD *prStaRec = (struct STA_RECORD *)NULL;
 	uint32_t ucStaRecIdx = STA_REC_INDEX_NOT_FOUND;
+#if (KERNEL_VERSION(6, 0, 0) <= CFG80211_VERSION_CODE) && \
+	(CFG_SUPPORT_802_11BE_MLO == 1)
+	struct MLD_STA_RECORD *prMldStarec;
+#endif
 
 	do {
 		if (prMgmtTxReqInfo->fgIsMgmtTxRequested) {
@@ -8088,6 +8092,33 @@ aisFuncTxMgmtFrame(struct ADAPTER *prAdapter,
 		    (struct WLAN_MAC_HEADER *)((uintptr_t)
 					       prMgmtTxMsdu->prPacket +
 					       MAC_TX_RESERVED_FIELD);
+
+		DBGLOG(AIS, INFO,
+			"TX Mgmt A1["MACSTR"] A2["MACSTR"] A3["MACSTR"]\n",
+			MAC2STR(prWlanHdr->aucAddr1),
+			MAC2STR(prWlanHdr->aucAddr2),
+			MAC2STR(prWlanHdr->aucAddr3));
+
+#if (KERNEL_VERSION(6, 0, 0) <= CFG80211_VERSION_CODE) && \
+		(CFG_SUPPORT_802_11BE_MLO == 1)
+		prStaRec = aisGetTargetStaRec(prAdapter, ucBssIndex);
+		prMldStarec = mldStarecGetByStarec(prAdapter, prStaRec);
+		if (prStaRec && prMldStarec &&
+		    EQUAL_MAC_ADDR(prMldStarec->aucPeerMldAddr,
+			prWlanHdr->aucAddr1) &&
+		    EQUAL_MAC_ADDR(prMldStarec->aucPeerMldAddr,
+			prWlanHdr->aucAddr3)) {
+			DBGLOG(AIS, INFO,
+				"TX Mgmt to Link["MACSTR"] MLD["MACSTR"]\n",
+				MAC2STR(prStaRec->aucMacAddr),
+				MAC2STR(prMldStarec->aucPeerMldAddr));
+			COPY_MAC_ADDR(prWlanHdr->aucAddr1,
+				prStaRec->aucMacAddr);
+			COPY_MAC_ADDR(prWlanHdr->aucAddr3,
+				prStaRec->aucMacAddr);
+		}
+#endif
+
 		prStaRec =
 		    cnmGetStaRecByAddress(prAdapter,
 					  ucBssIndex,
