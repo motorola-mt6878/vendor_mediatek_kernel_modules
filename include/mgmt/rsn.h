@@ -201,9 +201,8 @@
 #if CFG_SUPPORT_802_11W
 /* sync with IW_AUTH_MFP_XXXX */
 #define RSN_AUTH_MFP_DISABLED		0	/* MFP disabled */
-#define RSN_AUTH_MFP_OPTIONAL		1	/* MFP optional only */
+#define RSN_AUTH_MFP_OPTIONAL		1	/* MFP optional */
 #define RSN_AUTH_MFP_REQUIRED		2	/* MFP required */
-#define RSN_AUTH_MFP_OPTIONAL_REQUIRED	3	/* MFP optional + required */
 #endif
 
 /* Extended RSN Capabilities */
