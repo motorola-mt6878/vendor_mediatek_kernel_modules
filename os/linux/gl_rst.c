@@ -606,12 +606,13 @@ uint32_t glResetSelectAction(struct ADAPTER *prAdapter)
  * @retval  none
  */
 /*----------------------------------------------------------------------------*/
-void glResetTrigger(struct ADAPTER *prAdapter,
+uint32_t glResetTrigger(struct ADAPTER *prAdapter,
 		uint32_t u4RstFlag, const uint8_t *pucFile, uint32_t u4Line)
 {
 	struct RESET_STRUCT *rst = &wifi_rst;
 	struct mt66xx_chip_info *prChipInfo = NULL;
 	struct CHIP_DBG_OPS *prDbgOps = NULL;
+	uint32_t rst_evt_send = WLAN_STATUS_NOT_ACCEPTED;
 #if !IS_ENABLED(CFG_SUPPORT_CONNAC1X)
 	int ret = 0;
 #endif
@@ -717,9 +718,11 @@ void glResetTrigger(struct ADAPTER *prAdapter,
 		kalSetRstEvent(FALSE);
 	else
 		kalSetRstEvent(TRUE);
+	rst_evt_send = WLAN_STATUS_SUCCESS;
 #endif
 exit:
 	fgIsMcuOff = FALSE;
+	return rst_evt_send;
 }
 #else
 /* The following definition is of ce. */
@@ -1672,8 +1675,9 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 			goto exit;
 		}
 
-		GL_DEFAULT_RESET_TRIGGER(prGlueInfo->prAdapter,
-					 RST_WHOLE_CHIP_TRIGGER);
+		if (GL_DEFAULT_RESET_TRIGGER(prGlueInfo->prAdapter,
+				RST_WHOLE_CHIP_TRIGGER) != WLAN_STATUS_SUCCESS)
+			goto exit;
 	} else {
 		while (kalIsResetOnEnd() &&
 				fgIsDrvTriggerWholeChipReset == FALSE) {
