@@ -195,7 +195,6 @@ static void mt6639UpdatePcieAspm(struct GLUE_INFO *prGlueInfo, u_int8_t fgEn);
 static void mt6639KeepPcieWakeup(struct GLUE_INFO *prGlueInfo,
 				u_int8_t fgWakeup);
 static u_int8_t mt6639DumpPcieDateFlowStatus(struct GLUE_INFO *prGlueInfo);
-static void mt6639_enable_pcie_l1p2(struct ADAPTER *);
 #endif
 
 static void mt6639ShowPcieDebugInfo(struct GLUE_INFO *prGlueInfo);
@@ -1099,9 +1098,6 @@ struct mt66xx_chip_info mt66xx_chip_info_mt6639 = {
 	.eDefaultDbdcMode = ENUM_DBDC_MODE_STATIC,
 
 	.fgCheckRxDropThreshold = TRUE,
-#if CFG_SUPPORT_PCIE_ASPM
-	.enable_pcie_l1p2 = mt6639_enable_pcie_l1p2,
-#endif
 };
 
 struct mt66xx_hif_driver_data mt66xx_driver_data_mt6639 = {
@@ -3712,11 +3708,4 @@ int mt6639PowerDumpEnd(void *priv_data)
 	return 0;
 }
 #endif  /* CFG_SUPPORT_WIFI_SLEEP_COUNT */
-
-#if CFG_SUPPORT_PCIE_ASPM
-static void mt6639_enable_pcie_l1p2(struct ADAPTER *prAdapter)
-{
-	HAL_MCR_WR(prAdapter, PCIE_MAC_IREG_PCIE_LOW_POWER_CTRL_ADDR, 0xf);
-}
-#endif  /* CFG_SUPPORT_PCIE_ASPM */
 #endif  /* MT6639 */
