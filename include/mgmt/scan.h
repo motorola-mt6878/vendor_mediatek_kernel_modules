@@ -698,6 +698,7 @@ struct SCAN_INFO {
 #if CFG_SUPPORT_SCAN_LOG
 	uint8_t fgBcnReport;
 #endif
+	uint8_t fgWifiOnFirstScan;
 };
 
 /* Incoming Mailbox Messages */

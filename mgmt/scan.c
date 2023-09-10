@@ -111,6 +111,7 @@ void scnInit(struct ADAPTER *prAdapter)
 
 	/* 4 <1> Reset STATE and Message List */
 	prScanInfo->eCurrentState = SCAN_STATE_IDLE;
+	prScanInfo->fgWifiOnFirstScan = TRUE;
 
 #if CFG_SUPPORT_SCAN_NO_AP_RECOVERY
 	prScanInfo->ucScnZeroMdrdyTimes = 0;
@@ -1799,7 +1800,8 @@ void scanParsingRnrElement(struct ADAPTER *prAdapter,
 
 	if (prAdapter->rWifiVar.u4SwTestMode == ENUM_SW_TEST_MODE_SIGMA_OCE
 		|| prScanInfo->eCurrentState != SCAN_STATE_SCANNING
-		|| !prScanInfo->rScanParam.fgOobRnrParseEn) {
+		|| !prScanInfo->rScanParam.fgOobRnrParseEn
+		|| prScanInfo->fgWifiOnFirstScan) {
 		DBGLOG(SCN, TRACE, "Skip oob scan Rnr parsing\n");
 		return;
 	}
