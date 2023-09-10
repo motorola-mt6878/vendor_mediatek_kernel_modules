@@ -1622,7 +1622,9 @@ struct mt66xx_chip_info {
 #endif
 	void (*asicSerInit)(struct ADAPTER *prAdapter,
 			    const u_int8_t fgAtResetFlow);
-
+#if CFG_SUPPORT_PCIE_ASPM
+	void (*enable_pcie_l1p2)(struct ADAPTER *);
+#endif
 	/* If you want to explicitly specify the max AMPDU length exponent in
 	 * HE CAP IE instead of using default one specified by
 	 * prWifiVar->ucMaxAmpduLenExp, then you shall set

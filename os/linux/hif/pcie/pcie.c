@@ -44,6 +44,11 @@
 #include <linux/of_address.h>
 #include <linux/of.h>
 
+#if CFG_SUPPORT_PCIE_ASPM
+#include <linux/jiffies.h>
+#include <linux/timer.h>
+#endif
+
 #if CFG_SUPPORT_RX_PAGE_POOL
 #include <net/page_pool.h>
 #endif
@@ -2399,3 +2404,42 @@ int mtk_pcie_retrain(struct pci_dev *dev)
 	return 0;
 }
 #endif
+
+#if CFG_SUPPORT_PCIE_ASPM
+void halPcieTimeoutHandler(struct timer_list *timer)
+{
+	struct GLUE_INFO *prGlueInfo = NULL;
+	struct ADAPTER *prAdapter = NULL;
+
+	WIPHY_PRIV(wlanGetWiphy(), prGlueInfo);
+	ASSERT(prGlueInfo);
+
+	prAdapter = prGlueInfo->prAdapter;
+	if (prAdapter == NULL) {
+		DBGLOG(INIT, ERROR, "NULL prAdapter.\n");
+		return;
+	}
+	if (prAdapter->chip_info && prAdapter->chip_info->enable_pcie_l1p2)
+		prAdapter->chip_info->enable_pcie_l1p2(prAdapter);
+}
+
+void halPcieTimerInit(struct GLUE_INFO *prGlueInfo)
+{
+	ASSERT(prGlueInfo);
+
+	timer_setup(&prGlueInfo->rPcieTimer, halPcieTimeoutHandler, 0);
+	/* Call timeout handler after 2 seconds */
+	prGlueInfo->rPcieTimer.expires = jiffies + MSEC_TO_JIFFIES(2000);
+	if (!timer_pending(&prGlueInfo->rPcieTimer)) {
+		DBGLOG(INIT, INFO, "Add timer to enable PCIe L1.2\n");
+		add_timer(&prGlueInfo->rPcieTimer);
+	}
+}
+
+void halPcieTimerDeInit(struct GLUE_INFO *prGlueInfo)
+{
+	ASSERT(prGlueInfo);
+	DBGLOG(INIT, INFO, "Delete timer for enabling PCIe L1.2\n");
+	del_timer_sync(&prGlueInfo->rPcieTimer);
+}
+#endif /* CFG_SUPPORT_PCIE_ASPM */

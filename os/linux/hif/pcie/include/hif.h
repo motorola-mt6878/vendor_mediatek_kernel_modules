@@ -620,6 +620,12 @@ int mtk_pcie_retrain(struct pci_dev *dev);
 #endif
 u_int8_t mtk_get_aer_triggered(void);
 
+#if CFG_SUPPORT_PCIE_ASPM
+void halPcieTimeoutHandler(struct timer_list *);
+void halPcieTimerInit(struct GLUE_INFO *);
+void halPcieTimerDeInit(struct GLUE_INFO *);
+#endif /* CFG_SUPPORT_PCIE_ASPM */
+
 /*******************************************************************************
  *                              F U N C T I O N S
  *******************************************************************************

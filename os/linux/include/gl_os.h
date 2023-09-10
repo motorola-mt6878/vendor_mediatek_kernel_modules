@@ -983,6 +983,11 @@ struct GLUE_INFO {
 #if CFG_SUPPORT_CSI
 	wait_queue_head_t waitq_csi;
 #endif
+
+#if CFG_SUPPORT_PCIE_ASPM
+	struct timer_list rPcieTimer;
+#endif
+
 	unsigned long fgIsInSuspend;
 	u_int8_t fgIsPendingMsi;
 };

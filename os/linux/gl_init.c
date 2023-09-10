@@ -6712,6 +6712,10 @@ int32_t wlanOnWhenProbeSuccess(struct GLUE_INFO *prGlueInfo,
 #if CFG_SUPPORT_TPENHANCE_MODE
 		kalTpeInit(prGlueInfo);
 #endif /* CFG_SUPPORT_TPENHANCE_MODE */
+
+#if CFG_SUPPORT_PCIE_ASPM
+		halPcieTimerInit(prGlueInfo);
+#endif
 	}
 
 #if CFG_SUPPORT_THERMAL_QUERY
@@ -7753,6 +7757,9 @@ static void wlanRemove(void)
 	wlanServiceExit(prGlueInfo);
 #endif
 
+#if CFG_SUPPORT_PCIE_ASPM
+	halPcieTimerDeInit(prGlueInfo);
+#endif
 	/* Have tried to do scan done here, but the exception occurs for */
 	/* the P2P scan. Keep the original design that scan done in the	 */
 	/* p2pStop/wlanStop.						 */
