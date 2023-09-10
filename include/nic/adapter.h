@@ -1612,6 +1612,8 @@ struct WIFI_VAR {
 
 	uint32_t u4PmkRefreshThreshold;
 	int8_t icRegPwrLmtMin;
+
+	uint32_t u4RecoveryMsiRxCnt;
 };
 
 /* cnm_timer module */

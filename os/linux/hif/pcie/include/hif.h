@@ -434,6 +434,7 @@ struct BUS_INFO {
 	void (*hwControlVote)(struct ADAPTER *prAdapter,
 		uint8_t enable, uint32_t u4WifiUser);
 	u_int8_t (*checkDriverOwnMsiStatus)(struct GLUE_INFO *prGlueInfo);
+	void (*checkFwOwnMsiStatus)(struct ADAPTER *prAdapter);
 #if CFG_SUPPORT_WIFI_SLEEP_COUNT
 	int (*wf_power_dump_start)(void *priv_data, unsigned int force_dump);
 	int (*wf_power_dump_end)(void *priv_data);

@@ -728,7 +728,7 @@ end:
 	return fgStatus;
 }
 
-static uint32_t halGetWfdmaRxCnt(struct ADAPTER *prAdapter)
+uint32_t halGetWfdmaRxCnt(struct ADAPTER *prAdapter)
 {
 	uint32_t u4RxCnt = 0, u4Idx;
 
@@ -822,6 +822,10 @@ void halSetFWOwn(struct ADAPTER *prAdapter, u_int8_t fgEnableGlobalInt)
 		DBGLOG(INIT, TRACE, "fgN9AssertDumpOngoing\n");
 		goto unlock;
 	}
+#endif
+#if defined(_HIF_PCIE)
+	if (prBusInfo->checkFwOwnMsiStatus)
+		prBusInfo->checkFwOwnMsiStatus(prAdapter);
 #endif
 
 	if (p2pFuncNeedForceSleep(prAdapter))

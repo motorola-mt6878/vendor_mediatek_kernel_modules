@@ -8492,6 +8492,7 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 #if WLAN_INCLUDE_SYS
 	sysGetExtCfg(prAdapter);
 #endif
+	INIT_UINT(prWifiVar->u4RecoveryMsiRxCnt, "RecoveryMsiRxCnt", 5);
 }
 
 void wlanCfgSetSwCtrl(struct ADAPTER *prAdapter)
