@@ -1611,15 +1611,13 @@ int32_t mddpMdNotifyInfo(struct mddpw_md_notify_info_t *prMdInfo)
 #if CFG_SUPPORT_PCIE_ASPM
 		} else if (event->u4Reason == MD_L12_DISABLE) {
 			/* disable PCIe L1.2, 2 means md config */
-			if (mtk_get_pci_probe_status() &&
-				prBusInfo->configPcieAspm) {
+			if (prBusInfo->configPcieAspm) {
 				prBusInfo->configPcieAspm(prGlueInfo, FALSE, 2);
 				mddpNotifyMDPCIeL12Status(0);
 			}
 		} else if (event->u4Reason == MD_L12_ENABLE) {
 			/* enable PCIe L1.2, 2 means md config */
-			if (mtk_get_pci_probe_status() &&
-				prBusInfo->configPcieAspm) {
+			if (prBusInfo->configPcieAspm) {
 				prBusInfo->configPcieAspm(prGlueInfo, TRUE, 2);
 				mddpNotifyMDPCIeL12Status(1);
 			}
