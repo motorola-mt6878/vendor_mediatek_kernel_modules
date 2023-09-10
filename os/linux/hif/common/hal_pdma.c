@@ -835,7 +835,7 @@ void halSetFWOwn(struct ADAPTER *prAdapter, u_int8_t fgEnableGlobalInt)
 		&& (prAdapter->eWfsysResetState == WFSYS_RESET_STATE_IDLE)
 #endif
 		) {
-		DBGLOG(INIT, TRACE, "not in fgWiFiInSleepyState\n");
+		DBGLOG(INIT, LOUD, "not in fgWiFiInSleepyState\n");
 		goto unlock;
 	}
 
