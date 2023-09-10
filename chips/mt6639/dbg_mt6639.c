@@ -1788,10 +1788,17 @@ void mt6639_dumpCbtopReg(struct ADAPTER *ad)
 		connv3_hif_dbg_read(CONNV3_DRV_TYPE_WIFI, CONNV3_DRV_TYPE_BT,
 			read_addr, &u4Values[7]);
 		read_addr += 4;
+		connv3_hif_dbg_read(CONNV3_DRV_TYPE_WIFI, CONNV3_DRV_TYPE_BT,
+			read_addr, &u4Values[8]);
+		read_addr += 4;
+		connv3_hif_dbg_read(CONNV3_DRV_TYPE_WIFI, CONNV3_DRV_TYPE_BT,
+			read_addr, &u4Values[9]);
+		read_addr += 4;
 		DBGLOG(HAL, INFO,
-			"PCIe debug dump for SDES, 0x70003014=0x%08x, 0x70025404=0x%08x, MCU time=0x%08x, 0x74030150=0x%08x, 0x74030184=0x%08x, 0x70003014=0x%08x, 0x70025404=0x%08x, 0x74030194=0x%08x\n",
+			"PCIe debug dump for SDES, 0x70003014=0x%08x, 0x70025404=0x%08x, MCU time=0x%08x, 0x74030150=0x%08x, 0x74030184=0x%08x, 0x70003014=0x%08x, 0x70025404=0x%08x, 0x74030194=0x%08x, 0x70025008=0x%08x, 0x70025014=0x%08x\n",
 			u4Values[0], u4Values[1], u4Values[2], u4Values[3],
-			u4Values[4], u4Values[5], u4Values[6], u4Values[7]);
+			u4Values[4], u4Values[5], u4Values[6], u4Values[7],
+			u4Values[8], u4Values[9]);
 
 		for (i = 0; i < dump_count; i++) {
 			for (j = 0; j < 20; j++) {
