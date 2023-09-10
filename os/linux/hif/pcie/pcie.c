@@ -1297,6 +1297,13 @@ static int mtk_pci_suspend(struct pci_dev *pdev, pm_message_t state)
 #endif
 }
 
+bool mtk_get_pci_probe_status(void)
+{
+	if (g_fgDriverProbed)
+		return TRUE;
+
+	return FALSE;
+}
 
 int mtk_pci_resume(struct pci_dev *pdev)
 {

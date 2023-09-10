@@ -531,6 +531,7 @@ extern struct platform_device *g_prPlatDev;
  *                   F U N C T I O N   D E C L A R A T I O N S
  *******************************************************************************
  */
+bool mtk_get_pci_probe_status(void);
 
 uint32_t glRegisterBus(probe_card pfProbe, remove_card pfRemove);
 
