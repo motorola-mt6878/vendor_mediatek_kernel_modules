@@ -258,6 +258,9 @@ enum ENUM_EAPOL_KEY_TYPE_T secGetEapolKeyType(
 void secHandleNoWtbl(struct ADAPTER *prAdapter,
 	struct SW_RFB *prSwRfb);
 
+enum ENUM_EAPOL_KEY_TYPE_T secGetEapolKeyTypeBySwRfb(
+	struct SW_RFB *prSwRfb);
+
 void secCheckRxEapolPacketEncryption(struct ADAPTER *prAdapter,
 	struct SW_RFB *prRetSwRfb,
 	struct STA_RECORD *prStaRec);

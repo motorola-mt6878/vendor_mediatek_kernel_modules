@@ -793,6 +793,8 @@ static void statsParsePktInfo(uint8_t *pucData, void *pvPacket,
 						GLUE_GET_PKT_SEQ_NO(pvPacket));
 				break;
 			}
+			/* Record EAPOL key type */
+			GLUE_SET_INDEPENDENT_EAPOL(pvPacket, m);
 			break;
 		}
 		break;
