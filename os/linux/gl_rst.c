@@ -1616,7 +1616,6 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 	struct GLUE_INFO *prGlueInfo;
 	struct ADAPTER *prAdapter = NULL;
 	struct BUS_INFO *prBusInfo = NULL;
-	bool bTrigger = FALSE;
 
 	DBGLOG(INIT, INFO,
 		"drv: %d, reason: %s\n",
@@ -1639,7 +1638,7 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 		DBGLOG(REQ, WARN, "wifi driver is off now\n");
 		glResetOnEndUpdateFlag(TRUE);
 		wfsys_unlock();
-		goto exit;
+		return 0;
 	}
 	wfsys_unlock();
 #endif
@@ -1647,7 +1646,7 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 	prAdapter = prGlueInfo->prAdapter;
 	if (!prAdapter) {
 		DBGLOG(REQ, WARN, "adapter null, return\n");
-		goto exit;
+		return 0;
 	}
 
 	prBusInfo = prAdapter->chip_info->bus_info;
@@ -1687,7 +1686,6 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 		if (GL_DEFAULT_RESET_TRIGGER(prGlueInfo->prAdapter,
 				RST_WHOLE_CHIP_TRIGGER) != WLAN_STATUS_SUCCESS)
 			goto exit;
-		bTrigger = TRUE;
 	} else {
 		while (kalIsResetOnEnd() &&
 				fgIsDrvTriggerWholeChipReset == FALSE) {
@@ -1698,13 +1696,10 @@ int wlan_pre_whole_chip_rst_v3(enum connv3_drv_type drv,
 		g_IsWholeChipRst = TRUE;
 
 		kalSetRstEvent(TRUE);
-		bTrigger = TRUE;
 	}
 
 	wait_for_completion(&g_RstOffComp);
 exit:
-	if (bTrigger == FALSE)
-		wifi_reset_start();
 
 	DBGLOG(INIT, INFO, "Wi-Fi is off successfully.\n");
 
