@@ -646,11 +646,26 @@ done:
 			   (kalIsCardRemoved(prAdapter->prGlueInfo) ||
 			    fgIsBusAccessFailed || fgTimeout)) {
 #if IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE)
+			/* GIC pending recover */
 			if (prBusInfo->checkDriverOwnMsiStatus &&
 				prBusInfo->checkDriverOwnMsiStatus
 					(prAdapter->prGlueInfo)) {
+				DBGLOG(INIT, INFO,
+					"GIC pending recover.\n");
 				fgResult = TRUE;
 				goto done;
+			} else {
+				/* host pending recover */
+				uint32_t WFDrvOwnStat = 0xFFFFFFFF;
+
+				HAL_MCR_RD(prAdapter,
+					CONNAC3X_BN0_LPCTL_ADDR, &WFDrvOwnStat);
+				if (WFDrvOwnStat == 0) {
+					DBGLOG(INIT, INFO,
+						"host pending recover.\n");
+					fgResult = TRUE;
+					goto done;
+				}
 			}
 #endif /* IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) */
 			fgStatus = FALSE;
