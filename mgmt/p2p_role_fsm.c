@@ -855,6 +855,9 @@ p2pRoleFsmDeauthCompleteImpl(struct ADAPTER *prAdapter,
 		}
 		kalP2pNotifyDelStaComplete(prAdapter,
 			prP2pRoleFsmInfo->ucRoleIndex);
+
+		kalP2PGOStationUpdate(prAdapter->prGlueInfo,
+			prP2pBssInfo->u4PrivateData, prStaRec, FALSE);
 	} else { /* GC : Stop BSS when Deauth done */
 		p2pChangeMediaState(prAdapter,
 			prP2pBssInfo,
@@ -966,7 +969,6 @@ p2pRoleFsmRunEventDeauthTxDone(struct ADAPTER *prAdapter,
 		p2pRoleFsmDeauthComplete(prAdapter, prStaRec);
 		/* Avoid re-entry */
 		cnmTimerStopTimer(prAdapter, &(prStaRec->rDeauthTxDoneTimer));
-
 	} while (FALSE);
 
 	return WLAN_STATUS_SUCCESS;

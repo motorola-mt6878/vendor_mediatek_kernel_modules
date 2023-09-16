@@ -3615,6 +3615,7 @@ p2pFuncDisconnect(struct ADAPTER *prAdapter,
 #if (CFG_SUPPORT_TWT_HOTSPOT == 1)
 	struct _TWT_HOTSPOT_STA_NODE *prTWTHotspotStaNode = NULL;
 #endif
+	struct TIMER *prTimer;
 
 	do {
 		ASSERT_BREAK((prAdapter != NULL)
@@ -3624,7 +3625,7 @@ p2pFuncDisconnect(struct ADAPTER *prAdapter,
 
 		ASSERT_BREAK(prP2pBssInfo->ucBssIndex
 			< prAdapter->ucP2PDevBssIdx);
-
+		prTimer = &(prStaRec->rDeauthTxDoneTimer);
 		if (u2ReasonCode == REASON_CODE_DISASSOC_INACTIVITY ||
 			u2ReasonCode == REASON_CODE_DISASSOC_LEAVING_BSS) {
 			prAdapter->u4HifChkFlag |= HIF_TRIGGER_FW_DUMP;
@@ -3644,8 +3645,11 @@ p2pFuncDisconnect(struct ADAPTER *prAdapter,
 			/* Store last sta deauth reason */
 			prP2pBssInfo->u2DeauthReason = u2ReasonCode;
 #endif
-			kalP2PGOStationUpdate(prAdapter->prGlueInfo,
-				prP2pRoleFsmInfo->ucRoleIndex, prStaRec, FALSE);
+			if (!timerPendingTimer(prTimer))
+				kalP2PGOStationUpdate(
+					prAdapter->prGlueInfo,
+					prP2pRoleFsmInfo->ucRoleIndex,
+					prStaRec, FALSE);
 
 #if (CFG_SUPPORT_TWT_HOTSPOT == 1)
 			prTWTHotspotStaNode = prStaRec->prTWTHotspotStaNode;
@@ -8941,11 +8945,6 @@ p2pFunNotifyChnlSwitch(struct ADAPTER *prAdapter,
 
 				prTimer = &(prCurrStaRec->rDeauthTxDoneTimer);
 
-				p2pFuncDisconnect(prAdapter, prBssInfo,
-						prCurrStaRec, TRUE,
-						REASON_CODE_DEAUTH_LEAVING_BSS,
-						TRUE);
-
 				if (!timerPendingTimer(prTimer)) {
 					cnmTimerInitTimer(prAdapter,
 						prTimer,
@@ -8956,6 +8955,10 @@ p2pFunNotifyChnlSwitch(struct ADAPTER *prAdapter,
 						prTimer,
 						P2P_DEAUTH_TIMEOUT_TIME_MS);
 				}
+				p2pFuncDisconnect(prAdapter, prBssInfo,
+						prCurrStaRec, TRUE,
+						REASON_CODE_DEAUTH_LEAVING_BSS,
+						TRUE);
 			}
 			/* wait for deauth TX done & switch channel */
 		} else {
