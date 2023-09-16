@@ -853,6 +853,10 @@ struct GLUE_INFO {
 #if CFG_ENABLE_WAKE_LOCK && CFG_SUPPORT_RX_WORK
 	KAL_WAKE_LOCK_T *rRxWorkerLock;
 #endif
+#if (IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) \
+	&& CFG_ENABLE_WAKE_LOCK)
+	KAL_WAKE_LOCK_T *rDrvOwnWakeLock;
+#endif
 
 #if CFG_MET_PACKET_TRACE_SUPPORT
 	u_int8_t fgMetProfilingEn;

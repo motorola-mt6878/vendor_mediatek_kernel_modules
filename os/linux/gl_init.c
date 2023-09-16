@@ -4336,6 +4336,10 @@ void wlanWakeLockInit(struct GLUE_INFO *prGlueInfo)
 	KAL_WAKE_LOCK_INIT(NULL, prGlueInfo->rRxWorkerLock,
 			   "Rx Worker");
 #endif
+#if IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE)
+	KAL_WAKE_LOCK_INIT(NULL, prGlueInfo->rDrvOwnWakeLock,
+			   "WLAN Drv Own");
+#endif
 #endif
 }
 
@@ -4356,6 +4360,12 @@ void wlanWakeLockUninit(struct GLUE_INFO *prGlueInfo)
 				 prGlueInfo->rRxWorkerLock))
 		KAL_WAKE_UNLOCK(NULL, prGlueInfo->rRxWorkerLock);
 	KAL_WAKE_LOCK_DESTROY(NULL, prGlueInfo->rRxWorkerLock);
+#endif
+#if IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE)
+	if (KAL_WAKE_LOCK_ACTIVE(NULL,
+				 prGlueInfo->rDrvOwnWakeLock))
+		KAL_WAKE_UNLOCK(NULL, prGlueInfo->rDrvOwnWakeLock);
+	KAL_WAKE_LOCK_DESTROY(NULL, prGlueInfo->rDrvOwnWakeLock);
 #endif
 #endif
 }
@@ -6846,7 +6856,15 @@ void wlanOffWaitWlanThreads(struct completion *prComp,
 
 void wlanOffStopWlanThreads(struct GLUE_INFO *prGlueInfo)
 {
+#if (IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) && CFG_ENABLE_WAKE_LOCK)
+	struct ADAPTER *prAdapter = prGlueInfo->prAdapter;
+#endif
+
 	DBGLOG(INIT, TRACE, "start.\n");
+
+#if (IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) && CFG_ENABLE_WAKE_LOCK)
+	KAL_WAKE_LOCK(prAdapter, prAdapter->prGlueInfo->rDrvOwnWakeLock);
+#endif
 
 	prGlueInfo->fgRxTaskReady = FALSE;
 #if CFG_SUPPORT_MULTITHREAD
@@ -6863,6 +6881,10 @@ void wlanOffStopWlanThreads(struct GLUE_INFO *prGlueInfo)
 	/* wait main thread stops */
 	wlanOffWaitWlanThreads(&prGlueInfo->rHaltComp,
 			prGlueInfo->main_thread);
+
+#if (IS_ENABLED(CFG_MTK_WIFI_DRV_OWN_INT_MODE) && CFG_ENABLE_WAKE_LOCK)
+	KAL_WAKE_UNLOCK(prAdapter, prAdapter->prGlueInfo->rDrvOwnWakeLock);
+#endif
 
 	DBGLOG(INIT, INFO, "wlan thread stopped\n");
 }
