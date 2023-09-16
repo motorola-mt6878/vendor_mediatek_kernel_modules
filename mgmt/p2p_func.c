@@ -1456,7 +1456,11 @@ p2pFuncTxMgmtFrame(struct ADAPTER *prAdapter,
 		case MAC_FRAME_REASSOC_RSP:
 			DBGLOG(P2P, TRACE, "[OWE] TX assoc resp Frame\n");
 			if (!prStaRec) {
-				DBGLOG(AAA, WARN, "get sta fail\n");
+				DBGLOG(AAA, WARN,
+					"get sta fail, bss=%d, A1=" MACSTR "\n",
+					ucBssIndex,
+					MAC2STR(prWlanHdr->aucAddr1));
+				fgDrop = TRUE;
 				break;
 			}
 			prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter,
@@ -1483,7 +1487,11 @@ p2pFuncTxMgmtFrame(struct ADAPTER *prAdapter,
 		case MAC_FRAME_AUTH:
 			DBGLOG(P2P, TRACE, "TX auth Frame\n");
 			if (!prStaRec) {
-				DBGLOG(AAA, WARN, "get sta fail\n");
+				DBGLOG(AAA, WARN,
+					"get sta fail, bss=%d, A1=" MACSTR "\n",
+					ucBssIndex,
+					MAC2STR(prWlanHdr->aucAddr1));
+				fgDrop = TRUE;
 				break;
 			}
 			prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter,
