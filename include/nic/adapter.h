@@ -1615,6 +1615,7 @@ struct WIFI_VAR {
 	int8_t icRegPwrLmtMin;
 
 	uint32_t u4RecoveryMsiRxCnt;
+	uint32_t u4RecoveryMsiTime;
 };
 
 /* cnm_timer module */

@@ -2201,8 +2201,10 @@ static void mt6639WfdmaRxRingExtCtrl(
 }
 
 #if defined(_HIF_PCIE)
+static unsigned long g_ulRecoveryMsiCheckTime;
 static void mt6639RecoveryMsiStatus(struct ADAPTER *prAdapter)
 {
+	struct PERF_MONITOR *perf = &prAdapter->rPerMonitor;
 	struct BUS_INFO *prBusInfo = prAdapter->chip_info->bus_info;
 	struct WIFI_VAR *prWifiVar = &prAdapter->rWifiVar;
 	struct pcie_msi_info *prMsiInfo = &prBusInfo->pcie_msi_info;
@@ -2212,9 +2214,19 @@ static void mt6639RecoveryMsiStatus(struct ADAPTER *prAdapter)
 	u_int8_t fgRet = FALSE;
 #endif
 
+	/* tput < 10mbps */
+	if (perf->u4CurrPerfLevel > 0)
+		return;
+
 	/* check wfdma bits(0-7) */
 	if (prMsiInfo->ulEnBits & 0xff)
 		return;
+
+	if (time_before(jiffies, g_ulRecoveryMsiCheckTime))
+		return;
+
+	g_ulRecoveryMsiCheckTime = jiffies +
+		prAdapter->rWifiVar.u4RecoveryMsiTime * HZ / 1000;
 
 	u4Cnt = halGetWfdmaRxCnt(prAdapter);
 	if (u4Cnt < prWifiVar->u4RecoveryMsiRxCnt)
@@ -2237,7 +2249,7 @@ static void mt6639RecoveryMsiStatus(struct ADAPTER *prAdapter)
 
 	u4WrVal = u4Val & 0xffffff00;
 	HAL_MCR_WR(prAdapter, u4Addr, u4WrVal);
-	DBGLOG(HAL, INFO, "Rx[%u] CR[0x%08x]=[0x%08x] WR[0x%08x]",
+	DBGLOG(HAL, WARN, "Rx[%u] CR[0x%08x]=[0x%08x] WR[0x%08x]",
 	       u4Cnt, u4Addr, u4Val, u4WrVal);
 }
 
