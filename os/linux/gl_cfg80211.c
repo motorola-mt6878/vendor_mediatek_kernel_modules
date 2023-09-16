@@ -1346,7 +1346,8 @@ int wlanParseAkmSuites(uint32_t *au4AkmSuites, uint32_t u4AkmSuitesCount,
 	uint8_t i, j;
 	struct DOT11_RSNA_CONFIG_AUTHENTICATION_SUITES_ENTRY *prEntry;
 
-	for (i = 0; i < u4AkmSuitesCount; i++) {
+	for (i = 0;
+		i < u4AkmSuitesCount && i < CFG80211_MAX_NUM_AKM_SUITES; i++) {
 		uint32_t u4AkmSuite = 0;
 		enum ENUM_PARAM_AUTH_MODE eAuthMode;
 
