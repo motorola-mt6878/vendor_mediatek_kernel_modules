@@ -3618,12 +3618,12 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 	}
 #if (CFG_SUPPORT_TX_PWR_ENV == 1)
 	if (prTxPwrEnvIE) {
-		DBGLOG(SCN, TRACE,
+		DBGLOG(SCN, LOUD,
 			"TPE present,BSSID[" MACSTR "] SSID:%s\n",
 			MAC2STR(prBssDesc->aucBSSID),
 			prBssDesc->aucSSID);
 
-		DBGLOG_MEM8(SCN, TRACE, prTxPwrEnvIE, IE_SIZE(prTxPwrEnvIE));
+		DBGLOG_MEM8(SCN, LOUD, prTxPwrEnvIE, IE_SIZE(prTxPwrEnvIE));
 
 		rlmTxPwrEnvMaxPwrUpdate(
 			prAdapter,
@@ -3635,13 +3635,13 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 
 #if CFG_SUPPORT_802_11K
 	 if (prCountryIE) {
-		DBGLOG(SCN, TRACE,
+		DBGLOG(SCN, LOUD,
 			"Country IE present,BSSID[" MACSTR "] SSID:%s(%c%c)\n",
 			MAC2STR(prBssDesc->aucBSSID),
 			prBssDesc->aucSSID,
 			((u2CurrCountryCode & 0xff00) >> 8),
 			(u2CurrCountryCode & 0x00ff));
-		DBGLOG_MEM8(SCN, TRACE, prCountryIE, IE_SIZE(prCountryIE));
+		DBGLOG_MEM8(SCN, LOUD, prCountryIE, IE_SIZE(prCountryIE));
 		/* Update TxPower limit for Country IE & Power Constraint IE */
 		rlmRegTxPwrLimitUpdate(prAdapter,
 			prBssDesc,

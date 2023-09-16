@@ -8433,7 +8433,7 @@ uint32_t rlmRegTxPwrLimitUpdate(
 	while (ucRemainLen >= ucSubBandSize) {
 		ucStartCh = prSubBand->ucFirstChnlNum;
 		ucEndCh = ucStartCh + (prSubBand->ucNumOfChnl - 1) * ucChnlOfst;
-		DBGLOG(RLM, TRACE,
+		DBGLOG(RLM, LOUD,
 			"Country IE B[%d]ofst[%d]PriCh[%d]StartCh[%d]ChNum[%d]EndCh[%d]Lmt[%d]\n",
 			eHwBand,
 			ucChnlOfst,

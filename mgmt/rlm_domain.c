@@ -9142,9 +9142,9 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 #if CFG_SUPPORT_DYNAMIC_PWR_LIMIT_ANT_TAG
 	if (eType == PWR_LIMIT_TYPE_COMP_ANT_V2) {
 		prPwrLmtAnt = &prCmd->u.rChPwrLimtAnt[0];
-		DBGLOG(RLM, TRACE, "ANT Config #%d", prCmd->ucNum);
+		DBGLOG(RLM, LOUD, "ANT Config #%d", prCmd->ucNum);
 		for (i = 0; i < prCmd->ucNum; i++) {
-			DBGLOG(RLM, TRACE,
+			DBGLOG(RLM, LOUD,
 				"%s ANT Cfg%d Tag[%d]Ant[%d]Band[%d]Val[%d]\n",
 				message,
 				i,
@@ -9192,7 +9192,7 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 			else
 				msgLimit[0] = '\0';
 
-			DBGLOG(RLM, TRACE, "%s:%s\n", message, msgLimit);
+			DBGLOG(RLM, LOUD, "%s:%s\n", message, msgLimit);
 
 		} else if (eType == PWR_LIMIT_TYPE_COMP_11AX_BW160) {
 			prPwrLmtHEBW160 = &prCmd->u.rChPwrLimtHEBW160[i];
@@ -9217,7 +9217,7 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 			else
 				msgLimit[0] = '\0';
 
-			DBGLOG(RLM, TRACE, "%s:%s\n", message, msgLimit);
+			DBGLOG(RLM, LOUD, "%s:%s\n", message, msgLimit);
 
 		}
 #if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
@@ -9244,7 +9244,7 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 			else
 				msgLimit[0] = '\0';
 
-			DBGLOG(RLM, TRACE, "%s:%s\n", message, msgLimit);
+			DBGLOG(RLM, LOUD, "%s:%s\n", message, msgLimit);
 		}
 #endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
 #if (CFG_SUPPORT_WIFI_6G == 1)
@@ -9272,7 +9272,7 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 			else
 				msgLimit[0] = '\0';
 
-			DBGLOG(RLM, TRACE, "%s:%s\n", message, msgLimit);
+			DBGLOG(RLM, LOUD, "%s:%s\n", message, msgLimit);
 
 		} else if (eType >= PWR_LIMIT_TYPE_COMP_LEGACY_6G_1 &&
 			eType <= PWR_LIMIT_TYPE_COMP_LEGACY_V2_6G_3) {
@@ -9309,7 +9309,7 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 			else
 				msgLimit[0] = '\0';
 
-			DBGLOG(RLM, TRACE, "%s:%s\n", message, msgLimit);
+			DBGLOG(RLM, LOUD, "%s:%s\n", message, msgLimit);
 		}
 #if (CFG_SUPPORT_PWR_LIMIT_EHT == 1)
 		else if (eType >=
@@ -9338,7 +9338,7 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 			else
 				msgLimit[0] = '\0';
 
-			DBGLOG(RLM, TRACE, "%s:%s\n", message, msgLimit);
+			DBGLOG(RLM, LOUD, "%s:%s\n", message, msgLimit);
 		}
 #endif /* CFG_SUPPORT_PWR_LIMIT_EHT */
 #endif /* CFG_SUPPORT_WIFI_6G */
@@ -9373,7 +9373,7 @@ void rlmDomainShowPwrLimitPerCh(char *message,
 			else
 				msgLimit[0] = '\0';
 
-			DBGLOG(RLM, TRACE, "%s:%s\n", message, msgLimit);
+			DBGLOG(RLM, LOUD, "%s:%s\n", message, msgLimit);
 		}
 	}
 }
