@@ -1238,7 +1238,7 @@ static int wake_up_conninfra_off(void)
 	 * (polling "10 times" for specific project code
 	 * and each polling interval is "1ms")
 	 * Address: 0x1801_1000[31:0]
-	 * Data: 0x02050100
+	 * Data: by project
 	 * Action: polling
 	 */
 	wf_ioremap_read(CONN_INFRA_CFG_IP_VERSION_ADDR, &value);
@@ -1452,7 +1452,7 @@ static int wf_pwr_on_consys_mcu(struct ADAPTER *prAdapter)
 	/* Check WFSYS version ID
 	 * (polling "10 times" for specific project code and each polling interval is "0.5ms")
 	 * Address: 0x184B_0010[31:0]
-	 * Data: 32'h02040100
+	 * Data: by project
 	 * Action: polling
 	 */
 	wf_ioremap_read(WF_TOP_CFG_IP_VERSION_ADDR, &value);
@@ -1508,7 +1508,7 @@ static int wf_pwr_on_consys_mcu(struct ADAPTER *prAdapter)
 
 	/* Reset wfsys bus timeout value (debug ctrl ao)
 	 * Address: 0x1850_0000[9]
-	 * Data: 1'b0
+	 * Data: 1'b1
 	 * Action: write
 	 */
 	wf_ioremap_read(DEBUG_CTRL_AO_WFMCU_PWA_CTRL0, &value);
@@ -1746,21 +1746,29 @@ static int wf_pwr_off_consys_mcu(struct ADAPTER *prAdapter)
 	/* Release WFSYS semaphore */
 	u4ChipID = kalGetChipID();
 
-	if (u4ChipID == 0x6897) {
-		/* for Ponsot (mt6897) only
-		 * 0x18070900[0]=1'b1
+	if (u4ChipID == 0x6897 || u4ChipID == 0x6878) {
+		/* for mt6897 and mt6878
+		 * 0x18000158[0]=1'b0
 		 * Action: write
 		 */
-		wf_ioremap_read(
-		CONN_SEMAPHORE_CONN_SEMA_M0_TIMEOUT_INT_RESET_BY_SW_ADDR,
+		wf_ioremap_read(CONN_INFRA_RGU_ON_SEMA_M0_SW_RST_B_ADDR,
+				&value);
+		value &=
+		~CONN_INFRA_RGU_ON_SEMA_M0_SW_RST_B_MASK;
+		wf_ioremap_write(CONN_INFRA_RGU_ON_SEMA_M0_SW_RST_B_ADDR,
+				value);
+		/* 0x18000158[0]=1'b1
+		 * Action: write
+		 */
+		wf_ioremap_read(CONN_INFRA_RGU_ON_SEMA_M0_SW_RST_B_ADDR,
 				&value);
 		value |=
-		CONN_SEMAPHORE_CONN_SEMA_M0_TIMEOUT_INT_RESET_BY_SW_MASK;
-		wf_ioremap_write(
-		CONN_SEMAPHORE_CONN_SEMA_M0_TIMEOUT_INT_RESET_BY_SW_ADDR,
+		CONN_INFRA_RGU_ON_SEMA_M0_SW_RST_B_MASK;
+		wf_ioremap_write(CONN_INFRA_RGU_ON_SEMA_M0_SW_RST_B_ADDR,
 				value);
 		goto release_wfsys_sem_done;
 	}
+
 	/* for other soc7_0 chips
 	 * 0x1807_0200[0]=1'b1
 	 * 0x1807_0204[0]=1'b1
@@ -1902,7 +1910,7 @@ release_wfsys_sem_done:
 
 	/* Disable A-die top_ck_en_1
 	 * Address: 0x18003124[1]
-	 * Data: 1'b1
+	 * Data: 1'b0
 	 * Action: polling
 	 */
 	wf_ioremap_read(CONN_WT_SLP_CTL_REG_WB_SLP_TOP_CK_1_ADDR, &value);
