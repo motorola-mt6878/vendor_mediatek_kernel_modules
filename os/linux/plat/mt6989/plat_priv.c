@@ -56,7 +56,7 @@ static uint32_t u4EmiMetOffset = 0x98000;
 static uint32_t u4ProjectId = 6989;
 
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
-#define RST_PIN_MIN_WAIT_TIME		10 /* ms */
+#define RST_PIN_MIN_WAIT_TIME		200 /* ms */
 
 static struct pinctrl *pinctrl_ptr;
 static int8_t last_wf_rst_pin_state;

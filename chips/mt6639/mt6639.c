@@ -3168,6 +3168,8 @@ static uint32_t mt6639_mcu_init(struct ADAPTER *ad)
 
 	uint32_t u4Value = 0, u4PollingCnt = 0;
 	uint32_t rStatus = WLAN_STATUS_SUCCESS;
+	struct mt66xx_chip_info *prChipInfo = NULL;
+	struct CHIP_DBG_OPS *prDbgOps = NULL;
 
 	if (!ad) {
 		DBGLOG(INIT, ERROR, "NULL ADAPTER.\n");
@@ -3230,11 +3232,12 @@ dump:
 	if (rStatus != WLAN_STATUS_SUCCESS) {
 		DBGLOG(INIT, ERROR, "u4Value: 0x%x\n",
 			u4Value);
-		mt6639_dumpWfsyscpupcr(ad);
-		mt6639_dumpPcGprLog(ad);
-		mt6639_dumpN45CoreReg(ad);
-		mt6639_dumpWfTopReg(ad);
-		mt6639_dumpWfBusReg(ad);
+		WARN_ON_ONCE(TRUE);
+
+		prChipInfo = ad->chip_info;
+		prDbgOps = prChipInfo->prDebugOps;
+		if (prDbgOps && prDbgOps->dumpBusHangCr)
+			prDbgOps->dumpBusHangCr(ad);
 
 		/* Clock detection for ULPOSC */
 		HAL_MCR_WR(ad,
