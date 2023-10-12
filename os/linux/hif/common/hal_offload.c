@@ -2635,13 +2635,13 @@ static u_int8_t __halMawdWakeup(void)
 	u4Addr = 0x18011000;
 	kalDevRegRead(NULL, u4Addr, &u4Val);
 	for (u4Idx = 0; u4Idx < MAWD_POWER_UP_RETRY_CNT; u4Idx++) {
-		if (u4Val == 0x02050300)
+		if (u4Val == 0x02050300 || u4Val == 0x02050500)
 			break;
 		kalUdelay(MAWD_POWER_UP_WAIT_TIME);
 		kalDevRegRead(NULL, u4Addr, &u4Val);
 	}
 	if (u4Idx == MAWD_POWER_UP_RETRY_CNT) {
-		DBGLOG(HAL, ERROR, "polling ID fail\n");
+		DBGLOG(HAL, ERROR, "polling ID fail[0x%08x]\n", u4Val);
 		fgRet = FALSE;
 		goto exit;
 	}
