@@ -7907,6 +7907,10 @@ wlanoidSetKeyCfg(struct ADAPTER *prAdapter,
 		wlanCfgSet(prAdapter, prKeyCfgInfo->aucKey,
 			   prKeyCfgInfo->aucValue, prKeyCfgInfo->u4Flag);
 		wlanInitFeatureOptionImpl(prAdapter, prKeyCfgInfo->aucKey);
+#if CFG_SUPPORT_IOT_AP_BLACKLIST
+		if (kalMemCmp(prKeyCfgInfo->aucKey, "IOTAP", 5) == 0)
+			wlanCfgLoadIotApRule(prAdapter);
+#endif
 	}
 
 
