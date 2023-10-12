@@ -1758,8 +1758,9 @@ uint8_t scanRnrChnlIsNeedScan(struct ADAPTER *prAdapter,
 		}
 	} else if (prScanParam->eScanChannel == SCAN_CHANNEL_FULL) {
 #if (CFG_SUPPORT_WIFI_6G == 1)
-		if (eRfBand != BAND_6G) {
+		if (eRfBand != BAND_6G)
 #endif
+		{
 			log_dbg(SCN, INFO,
 					"[ch:%d][band:%d] already in scan chnl list\n",
 						ucRnrChNum, eRfBand);
