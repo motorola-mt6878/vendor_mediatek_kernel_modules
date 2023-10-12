@@ -860,7 +860,7 @@ static int32_t mt6989_wlan_pinctrl_action(struct mt66xx_chip_info *chip_info,
 	}
 
 	ret = pinctrl_select_state(pinctrl_ptr, pinctrl);
-	DBGLOG(INIT, TRACE,
+	DBGLOG(INIT, INFO,
 		"pinctrl_select_state msg: %d, ret: %d.\n",
 		msg, ret);
 
