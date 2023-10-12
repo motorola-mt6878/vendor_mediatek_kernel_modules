@@ -2434,6 +2434,9 @@ int mtk_cfg80211_vendor_get_wfd_pred_tx_br(struct wiphy *wiphy,
 	} query = {0};
 	uint32_t u4QueryBufLen = sizeof(query);
 	uint32_t u4QueryInfoLen = sizeof(query.cmd);
+	uint8_t i, aisCnt = 0;
+	struct EVENT_STATS_LLS_TX_BIT_RATE dest = {0};
+	struct BSS_INFO *prBssInfo;
 #endif
 
 	if ((wiphy == NULL) || (wdev == NULL))
@@ -2461,8 +2464,45 @@ int mtk_cfg80211_vendor_get_wfd_pred_tx_br(struct wiphy *wiphy,
 				rStatus, u4QueryBufLen);
 		return -EFAULT;
 	}
+#define P2P_IDX 2
+#define SAP_IDX 3
+	for (i = 0; i < MAX_BSSID_NUM; i++) {
+		prBssInfo = GET_BSS_INFO_BY_INDEX(prAdapter, i);
+		if (!prBssInfo)
+			continue;
+		if (IS_BSS_AIS(prBssInfo)) {
+			kalMemCopy(&dest.au4CurrentBitrate[aisCnt],
+				&query.bitrate.au4CurrentBitrate[i],
+				sizeof(uint32_t));
+			kalMemCopy(&dest.au4PredictBitrate[aisCnt],
+				&query.bitrate.au4PredictBitrate[i],
+				sizeof(uint32_t));
+			aisCnt++;
+		} else if (IS_BSS_P2P(prBssInfo)) {
+			if (p2pFuncIsAPMode(
+				prAdapter->rWifiVar.prP2PConnSettings
+				[prBssInfo->u4PrivateData])) {
+				/* sap */
+				kalMemCopy(&dest.au4CurrentBitrate[SAP_IDX],
+					&query.bitrate.au4CurrentBitrate[i],
+					sizeof(uint32_t));
+				kalMemCopy(&dest.au4PredictBitrate[SAP_IDX],
+					&query.bitrate.au4PredictBitrate[i],
+					sizeof(uint32_t));
+			} else {
+				/* gc/go */
+				kalMemCopy(&dest.au4CurrentBitrate[P2P_IDX],
+					&query.bitrate.au4CurrentBitrate[i],
+					sizeof(uint32_t));
+				kalMemCopy(&dest.au4PredictBitrate[P2P_IDX],
+					&query.bitrate.au4PredictBitrate[i],
+					sizeof(uint32_t));
+			}
+		}
+	}
 
-	DBGLOG(REQ, TRACE, "CurBitRate=%u/%u/%u/%u PredBitRate=%u/%u/%u/%u",
+	DBGLOG(REQ, TRACE,
+		"query CurBitRate=%u/%u/%u/%u PredBitRate=%u/%u/%u/%u",
 		query.bitrate.au4CurrentBitrate[0],
 		query.bitrate.au4CurrentBitrate[1],
 		query.bitrate.au4CurrentBitrate[2],
@@ -2471,6 +2511,16 @@ int mtk_cfg80211_vendor_get_wfd_pred_tx_br(struct wiphy *wiphy,
 		query.bitrate.au4PredictBitrate[1],
 		query.bitrate.au4PredictBitrate[2],
 		query.bitrate.au4PredictBitrate[3]);
+	DBGLOG(REQ, TRACE,
+		"dest CurBitRate=%u/%u/%u/%u PredBitRate=%u/%u/%u/%u",
+		dest.au4CurrentBitrate[0],
+		dest.au4CurrentBitrate[1],
+		dest.au4CurrentBitrate[2],
+		dest.au4CurrentBitrate[3],
+		dest.au4PredictBitrate[0],
+		dest.au4PredictBitrate[1],
+		dest.au4PredictBitrate[2],
+		dest.au4PredictBitrate[3]);
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
 			sizeof(struct EVENT_STATS_LLS_TX_BIT_RATE));
@@ -2479,12 +2529,12 @@ int mtk_cfg80211_vendor_get_wfd_pred_tx_br(struct wiphy *wiphy,
 		return -ENOMEM;
 	}
 	if (unlikely(nla_put(skb, WIFI_ATTR_WFD_CUR_TX_BR,
-			     sizeof(query.bitrate.au4CurrentBitrate),
-			     query.bitrate.au4CurrentBitrate)))
+			     sizeof(dest.au4CurrentBitrate),
+			     dest.au4CurrentBitrate)))
 		goto nla_put_failure;
 	if (unlikely(nla_put(skb, WIFI_ATTR_WFD_PRED_TX_BR,
-			     sizeof(query.bitrate.au4PredictBitrate),
-			     query.bitrate.au4PredictBitrate)))
+			     sizeof(dest.au4PredictBitrate),
+			     dest.au4PredictBitrate)))
 		goto nla_put_failure;
 	return cfg80211_vendor_cmd_reply(skb);
 
