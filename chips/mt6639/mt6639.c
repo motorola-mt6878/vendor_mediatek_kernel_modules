@@ -3026,59 +3026,12 @@ exit:
 	return fgResult;
 }
 
-static uint32_t mt6639_mcu_reset(struct ADAPTER *ad)
-{
-	uint32_t u4Value = 0;
-	uint32_t rStatus = WLAN_STATUS_SUCCESS;
-
-	DBGLOG(INIT, INFO, "mt6639_mcu_reset..\n");
-
-	HAL_MCR_RD(ad,
-		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
-		&u4Value);
-	u4Value &= ~CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_MASK;
-	u4Value |= (0x1 << CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_SHFT);
-	HAL_MCR_WR(ad,
-		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
-		u4Value);
-
-	kalMdelay(1);
-
-	HAL_MCR_RD(ad,
-		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
-		&u4Value);
-	u4Value &= ~CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_MASK;
-	u4Value |= (0x0 << CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_SHFT);
-	HAL_MCR_WR(ad,
-		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
-		u4Value);
-
-	HAL_MCR_RD(ad,
-		CONN_SEMAPHORE_CONN_SEMA_OWN_BY_M0_STA_REP_1_ADDR,
-		&u4Value);
-	DBGLOG(INIT, INFO, "0x%08x=0x%08x.\n",
-		CONN_SEMAPHORE_CONN_SEMA_OWN_BY_M0_STA_REP_1_ADDR,
-		u4Value);
-	if ((u4Value &
-	     CONN_SEMAPHORE_CONN_SEMA_OWN_BY_M0_STA_REP_1_CONN_SEMA00_OWN_BY_M0_STA_REP_MASK) != 0x0)
-		DBGLOG(INIT, ERROR, "L0.5 reset failed.\n");
-
-	return rStatus;
-}
-
 static uint32_t mt6639_mcu_reinit(struct ADAPTER *ad)
 {
 #define CONNINFRA_ID_MAX_POLLING_COUNT		10
 
 	uint32_t u4Value = 0, u4PollingCnt = 0;
 	uint32_t rStatus = WLAN_STATUS_SUCCESS;
-
-	HAL_MCR_RD(ad, CONN_DBG_CTL_WF_MCU_DBG_PC_LOG_ADDR, &u4Value);
-	if (u4Value == 0x80dcac) {
-		DBGLOG(INIT, WARN, "PC=[0x%08x]\n", u4Value);
-		rStatus = mt6639_mcu_reset(ad);
-		goto exit;
-	}
 
 	/* Check recovery needed */
 	if (mt6639_check_recovery_needed(ad) == FALSE)
@@ -3155,6 +3108,48 @@ exit:
 	return rStatus;
 }
 
+#if (CFG_MTK_ANDROID_WMT == 0)
+static uint32_t mt6639_mcu_reset(struct ADAPTER *ad)
+{
+	uint32_t u4Value = 0;
+	uint32_t rStatus = WLAN_STATUS_SUCCESS;
+
+	DBGLOG(INIT, INFO, "mt6639_mcu_reset..\n");
+
+	HAL_MCR_RD(ad,
+		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
+		&u4Value);
+	u4Value &= ~CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_MASK;
+	u4Value |= (0x1 << CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_SHFT);
+	HAL_MCR_WR(ad,
+		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
+		u4Value);
+
+	kalMdelay(1);
+
+	HAL_MCR_RD(ad,
+		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
+		&u4Value);
+	u4Value &= ~CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_MASK;
+	u4Value |= (0x0 << CB_INFRA_RGU_WF_SUBSYS_RST_WF_SUBSYS_RST_SHFT);
+	HAL_MCR_WR(ad,
+		CB_INFRA_RGU_WF_SUBSYS_RST_ADDR,
+		u4Value);
+
+	HAL_MCR_RD(ad,
+		CONN_SEMAPHORE_CONN_SEMA_OWN_BY_M0_STA_REP_1_ADDR,
+		&u4Value);
+	DBGLOG(INIT, INFO, "0x%08x=0x%08x.\n",
+		CONN_SEMAPHORE_CONN_SEMA_OWN_BY_M0_STA_REP_1_ADDR,
+		u4Value);
+	if ((u4Value &
+	     CONN_SEMAPHORE_CONN_SEMA_OWN_BY_M0_STA_REP_1_CONN_SEMA00_OWN_BY_M0_STA_REP_MASK) != 0x0)
+		DBGLOG(INIT, ERROR, "L0.5 reset failed.\n");
+
+	return rStatus;
+}
+#endif
+
 static void set_cbinfra_remap(struct ADAPTER *ad)
 {
 	DBGLOG(INIT, INFO, "set_cbinfra_remap.\n");
@@ -3224,8 +3219,6 @@ static uint32_t mt6639_mcu_init(struct ADAPTER *ad)
 	HAL_MCR_WR(ad,
 		   CONN_BUS_CR_VON_CONN_INFRA_PCIE2AP_REMAP_WF_1_BA_ADDR,
 		   0x18051803);
-	/* Clear pending ccif interrupt */
-	HAL_MCR_WR(ad, AP2WF_CONN_INFRA_ON_CCIF4_AP2WF_PCCIF_ACK_ADDR, 0xFF);
 
 	if (ad->chip_info->coexpccifon)
 		ad->chip_info->coexpccifon(ad);
@@ -3425,9 +3418,8 @@ dump:
 			CB_INFRA_MISC0_CBTOP_FREQ_METER_STATUS_ADDR,
 			u4Value);
 	}
+
 exit:
-	/* Disable conn_infra off domain force on 0x180601A4[0] = 1'b0 */
-	HAL_MCR_WR(ad, CONN_HOST_CSR_TOP_CONN_INFRA_WAKEPU_WF_ADDR, 0x0);
 	return rStatus;
 }
 
