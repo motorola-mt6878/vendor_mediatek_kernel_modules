@@ -1346,6 +1346,12 @@ else
     endif
 endif
 
+ifeq ($(CONFIG_WIFI_LEROY_MP2), y)
+    ccflags-y += -DCFG_WIFI_LEROY_MP2=1
+else
+    ccflags-y += -DCFG_WIFI_LEROY_MP2=0
+endif
+
 ifeq ($(CONFIG_MTK_CONNSYS_DEDICATED_LOG_PATH), y)
     ccflags-y += -DCFG_MTK_CONNSYS_DEDICATED_LOG_PATH
 endif
