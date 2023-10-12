@@ -2833,7 +2833,7 @@ int _mtk_p2p_cfg80211_mgmt_tx(struct wiphy *wiphy,
 		mboxSendMsg(prGlueInfo->prAdapter,
 			MBOX_ID_0,
 			(struct MSG_HDR *) prMsgTxReq,
-			MSG_SEND_METHOD_BUF);
+			MSG_SEND_METHOD_UNBUF);
 
 		i4Rslt = 0;
 	} while (FALSE);
