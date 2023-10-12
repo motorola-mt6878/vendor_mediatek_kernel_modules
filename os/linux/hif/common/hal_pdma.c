@@ -6228,9 +6228,11 @@ void halDumpHifStats(struct ADAPTER *prAdapter)
 				(i == NUM_OF_RX_RING - 1) ? "]" : " ");
 	}
 	pos += kalSnprintf(buf + pos, u4BufferSize - pos,
-			" Msdu[%u/%u] Tok[%u/%u] Rfb[%u/%u/%u/%u]",
+			" Msdu:F[%u/%u]P[%u]D[%u] Tok[%u/%u] Rfb[%u/%u/%u/%u]",
 			prTxCtrl->rFreeMsduInfoList.u4NumElem,
 			CFG_TX_MAX_PKT_NUM,
+			prTxCtrl->rTxMgmtTxingQueue.u4NumElem,
+			prAdapter->rTxDataDoneQueue.u4NumElem,
 			prHifInfo->rTokenInfo.u4UsedCnt,
 			prTokenInfo->u4TokenNum,
 			RX_GET_FREE_RFB_CNT(prRxCtrl),
