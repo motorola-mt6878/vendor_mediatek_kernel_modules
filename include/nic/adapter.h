@@ -569,6 +569,7 @@ struct BSS_INFO {
 	struct TIMER rCsaTimer;
 	struct SWITCH_CH_AND_BAND_PARAMS CSAParams;
 	uint8_t ucVhtChannelWidthBeforeCsa;
+	uint8_t fgIsAisSwitchingChnl;
 #endif
 
 	u_int8_t fgEnableH2E;
