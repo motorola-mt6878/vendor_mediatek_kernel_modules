@@ -6550,6 +6550,12 @@ void rlmCsaTimeout(struct ADAPTER *prAdapter,
 
 	kalMemZero(&rSsid, sizeof(rSsid));
 	prCSAParams = &prBssInfo->CSAParams;
+	if (prBssInfo->ucPrimaryChannel == prCSAParams->ucCsaNewCh) {
+		DBGLOG(RLM, WARN,
+			"BSS: " MACSTR " already at channel %u\n",
+			MAC2STR(prBssInfo->aucBSSID), prCSAParams->ucCsaNewCh);
+		return;
+	}
 	prBssInfo->ucPrimaryChannel = prCSAParams->ucCsaNewCh;
 	if (prCSAParams->eCsaBand != BAND_NULL)
 		prBssInfo->eBand = prCSAParams->eCsaBand;
@@ -6609,7 +6615,7 @@ void rlmCsaTimeout(struct ADAPTER *prAdapter,
 				prAdapter->prGlueInfo,
 				prBssInfo->eBssSCO,
 				prBssDesc->ucChannelNum,
-				prBssDesc->eBand,
+				prBssInfo->eBand,
 				prBssInfo->ucBssIndex);
 	} else {
 		DBGLOG(RLM, INFO,
