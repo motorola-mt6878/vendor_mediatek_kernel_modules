@@ -2745,6 +2745,7 @@ struct ADAPTER {
 #endif /* CFG_MTK_MDDP_SUPPORT */
 #if (CFG_SUPPORT_WIFI_6G_PWR_MODE == 1)
 	enum ENUM_PWR_MODE_6G_TYPE e6GPwrMode[MAX_BSSID_NUM];
+	u_int8_t fg6GPwrModeForce;
 #endif /* CFG_SUPPORT_WIFI_6G_PWR_MODE == 1 */
 
 #if CFG_STAINFO_FEATURE
