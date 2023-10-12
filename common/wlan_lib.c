@@ -6306,8 +6306,11 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 	uint8_t ucConnBss[MAX_BSSID_NUM] = {0};
 	struct LINK_SPEED_EX_ *prLq;
 	struct PARAM_GET_STATS_ONE_CMD *prParam;
+	uint32_t u4CurrTick;
 #if (CFG_SUPPORT_REG_STAT_FROM_EMI == 1)
 	uint32_t u4EmiUpdateMs = 0;
+	uint32_t u4SyncDrvTick;
+	uint32_t u4SyncFwMs;
 #endif
 
 	ucBssIndex = GET_IOCTL_BSSIDX(prAdapter);
@@ -6325,18 +6328,20 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 	if (!pvQueryBuffer)
 		return WLAN_STATUS_FAILURE;
 
+	GET_CURRENT_SYSTIME(&u4CurrTick);
 	prParam = (struct PARAM_GET_STATS_ONE_CMD *)pvQueryBuffer;
 	prLq = &prAdapter->rLinkQuality.rLq[ucBssIndex];
-	DBGLOG(NIC, TRACE, "bssIdx:%u curTime:%u LRValid:%u\n",
-		ucBssIndex, kalGetTimeTick(),
-		prLq->fgIsLinkRateValid);
+	DBGLOG(NIC, TRACE,
+		"bssIdx:%u curTime:%u LRValid:%u period:%u\n",
+		ucBssIndex, u4CurrTick,
+		prLq->fgIsLinkRateValid, prParam->u4Period);
 	if (prLq->fgIsLinkRateValid &&
-		!CHECK_FOR_TIMEOUT(kalGetTimeTick(),
+		!CHECK_FOR_TIMEOUT(u4CurrTick,
 			prAdapter->rAllStatsUpdateTime,
 			MSEC_TO_SYSTIME(prParam->u4Period)))
 		return rResult;
 
-	prAdapter->rAllStatsUpdateTime = kalGetTimeTick();
+	prAdapter->rAllStatsUpdateTime = u4CurrTick;
 
 	/* prepare staStats driver stuff */
 	max_cmd_len = sizeof(struct UNI_CMD_GET_STATISTICS) +
@@ -6374,20 +6379,28 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 		return WLAN_STATUS_FAILURE;
 	}
 
+	/* get last sync driver/fw time */
+	u4SyncDrvTick = prAdapter->u4RegStatLastSyncDrvTick;
+	u4SyncFwMs = prAdapter->u4RegStatLastSyncFwMs;
+
 	/* get EMI update time */
 	kalMemCopyFromIo(&u4EmiUpdateMs,
 			&prAdapter->prStatsAllRegStat->u4LastUpdateTime,
 			sizeof(uint32_t));
-	DBGLOG(REQ, TRACE, "last update time local/EMI=%u/%u\n",
-		prAdapter->u4RegStatLastUpdateMs, u4EmiUpdateMs);
-	if (u4EmiUpdateMs != 0 &&
-		prAdapter->u4RegStatLastUpdateMs +
-		prParam->u4Period <= u4EmiUpdateMs) {
+	DBGLOG(REQ, TRACE, "drv cur/sync=%u/%u fw cur/sync=%u/%u\n",
+		u4CurrTick, u4SyncDrvTick, u4EmiUpdateMs, u4SyncFwMs);
+
+	if (u4EmiUpdateMs != 0 && u4SyncDrvTick != 0 &&
+		u4SyncFwMs != 0 && u4CurrTick >= u4SyncDrvTick &&
+		u4EmiUpdateMs >= u4SyncFwMs &&
+		(u4EmiUpdateMs - u4SyncFwMs + prParam->u4Period
+			>= u4CurrTick - u4SyncDrvTick))
 		nicCollectRegStatFromEmi(prAdapter);
-	} else
+	else
 #endif
-	rResult = sendStatsUniCmd(prAdapter, pvQueryBuffer, u4QueryBufferLen,
-		pu4QueryInfoLen, fgIsOid, max_cmd_len);
+	rResult = sendStatsUniCmd(prAdapter, pvQueryBuffer,
+		u4QueryBufferLen, pu4QueryInfoLen,
+		fgIsOid, max_cmd_len);
 
 	for (i = 0; i < MAX_BSSID_NUM; i++) {
 		if (!ucConnBss[i])
@@ -6396,11 +6409,8 @@ uint32_t wlanQueryStatsOneCmd(struct ADAPTER *prAdapter,
 			&prAdapter->rQueryStaStatistics[i]);
 		prQueryStaStatistics->u4Flag |= BIT(1);
 	}
-#if (CFG_SUPPORT_REG_STAT_FROM_EMI == 1)
-	prAdapter->u4RegStatLastUpdateMs = u4EmiUpdateMs;
-#endif
-	return rResult;
 
+	return rResult;
 }
 #endif
 
@@ -13445,6 +13455,8 @@ uint32_t wlanLinkQualityMonitor(struct GLUE_INFO *prGlueInfo, bool bFgIsOid)
 				FALSE);
 
 #endif
+
+	wlanFinishCollectingLinkQuality(prAdapter->prGlueInfo);
 
 	if (bFgIsOid == FALSE)
 		u4Status = WLAN_STATUS_SUCCESS;

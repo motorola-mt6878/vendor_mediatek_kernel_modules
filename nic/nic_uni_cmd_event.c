@@ -8924,13 +8924,6 @@ void nicCollectRegStatFromEmi(struct ADAPTER
 #endif
 	struct STA_RECORD *prStaRec = NULL;
 	uint8_t i, ucBssIdx;
-	uint32_t u4EmiUpdateMs = 0;
-
-	kalMemCopyFromIo(&u4EmiUpdateMs,
-			&prAdapter->prStatsAllRegStat->u4LastUpdateTime,
-			sizeof(uint32_t));
-	prAdapter->u4RegStatLastUpdateMs = u4EmiUpdateMs;
-	DBGLOG(REQ, TRACE, "EMI update time:%u\n", u4EmiUpdateMs);
 
 	prBasicUniEvt = kalMemAlloc(
 		sizeof(struct UNI_EVENT_BASIC_STATISTICS),
@@ -9174,7 +9167,18 @@ void nicUniEventAllStatsOneCmd(struct ADAPTER
 		}
 	}
 #else
+	uint32_t u4EmiUpdateMs = 0;
+
 	nicCollectRegStatFromEmi(prAdapter);
+
+	/* latest fw/driver sync fw clock */
+	kalMemCopyFromIo(&u4EmiUpdateMs,
+			&prAdapter->prStatsAllRegStat->u4LastUpdateTime,
+			sizeof(uint32_t));
+	prAdapter->u4RegStatLastSyncFwMs = u4EmiUpdateMs;
+	GET_CURRENT_SYSTIME(&prAdapter->u4RegStatLastSyncDrvTick);
+	DBGLOG(REQ, TRACE, "sync time drv:%u fw:%u\n",
+		prAdapter->u4RegStatLastSyncDrvTick, u4EmiUpdateMs);
 #endif
 
 	if (prCmdInfo->fgIsOid)
