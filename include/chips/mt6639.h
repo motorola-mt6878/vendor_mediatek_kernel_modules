@@ -78,6 +78,8 @@
 #endif
 #define WFDMA_MD_MSI_NUM		8
 
+#define MT6639_MEMOEY_REPAIR_CHECK_MASK 0xFFFF
+
 extern struct PLE_TOP_CR rMt6639PleTopCr;
 extern struct PSE_TOP_CR rMt6639PseTopCr;
 extern struct PP_TOP_CR rMt6639PpTopCr;

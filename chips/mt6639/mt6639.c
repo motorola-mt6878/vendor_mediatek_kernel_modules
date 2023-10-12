@@ -46,6 +46,7 @@
 #include "coda/mt6639/wf_top_cfg_on.h"
 #include "coda/mt6639/wf_wtblon_top.h"
 #include "coda/mt6639/wf_uwtbl_top.h"
+#include "coda/mt6639/top_misc.h"
 #include "hal_wfsys_reset_mt6639.h"
 #include "coda/mt6639/cb_infra_slp_ctrl.h"
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
@@ -3178,6 +3179,15 @@ static uint32_t mt6639_mcu_init(struct ADAPTER *ad)
 	}
 
 	set_cbinfra_remap(ad);
+
+	HAL_MCR_RD(ad, TOP_MISC_EFUSE_MBIST_LATCH_16_ADDR, &u4Value);
+	if ((u4Value & MT6639_MEMOEY_REPAIR_CHECK_MASK) !=
+		MT6639_MEMOEY_REPAIR_CHECK_MASK) {
+		DBGLOG(INIT, ERROR,
+			"Unexpected memory repair pattern\n");
+		rStatus = WLAN_STATUS_FAILURE;
+		goto exit;
+	}
 
 	rStatus = mt6639_mcu_reinit(ad);
 	if (rStatus != WLAN_STATUS_SUCCESS)
