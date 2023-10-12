@@ -1300,7 +1300,6 @@ static void triggerHifDumpIfNeed(void)
 {
 	struct GLUE_INFO *prGlueInfo;
 	struct ADAPTER *prAdapter;
-	struct CHIP_DBG_OPS *debug_ops;
 
 	if (fgIsResetting)
 		return;
@@ -1311,10 +1310,6 @@ static void triggerHifDumpIfNeed(void)
 
 	prAdapter = prGlueInfo->prAdapter;
 	prAdapter->u4HifDbgFlag |= DEG_HIF_DEFAULT_DUMP;
-	debug_ops = prAdapter->chip_info->prDebugOps;
-
-	if (debug_ops && debug_ops->dumpBusHangCr)
-		debug_ops->dumpBusHangCr(prAdapter);
 
 	kalSetHifDbgEvent(prAdapter->prGlueInfo);
 	/* wait for hif_thread finish dump */
