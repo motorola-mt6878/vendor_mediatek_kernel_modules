@@ -1135,7 +1135,11 @@ struct WIFI_VAR {
 	uint32_t u4LTOValue;
 #endif /* CFG_TX_CUSTOMIZE_LTO */
 
-	uint8_t ucWarningTxTimeout;
+	uint8_t fgWarningTxTimeout;
+	uint32_t u4TxTimeoutWarningThr;
+	uint8_t fgIgnoreLowIdleSlot;
+	uint32_t u4LowIdleSlotThr;
+	uint32_t u4SameTokenThr;
 
 	uint32_t u4UapsdAcBmp;
 	uint32_t u4MaxSpLen;
@@ -2236,6 +2240,10 @@ struct ADAPTER {
 
 	/* Online Scan Option */
 	u_int8_t fgDisBcnLostDetection;
+
+	uint64_t u8AvgIdleSlot;
+	uint32_t u4LastTokenId;
+	uint32_t u4SameTokenDur;
 
 	/* MAC address */
 	uint8_t rMyMacAddr[PARAM_MAC_ADDR_LEN];
