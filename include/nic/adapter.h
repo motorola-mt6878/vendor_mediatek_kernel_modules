@@ -1863,7 +1863,6 @@ struct HIF_STATS {
 	uint32_t u4DataRxCount; /* data from DMA to hif_thread */
 	uint32_t u4TxDataRegCnt;
 	uint32_t u4RxDataRegCnt;
-	uint32_t u4LastDataMsduRptCount; /* for TxTimout SER condition */
 };
 
 struct OID_HANDLER_RECORD {

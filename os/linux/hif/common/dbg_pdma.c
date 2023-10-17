@@ -666,11 +666,8 @@ static bool halIsTxTimeout(struct ADAPTER *prAdapter, uint32_t *u4Token)
 	u_int8_t fgIsTimeout = FALSE;
 	struct WIFI_VAR *prWifiVar;
 	uint8_t ucStaIdx = 0;
-	struct HIF_STATS *prHifStats;
 	enum ENUM_OP_MODE eOPMode = OP_MODE_NUM;
 	uint32_t u4TimeoutSerTime;
-	struct timespec64 *prLastMsduRptChangedTime;
-	uint32_t u4CurrentMsduRptCnt;
 
 	ASSERT(prAdapter);
 	ASSERT(prAdapter->prGlueInfo);
@@ -686,9 +683,6 @@ static bool halIsTxTimeout(struct ADAPTER *prAdapter, uint32_t *u4Token)
 	prHistory = &prTokenInfo->rHistory;
 	prWifiVar = &prAdapter->rWifiVar;
 	u4TimeoutSerTime = prWifiVar->u4MsduReportTimeoutSerTime;
-	prHifStats = &prAdapter->rHifStats;
-	prLastMsduRptChangedTime =
-		&prAdapter->prGlueInfo->rLastMsduRptChangedTime;
 
 	rTimeout.tv_sec = prWifiVar->u4MsduReportTimeout;
 	KAL_GET_TIME_OF_USEC_OR_NSEC(rTimeout) = 0;
@@ -752,19 +746,8 @@ static bool halIsTxTimeout(struct ADAPTER *prAdapter, uint32_t *u4Token)
 			(prHistory->u4CurIdx + 1) % MSDU_TOKEN_HISTORY_NUM;
 		halNotifyTxHangEvent(prAdapter, prHistory);
 
-		u4CurrentMsduRptCnt = GLUE_GET_REF_CNT(
-				prHifStats->u4DataMsduRptCount);
-		if (GLUE_GET_REF_CNT(prHifStats->u4LastDataMsduRptCount) !=
-			    u4CurrentMsduRptCnt)
-			*prLastMsduRptChangedTime = rNowTs;
-
-		GLUE_SET_REF_CNT(u4CurrentMsduRptCnt,
-				 prHifStats->u4LastDataMsduRptCount);
 	} else {
 		kalMemZero(prHistory, sizeof(struct MSDU_TOKEN_HISTORY_INFO));
-
-		prLastMsduRptChangedTime->tv_sec = 0;
-		KAL_GET_PTIME_OF_USEC_OR_NSEC(prLastMsduRptChangedTime) = 0;
 
 		halResetTxTimeoutParams(prAdapter);
 	}
@@ -773,19 +756,9 @@ static bool halIsTxTimeout(struct ADAPTER *prAdapter, uint32_t *u4Token)
 
 	/* Trigger SER */
 	if (rLongest.tv_sec >= u4TimeoutSerTime) {
-		if (halGetDeltaTime(&rNowTs, prLastMsduRptChangedTime, &rTime)
-				&& rTime.tv_sec >= u4TimeoutSerTime) {
-			prAdapter->u4HifChkFlag |= HIF_DRV_SER;
-			DBGLOG(HAL, INFO, "Timeout > %ds, trigger SER\n",
-				u4TimeoutSerTime);
-		} else {
-			DBGLOG(HAL, INFO,
-				"MSDU reports are returning, do not trigger SER. lastMsduRpt @ %ld, MsduRptCnt[%u] timeout[sec:%ld]",
-				prLastMsduRptChangedTime->tv_sec,
-				GLUE_GET_REF_CNT(
-					prHifStats->u4LastDataMsduRptCount),
-				rLongest.tv_sec);
-		}
+		prAdapter->u4HifChkFlag |= HIF_DRV_SER;
+		DBGLOG(HAL, INFO, "Timeout > %ds, trigger SER\n",
+			u4TimeoutSerTime);
 	}
 
 	*u4Token = u4TokenId;
