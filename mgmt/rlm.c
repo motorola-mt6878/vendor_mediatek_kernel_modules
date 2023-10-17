@@ -8584,6 +8584,7 @@ uint32_t rlmRegTxPwrLimitUpdate(
 	int8_t icNewPwrLimit;
 	uint8_t ucStartCh = 0;
 	uint8_t ucEndCh = 0;
+	uint8_t ucCurrChnl = 0;
 
 	/* Sanity check for null pointer & IE content */
 	if (!prAdapter || !prBssDesc || !prCountryIE)
@@ -8598,6 +8599,7 @@ uint32_t rlmRegTxPwrLimitUpdate(
 	ucRemainLen = prCountryIE->ucLength - 3;
 	prSubBand = &prCountryIE->arCountryStr[0];
 	ucChnlOfst = (eHwBand == BAND_2G4) ? CHNL_SPAN_5 : CHNL_SPAN_20;
+	ucCurrChnl = prBssDesc->ucChannelNum;
 
 	while (ucRemainLen >= ucSubBandSize) {
 		ucStartCh = prSubBand->ucFirstChnlNum;
@@ -8606,15 +8608,15 @@ uint32_t rlmRegTxPwrLimitUpdate(
 			"Country IE B[%d]ofst[%d]PriCh[%d]StartCh[%d]ChNum[%d]EndCh[%d]Lmt[%d]\n",
 			eHwBand,
 			ucChnlOfst,
-			prBssDesc->ucChannelNum,
+			ucCurrChnl,
 			ucStartCh,
 			prSubBand->ucNumOfChnl,
 			ucEndCh,
 			prSubBand->cMaxTxPwrLv);
 
 		if (ucStartCh < 201 &&
-			prBssDesc->ucChannelNum >= ucStartCh &&
-			prBssDesc->ucChannelNum <= ucEndCh) {
+			ucCurrChnl >= ucStartCh &&
+			ucCurrChnl <= ucEndCh) {
 			/* Found */
 			break;
 		}
@@ -8624,18 +8626,26 @@ uint32_t rlmRegTxPwrLimitUpdate(
 
 	/* Found a right country band */
 	if (ucRemainLen >= ucSubBandSize) {
-		icNewPwrLimit = prSubBand->cMaxTxPwrLv - ucPowerConstraint;
+		if (rlmDomainIsDfsChnls(prAdapter, ucCurrChnl)) {
+			/* only DFS channel need to consider power constrant */
+			icNewPwrLimit =
+				prSubBand->cMaxTxPwrLv - ucPowerConstraint;
+		} else {
+			icNewPwrLimit = prSubBand->cMaxTxPwrLv;
+		}
+
 		/* Tx power changed Limit */
 		if (prBssDesc->cPowerLimit != icNewPwrLimit) {
 
 			DBGLOG(RLM, TRACE,
 			"Update Regulatory PwrLmt SSID:%s BSSID["MACSTR
-			"]Old PwrLmt[%d]New PwrLmt[%d]Constrant[%d]\n",
+			"]Old PwrLmt[%d]New PwrLmt[%d]Constrant[%d]DFS[%d]\n",
 			prBssDesc->aucSSID,
 			MAC2STR(prBssDesc->aucBSSID),
 			prBssDesc->cPowerLimit,
 			icNewPwrLimit,
-			ucPowerConstraint);
+			ucPowerConstraint,
+			rlmDomainIsDfsChnls(prAdapter, ucCurrChnl));
 
 			prBssDesc->cPowerLimit = icNewPwrLimit;
 
@@ -8649,7 +8659,7 @@ uint32_t rlmRegTxPwrLimitUpdate(
 		DBGLOG(RLM, LOUD,
 			"The channel[%d] of BSSID["MACSTR
 			"] SSID:%sdoesn't match with country IE, Pwrlmt[%d]\n",
-			prBssDesc->ucChannelNum,
+			ucCurrChnl,
 			MAC2STR(prBssDesc->aucBSSID),
 			prBssDesc->aucSSID,
 			prBssDesc->cPowerLimit);
