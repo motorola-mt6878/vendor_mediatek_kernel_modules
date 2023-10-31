@@ -2144,12 +2144,13 @@ scnDoScanTimeoutRecoveryCheck(struct ADAPTER *prAdapter,
 		prScanInfo->ucScnTimeoutTimes,
 		prScanInfo->ucScnTimeoutSubsysResetCnt);
 
-	/* If scanDoneTimeout count > 3 and no connection, do subsys reset */
+	/* If scanDoneTimeout count > 3 and no connection, do L1 SER */
 	if (prScanInfo->ucScnTimeoutTimes >= prWifiVar->ucScanNoApRecoverTh) {
 		if (prScanInfo->ucScnTimeoutSubsysResetCnt < 1 &&
 		   prAisBssInfo->eConnectionState == MEDIA_STATE_DISCONNECTED) {
 			prScanInfo->ucScnTimeoutSubsysResetCnt++;
-			GL_DEFAULT_RESET_TRIGGER(prAdapter, RST_SCAN_RECOVERY);
+			prAdapter->u4HifChkFlag |= HIF_DRV_SER;
+			kalSetHifDbgEvent(prAdapter->prGlueInfo);
 		}
 	}
 }
