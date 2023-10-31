@@ -448,9 +448,15 @@ static int wlan_func_on_by_chrdev(void)
 		kalMdelay(100);
 	}
 
+#if CFG_WIFI_LEROY_MP2
+	rtnl_lock();
+#endif
 	wfsys_lock();
 	ret = wlanFuncOn();
 	wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+	rtnl_unlock();
+#endif
 
 exit:
 	return ret;
@@ -458,9 +464,15 @@ exit:
 
 static int wlan_func_off_by_chrdev(void)
 {
+#if CFG_WIFI_LEROY_MP2
+	rtnl_lock();
+#endif
 	wfsys_lock();
 	wlanFuncOff();
 	wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+	rtnl_unlock();
+#endif
 
 	return 0;
 }

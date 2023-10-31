@@ -2669,6 +2669,9 @@ static int wlan_efuse_on(void)
 	DBGLOG(INIT, INFO, "wlan_efuse_on.\n");
 
 	/* expect unlock wfsys at the end of do_cal_cb */
+#if CFG_WIFI_LEROY_MP2
+	rtnl_lock();
+#endif
 	wfsys_lock();
 	set_cal_enabled(FALSE);
 	ret = wlanFuncOnImpl();
@@ -2682,8 +2685,12 @@ exit:
 	if (ret) {
 		DBGLOG(INIT, ERROR, "failed, ret=%d\n", ret);
 		wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
 	}
 
+	/* unlock released by precal_docal */
 	return ret;
 }
 
@@ -2702,6 +2709,9 @@ static void __wlan_pwr_on_notify(struct work_struct *work)
 	KAL_WAKE_LOCK_INIT(NULL,
 		prWlanOnOffWakeLock, "WLAN pwr_on");
 	KAL_WAKE_LOCK(NULL, prWlanOnOffWakeLock);
+#endif
+#if CFG_WIFI_LEROY_MP2
+	rtnl_lock();
 #endif
 	wfsys_lock();
 
@@ -2726,6 +2736,9 @@ exit:
 	if (ret)
 		DBGLOG(INIT, ERROR, "failed, ret=%d\n", ret);
 	wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+	rtnl_unlock();
+#endif
 #if CFG_ENABLE_WAKE_LOCK
 	KAL_WAKE_UNLOCK(NULL, prWlanOnOffWakeLock);
 	KAL_WAKE_LOCK_DESTROY(NULL, prWlanOnOffWakeLock);

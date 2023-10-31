@@ -786,7 +786,9 @@ int wlan_precal_pwron_v1(void)
 	/* CONNAC 2 use backup /restore EMI */
 	gEmiCalNoUseEmiData = FALSE;
 #endif
-
+#if CFG_WIFI_LEROY_MP2
+	rtnl_lock();
+#endif
 	wfsys_lock();
 
 	return 0;
@@ -814,8 +816,10 @@ exit:
 		g_fgPreCal = FALSE;
 		update_pre_cal_status(0);
 		g_fgEverCal = TRUE;
-
 		wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
 	}
 	return ret;
 }
@@ -832,8 +836,12 @@ int wlan_precal_pwron_v2(void)
 	gEmiCalNoUseEmiData = TRUE;
 #endif
 
-	if (!wfsys_is_locked())
+	if (!wfsys_is_locked()) {
+#if CFG_WIFI_LEROY_MP2
+		rtnl_lock();
+#endif
 		wfsys_lock();
+	}
 
 	update_pre_cal_status(1);
 	g_fgPreCal = TRUE;
@@ -851,6 +859,9 @@ exit:
 	if (ret) {
 		DBGLOG(INIT, ERROR, "failed, ret=%d\n", ret);
 		wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
 	}
 
 	return ret;
@@ -863,8 +874,12 @@ int wlan_precal_docal_v2(void)
 	if (!g_fgEverCal)
 		g_fgEverCal = TRUE;
 
-	if (wfsys_is_locked())
+	if (wfsys_is_locked()) {
 		wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
+	}
 
 	return 0;
 }
@@ -876,8 +891,12 @@ int wlan_precal_err(void)
 	if (!g_fgEverCal)
 		g_fgEverCal = TRUE;
 
-	if (wfsys_is_locked())
+	if (wfsys_is_locked()) {
 		wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
+	}
 
 	return 0;
 }

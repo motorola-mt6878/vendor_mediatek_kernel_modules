@@ -4720,9 +4720,13 @@ void wlanNetDestroy(struct wireless_dev *prWdev)
 				wlanGetAisNetDev(prGlueInfo, u4Idx);
 
 			if (ndev) {
+#if !CFG_WIFI_LEROY_MP2
 				rtnl_lock();
+#endif
 				ndev->wireless_handlers = NULL;
+#if !CFG_WIFI_LEROY_MP2
 				rtnl_unlock();
+#endif
 			}
 		}
 	}
@@ -7778,10 +7782,14 @@ static void wlanRemove(void)
 		if (gprWdev[i] && gprWdev[i]->netdev) {
 			netif_device_detach(gprWdev[i]->netdev);
 			if (i != AIS_DEFAULT_INDEX) {
+#if !CFG_WIFI_LEROY_MP2
 				rtnl_lock();
+#endif
 				mtk_cfg80211_del_iface(gprWdev[i]->wiphy,
 						       gprWdev[i]);
+#if !CFG_WIFI_LEROY_MP2
 				rtnl_unlock();
+#endif
 			}
 		}
 	}
@@ -8254,11 +8262,17 @@ static int initWlan(void)
 
 	kalPlatOpsInit();
 
+#if CFG_WIFI_LEROY_MP2
+	rtnl_lock();
+#endif
 	g_prPlatDev = NULL;
 	ret = ((glRegisterBus(wlanProbe,
 			      wlanRemove) == WLAN_STATUS_SUCCESS) ? 0 : -EIO);
 	if (ret == -EIO) {
 		kalUninitIOBuffer();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
 		goto INIT_WLAN_RETURN;
 	}
 
@@ -8267,6 +8281,9 @@ static int initWlan(void)
 	if (ret)
 		DBGLOG(INIT, ERROR, "glBusFuncOn failed.\n");
 #endif /* CFG_MTK_ANDROID_WMT */
+#if CFG_WIFI_LEROY_MP2
+	rtnl_unlock();
+#endif
 
 #if (CFG_CHIP_RESET_SUPPORT)
 	glResetInit(prGlueInfo);
@@ -8400,6 +8417,9 @@ static void exitWlan(void)
 		wlanPowerOffWifi(prGlueInfo->prAdapter);
 #endif
 
+#if CFG_WIFI_LEROY_MP2
+	rtnl_lock();
+#endif
 #if CFG_MTK_ANDROID_WMT
 	unregister_plat_connsys_cbs();
 	g_IsPlatCbsRegistered = FALSE;
@@ -8408,6 +8428,9 @@ static void exitWlan(void)
 #endif /* CFG_MTK_ANDROID_WMT */
 
 	glUnregisterBus(wlanRemove);
+#if CFG_WIFI_LEROY_MP2
+	rtnl_unlock();
+#endif
 
 #ifdef CFG_MTK_CONNSYS_DEDICATED_LOG_PATH
 	fw_log_wifi_inf_deinit();

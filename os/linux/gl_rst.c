@@ -1433,9 +1433,15 @@ static u_int8_t glResetMsgHandler(enum ENUM_RST_MSG MsgBody)
 #if CFG_MTK_ANDROID_WMT
 		wifi_reset_start();
 #endif
+#if CFG_WIFI_LEROY_MP2
+		rtnl_lock();
+#endif
 		wfsys_lock();
 		wlanFuncOffImpl();
 		wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
 		complete(&g_RstOffComp);
 		break;
 
@@ -1464,9 +1470,15 @@ static u_int8_t glResetMsgHandler(enum ENUM_RST_MSG MsgBody)
 #if CFG_MTK_ANDROID_WMT
 		wifi_reset_start();
 #endif
+#if CFG_WIFI_LEROY_MP2
+		rtnl_lock();
+#endif
 		wfsys_lock();
 		wlanFuncOff();
 		wfsys_unlock();
+#if CFG_WIFI_LEROY_MP2
+		rtnl_unlock();
+#endif
 		break;
 
 	case ENUM_RST_MSG_L04_END:
