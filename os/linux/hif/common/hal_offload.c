@@ -144,6 +144,10 @@ u_int8_t halMawdWakeup(struct GLUE_INFO *prGlueInfo)
 	    !prHifInfo->fgIsMawdSuspend)
 		goto exit;
 
+	u4Addr = MAWD_REG_PLL_CTRL_0;
+	u4Val = BIT(0);
+	kalDevRegWrite(prGlueInfo, u4Addr, u4Val);
+
 	u4Addr = MAWD_AP_WAKE_UP;
 	u4Val = BIT(0);
 	kalDevRegWrite(prGlueInfo, u4Addr, u4Val);
@@ -196,6 +200,9 @@ u_int8_t halMawdWakeup(struct GLUE_INFO *prGlueInfo)
 	u4Val = WF_RRO_TOP_IND_CMD_SIGNATURE_BASE_1_EN_MASK |
 		MAWD_WFDMA_HIGH_ADDR;
 	kalDevRegWrite(prGlueInfo, u4Addr, u4Val);
+
+	u4Addr = MAWD_SOFTRESET;
+	kalDevRegWrite(prGlueInfo, u4Addr, 0);
 done:
 	prHifInfo->fgIsMawdSuspend = FALSE;
 
@@ -272,6 +279,9 @@ mawd_sleep:
 
 done:
 	u4Addr = MAWD_AP_WAKE_UP;
+	kalDevRegWrite(prGlueInfo, u4Addr, 0);
+
+	u4Addr = MAWD_REG_PLL_CTRL_0;
 	kalDevRegWrite(prGlueInfo, u4Addr, 0);
 #if (CFG_MTK_FPGA_PLATFORM == 0)
 	__halMawdSleep();
