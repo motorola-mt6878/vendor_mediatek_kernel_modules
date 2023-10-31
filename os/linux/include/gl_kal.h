@@ -2640,6 +2640,9 @@ void kalRxWorkSchedule(struct GLUE_INFO *pr);
 #if CFG_SUPPORT_PCIE_GEN_SWITCH
 void kalSetPcieGen(struct ADAPTER *prAdapter);
 #endif /* CFG_SUPPORT_PCIE_GEN_SWITCH */
+#if CFG_SUPPORT_TPUT_FACTOR
+void kalTputFactorUpdate(struct ADAPTER *prAdapter);
+#endif
 
 #endif /* _GL_KAL_H */
 

@@ -1950,7 +1950,8 @@ struct CMD_PERF_IND {
 	uint8_t ucCurRxRCPI1[4];
 	uint8_t ucCurRxNss[4];
 	uint8_t ucCurRxNss2[4];
-	uint32_t au4Reserve[62];
+	uint32_t u4WtblBitMap;
+	uint32_t au4Reserve[61];
 };
 
 #if CFG_SUPPORT_SMART_GEAR
