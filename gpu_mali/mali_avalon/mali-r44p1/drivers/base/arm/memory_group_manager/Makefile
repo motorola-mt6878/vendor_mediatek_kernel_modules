@@ -34,6 +34,9 @@ endif
 ifeq ($(MTK_PLATFORM_VERSION),mt6897)
 ccflags-y += -DCONFIG_MALI_MTK_MGMM
 endif
+ifeq ($(MTK_PLATFORM_VERSION),mt6878)
+ccflags-y += -DCONFIG_MALI_MTK_MGMM
+endif
 endif
 
 ifeq ($(CONFIG_MALI_MTK_SLC_ALL_CACHE_MODE), y)
