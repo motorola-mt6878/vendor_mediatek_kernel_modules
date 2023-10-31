@@ -645,8 +645,15 @@ void p2pFreeMemSafe(struct GLUE_INFO *prGlueInfo,
 	kalMemFree(prTmpMemInfo, VIR_MEM_TYPE, size);
 }
 
+/*---------------------------------------------------------------------------*/
+/*!
+ * \param
+ *  [in] prGlueInfo		Pointer to glue info
+ *  [in] fgIsRtnlLockAcquired	Is the rtnl lock already hold.
+ */
+/*---------------------------------------------------------------------------*/
 u_int8_t p2pNetRegister(struct GLUE_INFO *prGlueInfo,
-		u_int8_t fgIsRtnlLockAcquired)
+		uint8_t fgIsRtnlLockAcquired)
 {
 	u_int8_t fgDoRegister = FALSE;
 	struct net_device *prDevHandler = NULL;
@@ -741,7 +748,7 @@ fail:
 }
 
 u_int8_t p2pNetUnregister(struct GLUE_INFO *prGlueInfo,
-		u_int8_t fgIsRtnlLockAcquired)
+		uint8_t fgIsRtnlLockAcquired)
 {
 	u_int8_t fgDoUnregister = FALSE;
 	uint8_t ucRoleIdx;

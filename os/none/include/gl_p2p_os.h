@@ -277,7 +277,7 @@ u_int8_t p2pUnregisterToWlan(struct GLUE_INFO *prGlueInfo);
 #define p2pLaunch(_prGlueInfo) \
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__)
 
-#define p2pRemove(_prGlueInfo) \
+#define p2pRemove(_prGlueInfo, fgIsRtnlLockAcquired) \
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__)
 
 #define p2pSetMode(_ucAPMode) \
@@ -288,7 +288,8 @@ u_int8_t p2pUnregisterToWlan(struct GLUE_INFO *prGlueInfo);
 #else
 u_int8_t p2pLaunch(struct GLUE_INFO *prGlueInfo);
 
-u_int8_t p2pRemove(struct GLUE_INFO *prGlueInfo);
+u_int8_t p2pRemove(struct GLUE_INFO *prGlueInfo,
+	uint8_t fgIsRtnlLockAcquired);
 
 void p2pSetMode(uint8_t ucAPMode);
 
@@ -303,10 +304,10 @@ u_int8_t glRegisterP2P(struct GLUE_INFO *prGlueInfo,
 u_int8_t glUnregisterP2P(struct GLUE_INFO *prGlueInfo, uint8_t ucIdx);
 
 u_int8_t p2pNetRegister(struct GLUE_INFO *prGlueInfo,
-		u_int8_t fgIsRtnlLockAcquired);
+		uint8_t fgIsRtnlLockAcquired);
 
 u_int8_t p2pNetUnregister(struct GLUE_INFO *prGlueInfo,
-		u_int8_t fgIsRtnlLockAcquired);
+		uint8_t fgIsRtnlLockAcquired);
 
 
 u_int8_t p2PAllocInfo(struct GLUE_INFO *prGlueInfo, uint8_t ucIdex);

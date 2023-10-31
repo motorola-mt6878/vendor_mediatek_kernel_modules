@@ -3810,7 +3810,12 @@ static int32_t wlanNetRegister(struct wireless_dev *prWdev)
 				wiphy_dev(prWdev->wiphy));
 
 		if (prWdev->netdev->reg_state == NETREG_UNINITIALIZED &&
-		    register_netdev(prWdev->netdev) < 0) {
+#if (CFG_WIFI_LEROY_MP2 == 1)
+			register_netdevice(prWdev->netdev) < 0)
+#else
+			register_netdev(prWdev->netdev) < 0)
+#endif
+		{
 			DBGLOG(INIT, ERROR,
 				"Register net_device %d %p failed\n",
 				i4DevIdx, prWdev->netdev);
@@ -3868,7 +3873,11 @@ static void wlanNetUnregister(struct wireless_dev *prWdev)
 
 			if (ndev) {
 				wlanClearDevIdx(ndev);
+#if (CFG_WIFI_LEROY_MP2 == 1)
+				unregister_netdevice(ndev);
+#else
 				unregister_netdev(ndev);
+#endif
 			}
 		}
 
@@ -4897,9 +4906,10 @@ static void wlan_late_resume(struct early_suspend *h)
 
 #if (CFG_MTK_ANDROID_WMT || WLAN_INCLUDE_PROC) && CFG_ENABLE_WIFI_DIRECT
 
-void reset_p2p_mode(struct GLUE_INFO *prGlueInfo)
+void reset_p2p_mode(struct GLUE_INFO *prGlueInfo,
+	uint8_t fgIsRtnlLockAcquired)
 {
-	struct PARAM_CUSTOM_P2P_SET_STRUCT rSetP2P;
+	struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT rSetP2P;
 	uint32_t rWlanStatus = WLAN_STATUS_SUCCESS;
 	uint32_t u4BufLen = 0;
 
@@ -4908,38 +4918,53 @@ void reset_p2p_mode(struct GLUE_INFO *prGlueInfo)
 
 	rSetP2P.u4Enable = 0;
 	rSetP2P.u4Mode = 0;
+	rSetP2P.fgIsRtnlLockAcquired = fgIsRtnlLockAcquired;
 
-	p2pNetUnregister(prGlueInfo, FALSE);
+	p2pNetUnregister(prGlueInfo, fgIsRtnlLockAcquired);
 
 	rWlanStatus = kalIoctl(prGlueInfo, wlanoidSetP2pMode,
 			(void *) &rSetP2P,
-			sizeof(struct PARAM_CUSTOM_P2P_SET_STRUCT), &u4BufLen);
+			sizeof(struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT),
+			&u4BufLen);
 
 	if (rWlanStatus != WLAN_STATUS_SUCCESS)
-		p2pRemove(prGlueInfo);
+		p2pRemove(prGlueInfo, fgIsRtnlLockAcquired);
 
 	DBGLOG(INIT, INFO,
 			"ret = 0x%08x\n", (uint32_t) rWlanStatus);
 }
 
 int set_p2p_mode_handler_wrapper(struct net_device *netdev,
-			 struct PARAM_CUSTOM_P2P_SET_STRUCT p2pmode)
+		struct PARAM_CUSTOM_P2P_SET_STRUCT p2pmode)
 {
-	while (rtnl_is_locked()) {
-		DBGLOG_LIMITED(INIT, WARN,
-			"sleep for 100ms and wait for rtnl_lock\n");
-		kalMsleep(100);
-	}
+	struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT rP2pmodeWithLock;
+	int ret;
 
-	return set_p2p_mode_handler(netdev, p2pmode);
+	DBGLOG(INIT, INFO, "set p2p enable[%d], mode[%d]\n",
+		p2pmode.u4Enable, p2pmode.u4Mode);
+
+	rP2pmodeWithLock.u4Enable = p2pmode.u4Enable;
+	rP2pmodeWithLock.u4Mode = p2pmode.u4Mode;
+
+#if (CFG_WIFI_LEROY_MP2 == 1)
+	rP2pmodeWithLock.fgIsRtnlLockAcquired = TRUE;
+	rtnl_lock();
+	ret = set_p2p_mode_handler(netdev, rP2pmodeWithLock);
+	rtnl_unlock();
+#else
+	rP2pmodeWithLock.fgIsRtnlLockAcquired = FALSE;
+	ret = set_p2p_mode_handler(netdev, rP2pmodeWithLock);
+#endif
+
+	return ret;
 }
 
 int set_p2p_mode_handler(struct net_device *netdev,
-			 struct PARAM_CUSTOM_P2P_SET_STRUCT p2pmode)
+			 struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT p2pmode)
 {
 	struct GLUE_INFO *prGlueInfo = *((struct GLUE_INFO **)
 					 netdev_priv(netdev));
-	struct PARAM_CUSTOM_P2P_SET_STRUCT rSetP2P;
+	struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT rSetP2P;
 	uint32_t rWlanStatus = WLAN_STATUS_SUCCESS;
 	uint32_t u4BufLen = 0;
 
@@ -4988,18 +5013,19 @@ int set_p2p_mode_handler(struct net_device *netdev,
 		&& prGlueInfo->prAdapter->fgIsP2PRegistered
 		&& !kalIsResetting()) {
 		DBGLOG(INIT, WARN, "Resetting p2p mode\n");
-		reset_p2p_mode(prGlueInfo);
+		reset_p2p_mode(prGlueInfo, p2pmode.fgIsRtnlLockAcquired);
 	}
 
 	rSetP2P.u4Enable = p2pmode.u4Enable;
 	rSetP2P.u4Mode = p2pmode.u4Mode;
+	rSetP2P.fgIsRtnlLockAcquired = p2pmode.fgIsRtnlLockAcquired;
 
 	if ((!rSetP2P.u4Enable) && (kalIsResetting() == FALSE))
-		p2pNetUnregister(prGlueInfo, FALSE);
+		p2pNetUnregister(prGlueInfo, p2pmode.fgIsRtnlLockAcquired);
 
 	rWlanStatus = kalIoctl(prGlueInfo, wlanoidSetP2pMode,
 			(void *) &rSetP2P,
-			sizeof(struct PARAM_CUSTOM_P2P_SET_STRUCT),
+			sizeof(struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT),
 			&u4BufLen);
 
 	DBGLOG(INIT, INFO,
@@ -5017,7 +5043,7 @@ int set_p2p_mode_handler(struct net_device *netdev,
 	if ((rSetP2P.u4Enable)
 	    && (prGlueInfo->prAdapter->fgIsP2PRegistered)
 	    && (kalIsResetting() == FALSE))
-		p2pNetRegister(prGlueInfo, FALSE);
+		p2pNetRegister(prGlueInfo, p2pmode.fgIsRtnlLockAcquired);
 
 	return 0;
 }
@@ -6643,7 +6669,8 @@ static void wlanOnPostNetRegister(void)
 static
 void wlanOnP2pRegistration(struct GLUE_INFO *prGlueInfo,
 	struct ADAPTER *prAdapter,
-	struct wireless_dev *prWdev)
+	struct wireless_dev *prWdev,
+	uint8_t fgIsRtnlLockAcquired)
 {
 	DBGLOG(INIT, TRACE, "start.\n");
 
@@ -6661,10 +6688,11 @@ void wlanOnP2pRegistration(struct GLUE_INFO *prGlueInfo,
 
 #if CFG_ENABLE_WIFI_DIRECT
 	if (prAdapter->rWifiVar.u4RegP2pIfAtProbe) {
-		struct PARAM_CUSTOM_P2P_SET_STRUCT rSetP2P;
+		struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT rSetP2P;
 
 		rSetP2P.u4Enable = 1;
 		rSetP2P.u4Mode = prAdapter->rWifiVar.ucRegP2pMode;
+		rSetP2P.fgIsRtnlLockAcquired = fgIsRtnlLockAcquired;
 
 		if (set_p2p_mode_handler(prWdev->netdev, rSetP2P) == 0)
 			DBGLOG(INIT, INFO,
@@ -6761,7 +6789,11 @@ int32_t wlanOnWhenProbeSuccess(struct GLUE_INFO *prGlueInfo,
 	}
 #endif
 
-	wlanOnP2pRegistration(prGlueInfo, prAdapter, gprWdev[0]);
+#if (CFG_WIFI_LEROY_MP2 == 1)
+	wlanOnP2pRegistration(prGlueInfo, prAdapter, gprWdev[0], TRUE);
+#else
+	wlanOnP2pRegistration(prGlueInfo, prAdapter, gprWdev[0], FALSE);
+#endif
 	halSetSuspendFlagToFw(prAdapter, FALSE);
 #if CFG_MODIFY_TX_POWER_BY_BAT_VOLT
 	if (wlan_bat_volt == 3550) {
@@ -6801,10 +6833,11 @@ int set_nan_handler(struct net_device *netdev, uint32_t ucEnable)
 
 #if CFG_ENABLE_WIFI_DIRECT
 	if (ucEnable) {
-		struct PARAM_CUSTOM_P2P_SET_STRUCT rSetP2P;
+		struct PARAM_CUSTOM_P2P_SET_WITH_LOCK_STRUCT rSetP2P;
 
 		rSetP2P.u4Mode = 0;
 		rSetP2P.u4Enable = 0;
+		rSetP2P.fgIsRtnlLockAcquired = FALSE;
 		set_p2p_mode_handler(netdev, rSetP2P);
 	}
 #endif
@@ -6832,7 +6865,7 @@ int set_nan_handler(struct net_device *netdev, uint32_t ucEnable)
 
 	if (!ucEnable)
 		wlanOnP2pRegistration(prGlueInfo,
-			prGlueInfo->prAdapter, gprWdev[0]);
+			prGlueInfo->prAdapter, gprWdev[0], FALSE);
 
 	return 0;
 }
@@ -7876,17 +7909,29 @@ static void wlanRemove(void)
 #if CFG_ENABLE_WIFI_DIRECT
 	if (prGlueInfo->prAdapter->fgIsP2PRegistered) {
 		DBGLOG(INIT, INFO, "p2pNetUnregister...\n");
+#if (CFG_WIFI_LEROY_MP2 == 1)
+		p2pNetUnregister(prGlueInfo, TRUE);
+#else
 		p2pNetUnregister(prGlueInfo, FALSE);
+#endif
 		DBGLOG(INIT, INFO, "p2pRemove...\n");
 		/*p2pRemove must before wlanAdapterStop */
-		p2pRemove(prGlueInfo);
+#if (CFG_WIFI_LEROY_MP2 == 1)
+		p2pRemove(prGlueInfo, TRUE);
+#else
+		p2pRemove(prGlueInfo, FALSE);
+#endif
 	}
 #endif
 
 #if CFG_SUPPORT_NAN
 	if (prGlueInfo->prAdapter->fgIsNANRegistered) {
 		DBGLOG(INIT, INFO, "NANNetUnregister...\n");
+#if (CFG_WIFI_LEROY_MP2 == 1)
+		nanNetUnregister(prGlueInfo, TRUE);
+#else
 		nanNetUnregister(prGlueInfo, FALSE);
+#endif
 		DBGLOG(INIT, INFO, "nanRemove...\n");
 		/* nanRemove must before wlanAdapterStop */
 		nanRemove(prGlueInfo);

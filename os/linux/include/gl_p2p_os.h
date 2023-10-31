@@ -314,7 +314,8 @@ u_int8_t p2pUnregisterToWlan(struct GLUE_INFO *prGlueInfo);
 
 u_int8_t p2pLaunch(struct GLUE_INFO *prGlueInfo);
 
-u_int8_t p2pRemove(struct GLUE_INFO *prGlueInfo);
+u_int8_t p2pRemove(struct GLUE_INFO *prGlueInfo,
+	uint8_t fgIsRtnlLockAcquired);
 
 void p2pSetMode(uint8_t ucAPMode);
 
@@ -335,10 +336,10 @@ int glSetupP2P(struct GLUE_INFO *prGlueInfo,
 u_int8_t glUnregisterP2P(struct GLUE_INFO *prGlueInfo, uint8_t ucIdx);
 
 u_int8_t p2pNetRegister(struct GLUE_INFO *prGlueInfo,
-		u_int8_t fgIsRtnlLockAcquired);
+		uint8_t fgIsRtnlLockAcquired);
 
 u_int8_t p2pNetUnregister(struct GLUE_INFO *prGlueInfo,
-		u_int8_t fgIsRtnlLockAcquired);
+		uint8_t fgIsRtnlLockAcquired);
 
 
 u_int8_t p2PAllocInfo(struct GLUE_INFO *prGlueInfo, uint8_t ucIdex);
