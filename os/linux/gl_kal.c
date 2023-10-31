@@ -12461,9 +12461,6 @@ void connsysPowerLevelNotify(struct ADAPTER *prAdapter)
 	prPwrLevelHandlerList = &(prAdapter->rPwrLevelHandlerList);
 	u4PwrLevel = prAdapter->u4PwrLevel;
 
-	DBGLOG(INIT, INFO, "Notify each handler new power level: %d\n",
-								u4PwrLevel);
-
 	/* Notify registered handler. */
 	LINK_FOR_EACH_ENTRY(prPwrLevelHdlr, prPwrLevelHandlerList, rLinkEntry,
 		    struct PWR_LEVEL_HANDLER_ELEMENT) {
@@ -12497,8 +12494,6 @@ void connsysPowerLevelNotify(struct ADAPTER *prAdapter)
 
 	rCmdV1Header.cmdBufferLen += sizeof(struct CMD_FORMAT_V1);
 	rCmdV1Header.itemNum = 1;
-
-	DBGLOG(INIT, INFO, "Notify FW new power level: %d\n", u4PwrLevel);
 
 	rStatus = wlanSendSetQueryCmd(
 			prAdapter, /* prAdapter */

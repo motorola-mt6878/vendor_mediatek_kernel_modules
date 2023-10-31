@@ -6340,9 +6340,8 @@ int connsys_power_event_notification(
 	}
 
 	prAdapter = prGlueInfo->prAdapter;
-	DBGLOG(INIT, TRACE, "prAdapter=%p\n", prAdapter);
 	if (!prAdapter) {
-		DBGLOG(INIT, INFO,
+		DBGLOG(INIT, WARN,
 			"prAdapter == NULL return\n");
 		return ret;
 	}
