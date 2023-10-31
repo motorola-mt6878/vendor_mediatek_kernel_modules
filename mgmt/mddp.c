@@ -36,6 +36,7 @@
 */
 #define MDDP_HIF_NOTIFY_MD_CRASH_2_FW	0
 #define MDDP_HIF_MD_FW_OWN		1
+#define MDDP_HIF_SER_RECOVERY		2
 
 /*******************************************************************************
 *                   F U N C T I O N   D E C L A R A T I O N S
@@ -1888,6 +1889,8 @@ static void notifyMdCrash2FW(void)
 
 void mddpInHifThread(struct ADAPTER *prAdapter)
 {
+	struct BUS_INFO *prBusInfo = prAdapter->chip_info->bus_info;
+
 	if (KAL_TEST_AND_CLEAR_BIT(
 		    MDDP_HIF_NOTIFY_MD_CRASH_2_FW,
 		    g_ulMddpActionFlag))
@@ -1897,6 +1900,12 @@ void mddpInHifThread(struct ADAPTER *prAdapter)
 		    MDDP_HIF_MD_FW_OWN,
 		    g_ulMddpActionFlag))
 		mddpSetMDFwOwn();
+
+	if (KAL_TEST_AND_CLEAR_BIT(
+		    MDDP_HIF_SER_RECOVERY,
+		    g_ulMddpActionFlag) &&
+	    prBusInfo->getMdSwIntSta)
+		mddpNotifyCheckSer(prBusInfo->getMdSwIntSta(prAdapter));
 }
 
 void mddpTriggerMdFwOwnByFw(struct ADAPTER *prAdapter)
@@ -1905,6 +1914,12 @@ void mddpTriggerMdFwOwnByFw(struct ADAPTER *prAdapter)
 		KAL_SET_BIT(MDDP_HIF_MD_FW_OWN, g_ulMddpActionFlag);
 		kalSetMddpEvent(prAdapter->prGlueInfo);
 	}
+}
+
+void mddpTriggerMdSerRecovery(struct ADAPTER *prAdapter)
+{
+	KAL_SET_BIT(MDDP_HIF_SER_RECOVERY, g_ulMddpActionFlag);
+	kalSetMddpEvent(prAdapter->prGlueInfo);
 }
 
 #if CFG_MTK_CCCI_SUPPORT
