@@ -2289,9 +2289,15 @@ omac_choosed:
 				&prBssInfo->rCsaTimer,
 				(PFN_MGMT_TIMEOUT_FUNC) rlmCsaTimeout,
 				(uintptr_t)ucBssIndex);
+
 			rlmResetCSAParams(prBssInfo, TRUE);
 			prBssInfo->fgIsAisSwitchingChnl = FALSE;
 #endif
+			cnmTimerInitTimer(prAdapter,
+				&prBssInfo->rObssScanTimer,
+				(PFN_MGMT_TIMEOUT_FUNC) rlmObssScanTimeout,
+				(uintptr_t) prBssInfo);
+
 			prBssInfo->u4PowerSaveFlag = 0;
 			prBssInfo->ePwrMode = Param_PowerModeCAM;
 			prBssInfo->eCurrentOPMode = OP_MODE_INFRASTRUCTURE;
@@ -2330,6 +2336,7 @@ void cnmFreeBssInfo(struct ADAPTER *prAdapter,
 #if CFG_SUPPORT_DFS
 	cnmTimerStopTimer(prAdapter, &prBssInfo->rCsaTimer);
 #endif
+	cnmTimerStopTimer(prAdapter, &prBssInfo->rObssScanTimer);
 
 	prBssInfo->fgIsInUse = FALSE;
 }

@@ -49,39 +49,11 @@
  *                   F U N C T I O N   D E C L A R A T I O N S
  *******************************************************************************
  */
-static void rlmObssScanTimeout(struct ADAPTER *prAdapter,
-			       uintptr_t ulParamPtr);
 
 /*******************************************************************************
  *                              F U N C T I O N S
  *******************************************************************************
  */
-
-/*----------------------------------------------------------------------------*/
-/*!
- * \brief
- *
- * \param[in]
- *
- * \return none
- */
-/*----------------------------------------------------------------------------*/
-void rlmObssInit(struct ADAPTER *prAdapter)
-{
-	struct BSS_INFO *prBssInfo;
-	uint8_t i;
-
-	ASSERT(prAdapter);
-
-	for (i = 0; i < prAdapter->ucHwBssIdNum; i++) {
-		prBssInfo = prAdapter->aprBssInfo[i];
-
-		cnmTimerInitTimer(prAdapter, &prBssInfo->rObssScanTimer,
-				  (PFN_MGMT_TIMEOUT_FUNC) rlmObssScanTimeout,
-				  (uintptr_t) prBssInfo);
-	}
-}
-
 /*----------------------------------------------------------------------------*/
 /*!
  * \brief
@@ -246,7 +218,7 @@ void rlmObssScanDone(struct ADAPTER *prAdapter, struct MSG_HDR *prMsgHdr)
  * \return none
  */
 /*----------------------------------------------------------------------------*/
-static void rlmObssScanTimeout(struct ADAPTER *prAdapter,
+void rlmObssScanTimeout(struct ADAPTER *prAdapter,
 			       uintptr_t ulParamPtr)
 {
 	struct BSS_INFO *prBssInfo;
