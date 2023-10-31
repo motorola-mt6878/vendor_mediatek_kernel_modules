@@ -1542,6 +1542,7 @@ struct WIFI_VAR {
 	u_int8_t fgEnTxFragDebug;
 	u_int8_t fgEnTxFragTxDone;
 	u_int8_t ucErrPos;
+	uint32_t u4MlrCfg;
 #endif
 
 #if (CFG_SUPPORT_TX_DATA_DELAY == 1)
@@ -2729,6 +2730,7 @@ struct ADAPTER {
 	uint8_t ucMlrIsSupport;
 	uint8_t ucMlrVersion;
 	uint32_t u4MlrSupportBitmap;
+	uint32_t u4MlrCapSupportBitmap;
 #endif
 
 #if CFG_SUPPORT_PKT_OFLD
