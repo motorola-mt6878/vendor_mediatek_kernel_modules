@@ -1324,5 +1324,6 @@ int32_t wf_reg_start_wrapper(enum connv3_drv_type from_drv,
 	void *priv_data);
 int32_t wf_reg_end_wrapper(enum connv3_drv_type from_drv,
 	void *priv_data);
+void halHandleBtDumpviaWF(struct ADAPTER *prAdapter);
 #endif
 #endif /* HIF_PDMA_H__ */
