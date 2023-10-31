@@ -1417,6 +1417,11 @@ static bool kalWaitRxDmaDone(struct GLUE_INFO *prGlueInfo,
 			if (prRxRing->RxDmaIdx != u4CpuIdx) {
 				pRxCell = &prRxRing->Cell[u4CpuIdx];
 				pCrRxD = (struct RXD_STRUCT *)pRxCell->AllocVa;
+				if (!pCrRxD) {
+					DBGLOG(HAL, ERROR,
+						"pCrRxD is null\n");
+					return false;
+				}
 				DBGLOG(HAL, INFO, "Rx DMAD[%u]\n", u4CpuIdx);
 				DBGLOG_MEM32(HAL, INFO, pCrRxD,
 					sizeof(struct RXD_STRUCT));
