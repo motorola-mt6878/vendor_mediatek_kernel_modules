@@ -444,12 +444,15 @@ static uint32_t reset_handle_pending_req(void)
 	struct RESET_STRUCT *rst = &wifi_rst;
 	struct reset_pending_req *req = rst->pending_req;
 
-	if (!req)
+	if (!req) {
+		glResetCleanResetFlag();
 		return WLAN_STATUS_INVALID_DATA;
+	}
 
 	if (rst->is_suspend) {
 		DBGLOG(INIT, ERROR,
 			"Pending reset request only handled in resume mode.\n");
+		glResetCleanResetFlag();
 		return WLAN_STATUS_NOT_ACCEPTED;
 	}
 
@@ -711,10 +714,8 @@ uint32_t glResetTrigger(struct ADAPTER *prAdapter,
 						 pucFile,
 						 u4Line,
 						 ret != -ETIMEDOUT);
-		if (status == WLAN_STATUS_SUCCESS) {
-			glResetCleanResetFlag();
+		if (status == WLAN_STATUS_SUCCESS)
 			goto exit;
-		}
 	}
 
 	if (ret == -ETIMEDOUT)
