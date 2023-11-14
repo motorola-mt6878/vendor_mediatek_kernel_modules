@@ -560,8 +560,6 @@ struct BSS_INFO {
 #endif
 	uint8_t ucLinkIndex;
 
-	uint8_t ucVhtChannelWidthBackup;
-
 	uint16_t u2MaxIdlePeriod;
 	uint8_t ucIdleOptions;
 
