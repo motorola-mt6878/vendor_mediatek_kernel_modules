@@ -418,8 +418,14 @@ void cnmTimerStartTimer(struct ADAPTER *prAdapter, struct TIMER *prTimer,
 	ASSERT(prAdapter);
 	ASSERT(prTimer);
 
-	DBGLOG_LIMITED(CNM, TRACE, "start timer, timer %p func %ps %d ms\n",
-		prTimer, prTimer->pfMgmtTimeOutFunc, u4TimeoutMs);
+	if (!prTimer->pfMgmtTimeOutFunc)
+		log_dbg(CNM, WARN,
+			"start timer, timer %p func is NULL %d ms\n",
+			prTimer, u4TimeoutMs);
+	else
+		DBGLOG_LIMITED(CNM, TRACE,
+			"start timer, timer %p func %ps %d ms\n",
+			prTimer, prTimer->pfMgmtTimeOutFunc, u4TimeoutMs);
 
 	KAL_ACQUIRE_SPIN_LOCK(prAdapter, SPIN_LOCK_TIMER);
 
