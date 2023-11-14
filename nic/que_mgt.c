@@ -9884,10 +9884,17 @@ void qmArpMonitorHandleRxDhcpPkt(struct ADAPTER *prAdapter,
 
 u_int8_t qmArpMonitorIsCritical(uint8_t ucBssIndex)
 {
+	if (ucBssIndex >= MAX_BSS_INDEX) {
+		DBGLOG(QM, WARN, "arpMoniter invalid Bssidx[%u]\n",
+			ucBssIndex);
+		return FALSE;
+	}
+
 	DBGLOG(QM, LOUD, "[%u] arpMoniter:[Mon, Thres][%u, %u]\n",
 			ucBssIndex,
 			qmArpMonitorGetTxCnt(ucBssIndex),
 			qmArpMonitorGetCriticalThres(ucBssIndex));
+
 	return (qmArpMonitorGetTxCnt(ucBssIndex) >
 			qmArpMonitorGetCriticalThres(ucBssIndex));
 }
