@@ -14767,11 +14767,10 @@ static int get_connsys_thermal_temp(void *data, int *temp)
 #endif
 	struct GLUE_INFO *glue = wlanGetGlueInfo();
 	struct ADAPTER *ad = NULL;
-	struct WIFI_VAR *wifi_var = NULL;
 	struct THERMAL_TEMP_DATA temp_data;
-	uint32_t status = WLAN_STATUS_SUCCESS;
+	uint32_t status = WLAN_STATUS_SUCCESS, u4MinTempQueryTime = 0;
 	u_int8_t fgCache = FALSE;
-
+	int32_t i4MaxTempLimit = 0;
 	if (!wlanIsDriverReady(glue,
 			       WLAN_DRV_READY_CHECK_WLAN_ON)) {
 		status = WLAN_STATUS_FAILURE;
@@ -14780,9 +14779,15 @@ static int get_connsys_thermal_temp(void *data, int *temp)
 	}
 
 	ad = glue->prAdapter;
-	wifi_var = &ad->rWifiVar;
-
-	if (sensor->last_query_temp <= wifi_var->i4MaxTempLimit &&
+	if (glue->u4ReadyFlag != 0 && ad != NULL) {
+		i4MaxTempLimit = ad->rWifiVar.i4MaxTempLimit;
+		u4MinTempQueryTime = ad->rWifiVar.u4MinTempQueryTime;
+	} else {
+		status = WLAN_STATUS_FAILURE;
+		*temp = THERMAL_TEMP_INVALID;
+		goto exit;
+	}
+	if (sensor->last_query_temp <= i4MaxTempLimit &&
 	    time_before(jiffies, sensor->updated_period)) {
 		status = WLAN_STATUS_SUCCESS;
 		*temp = sensor->last_query_temp;
@@ -14793,7 +14798,10 @@ static int get_connsys_thermal_temp(void *data, int *temp)
 	kalMemZero(&temp_data, sizeof(temp_data));
 	temp_data.eType = sensor->type;
 	temp_data.ucIdx = sensor->sendor_idx;
-	status = wlanQueryThermalTemp(ad, &temp_data);
+	if (glue->u4ReadyFlag != 0 && ad != NULL)
+		status = wlanQueryThermalTemp(ad, &temp_data);
+	else
+		status = WLAN_STATUS_NOT_ACCEPTED;
 	if (status != WLAN_STATUS_SUCCESS) {
 		status = WLAN_STATUS_FAILURE;
 		*temp = THERMAL_TEMP_INVALID;
@@ -14801,8 +14809,7 @@ static int get_connsys_thermal_temp(void *data, int *temp)
 	}
 
 	*temp = temp_data.u4Temperature;
-	sensor->updated_period = jiffies +
-		wifi_var->u4MinTempQueryTime * HZ / 1000;
+	sensor->updated_period = jiffies + u4MinTempQueryTime * HZ / 1000;
 	sensor->last_query_temp = *temp;
 
 exit:
