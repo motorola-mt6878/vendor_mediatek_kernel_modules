@@ -76,6 +76,8 @@ unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_stack_idx_test(int co
 unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_dual(void);
 unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_dual_test(int top_idx, int stack_idx);
 
+int mtk_common_ged_dvfs_update_step_size(int low_step, int med_step, int high_step);
+
 int mtk_common_device_init(struct kbase_device *kbdev);
 void mtk_common_device_term(struct kbase_device *kbdev);
 

@@ -422,6 +422,14 @@ unsigned long mtk_common_ged_dvfs_write_sysram_last_commit_dual_test(int top_idx
 #endif
 }
 
+int mtk_common_ged_dvfs_update_step_size(int low_step, int med_step, int high_step)
+{
+#if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
+	return ged_dvfs_update_step_size(low_step, med_step, high_step);
+#else
+	return -1;
+#endif
+}
 
 #if IS_ENABLED(CONFIG_PROC_FS)
 static void mtk_common_procfs_init(struct kbase_device *kbdev)

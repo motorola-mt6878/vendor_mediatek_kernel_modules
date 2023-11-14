@@ -40,6 +40,12 @@ static int gIsDsuRequested = 0;
 spinlock_t g_dsu_request_lock;
 #endif
 
+#if IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
+#define MTK_DVFS_STEP_LOW (3)
+#define MTK_DVFS_STEP_MED (3)
+#define MTK_DVFS_STEP_HIGH (3)
+#endif /* CONFIG_MALI_MTK_DVFS_POLICY */
+
 DEFINE_MUTEX(g_mfg_lock);
 
 enum gpu_dvfs_status_step {
@@ -382,10 +388,21 @@ int mtk_platform_pm_init(struct kbase_device *kbdev)
 
 	gpu_dvfs_status_reset_footprint();
 
+#if IS_ENABLED(CONFIG_MALI_MTK_DVFS_POLICY)
+	// update dvfs policy step depends on platform
+	if (mtk_common_ged_dvfs_update_step_size(
+			MTK_DVFS_STEP_LOW, MTK_DVFS_STEP_MED, MTK_DVFS_STEP_HIGH) == 0)
+		dev_info(kbdev->dev, "[GPU DVFS] update step size by platform: low(%d) med(%d) high(%d)",
+				MTK_DVFS_STEP_LOW, MTK_DVFS_STEP_MED, MTK_DVFS_STEP_HIGH);
+	else
+		dev_info(kbdev->dev, "[GPU DVFS] update_step_size FAIL");
+#endif /* CONFIG_MALI_MTK_DVFS_POLICY */
+
 	dev_info(kbdev->dev, "GPU PM Callback - Initialize Done");
 
 	return 0;
 }
+
 
 void mtk_platform_pm_term(struct kbase_device *kbdev)
 {
