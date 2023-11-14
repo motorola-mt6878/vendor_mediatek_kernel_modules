@@ -147,6 +147,7 @@ enum ENUM_AIS_REQUEST_TYPE {
 	AIS_REQUEST_ROAMING_SEARCH,
 	AIS_REQUEST_ROAMING_CONNECT,
 	AIS_REQUEST_REMAIN_ON_CHANNEL,
+	AIS_REQUEST_BTO,
 	AIS_REQUEST_NUM
 };
 
@@ -414,6 +415,12 @@ struct AX_BLACKLIST_ITEM {
 	uint8_t aucBSSID[MAC_ADDR_LEN];
 };
 
+struct AIS_BTO_INFO {
+	struct BSS_DESC *prBtoBssDesc;
+	uint8_t ucBcnTimeoutReason;
+	uint8_t ucDisconnectReason;
+};
+
 struct AIS_FSM_INFO {
 	enum ENUM_AIS_STATE ePreviousState;
 	enum ENUM_AIS_STATE eCurrentState;
@@ -555,6 +562,8 @@ struct AIS_FSM_INFO {
 	struct TIMER rApRemovalTimer;
 #endif /* CFG_SUPPORT_ML_RECONFIG */
 #endif
+
+	struct AIS_BTO_INFO rBtoInfo;
 
 #if CFG_STAINFO_FEATURE
 	/* roaming count */
@@ -748,6 +757,9 @@ uint8_t aisBeaconTimeoutFilterPolicy(struct ADAPTER *prAdapter,
 
 void aisBssLinkDown(struct ADAPTER *prAdapter,
 	uint8_t ucBssIndex);
+
+void aisHandleBeaconTimeout(struct ADAPTER *prAdapter,
+	uint8_t ucBssIndex, u_int8_t fgDelayAbortIndication);
 
 #if CFG_SUPPORT_DETECT_SECURITY_MODE_CHANGE
 void aisBssSecurityChanged(struct ADAPTER *prAdapter,
