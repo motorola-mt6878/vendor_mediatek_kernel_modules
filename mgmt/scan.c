@@ -1771,6 +1771,25 @@ uint8_t scanRnrChnlIsNeedScan(struct ADAPTER *prAdapter,
 	return TRUE;
 }
 
+uint8_t scanIsNeedRnrScan(struct ADAPTER *prAdapter,
+	struct SCAN_INFO *prScanInfo)
+{
+	/* To speed up wifi on first scan, not to handle RNR.
+	 * except WIFI 7 certification.
+	 */
+	if (prAdapter->rWifiVar.u4SwTestMode != ENUM_SW_TEST_MODE_SIGMA_BE
+		&& prScanInfo->fgWifiOnFirstScan) {
+		return FALSE;
+	} else if (!prScanInfo->rScanParam.fgOobRnrParseEn
+		|| prAdapter->rWifiVar.u4SwTestMode
+		   == ENUM_SW_TEST_MODE_SIGMA_OCE
+		|| prScanInfo->eCurrentState != SCAN_STATE_SCANNING) {
+		DBGLOG(SCN, TRACE, "Skip oob scan Rnr parsing\n");
+		return FALSE;
+	}
+	return TRUE;
+}
+
 /*----------------------------------------------------------------------------*/
 /*!
  * @brief Allocate new NEIGHBOR_AP_INFO structure
@@ -1799,10 +1818,7 @@ void scanParsingRnrElement(struct ADAPTER *prAdapter,
 	struct SCAN_INFO *prScanInfo = &(prAdapter->rWifiVar.rScanInfo);
 	struct IE_RNR *prRnr = (struct IE_RNR *) pucIE;
 
-	if (prAdapter->rWifiVar.u4SwTestMode == ENUM_SW_TEST_MODE_SIGMA_OCE
-		|| prScanInfo->eCurrentState != SCAN_STATE_SCANNING
-		|| !prScanInfo->rScanParam.fgOobRnrParseEn
-		|| prScanInfo->fgWifiOnFirstScan) {
+	if (!scanIsNeedRnrScan(prAdapter, prScanInfo)) {
 		DBGLOG(SCN, TRACE, "Skip oob scan Rnr parsing\n");
 		return;
 	}
