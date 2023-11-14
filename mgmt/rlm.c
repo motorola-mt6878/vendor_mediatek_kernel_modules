@@ -3119,6 +3119,7 @@ static uint8_t rlmRecIeInfoForClient(struct ADAPTER *prAdapter,
 
 			prExCSAIE = (struct IE_EX_CHANNEL_SWITCH *)pucIE;
 
+			ucCurrentCsaCount = prExCSAIE->ucChannelSwitchCount;
 			rlmProcessExCsaIE(prAdapter, prStaRec,
 				prCSAParams,
 				prExCSAIE->ucChannelSwitchMode,
@@ -6369,7 +6370,8 @@ void rlmProcessExCsaIE(struct ADAPTER *prAdapter,
 	}
 
 	DBGLOG(RLM, INFO,
-		"[ECSA] bw[%d], channel[%d], s1[%d]\n",
+		"[ECSA] band[%d], bw[%d], channel[%d], s1[%d]\n",
+		prCSAParams->eCsaBand,
 		prCSAParams->ucVhtBw,
 		prCSAParams->ucCsaNewCh,
 		prCSAParams->ucVhtS1);
