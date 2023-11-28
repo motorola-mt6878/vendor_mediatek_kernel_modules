@@ -2661,6 +2661,12 @@ int32_t wf_reg_via_hif_thread(
 {
 	int32_t ret = 0, i;
 
+	if (kalIsResetting()) {
+		DBGLOG_LIMITED(HAL, WARN, "is resetting\n");
+		ret = -EFAULT;
+		goto end;
+	}
+
 	GLUE_SET_REF_CNT(0, prDebugOps->bt_dump_str.fgHifDone);
 	prDebugOps->bt_dump_str.eOp = eOp;
 	prDebugOps->bt_dump_str.u4Addr = u4Addr;
@@ -2686,7 +2692,7 @@ int32_t wf_reg_via_hif_thread(
 	}
 
 	GLUE_SET_REF_CNT(0, prDebugOps->bt_dump_str.fgHifDone);
-
+end:
 	return ret;
 }
 
