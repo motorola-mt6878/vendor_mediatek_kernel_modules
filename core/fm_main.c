@@ -1200,6 +1200,9 @@ signed int fm_monostereo_get(struct fm *fm, unsigned short *ms)
 {
 	signed int ret = 0;
 
+	if (fm_pwr_state_get(fm) != FM_PWR_RX_ON)
+		return -FM_EPARA;
+
 	if (fm_low_ops.bi.msget == NULL) {
 		WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
 		return -FM_EPARA;
@@ -1226,6 +1229,9 @@ signed int fm_monostereo_get(struct fm *fm, unsigned short *ms)
 signed int fm_monostereo_set(struct fm *fm, signed int ms)
 {
 	signed int ret = 0;
+
+	if (fm_pwr_state_get(fm) != FM_PWR_RX_ON)
+		return -FM_EPARA;
 
 	if (fm_low_ops.bi.msset == NULL) {
 		WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
@@ -1265,6 +1271,9 @@ signed int fm_pamd_get(struct fm *fm, unsigned short *pamd)
 signed int fm_caparray_get(struct fm *fm, signed int *ca)
 {
 	signed int ret = 0;
+
+	if (fm_pwr_state_get(fm) != FM_PWR_RX_ON)
+		return -FM_EPARA;
 
 	if (fm_low_ops.bi.caparray_get == NULL) {
 		WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
@@ -1400,6 +1409,10 @@ signed int fm_rds_good_bc_get(struct fm *fm, unsigned short *gbc)
 		WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
 		return -FM_EPARA;
 	}
+
+	if (fm_pwr_state_get(fm) != FM_PWR_RX_ON)
+		return -FM_EPARA;
+
 	if (FM_LOCK(fm_ops_lock))
 		return -FM_ELOCK;
 
@@ -1421,6 +1434,10 @@ signed int fm_rds_bad_bc_get(struct fm *fm, unsigned short *bbc)
 		WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
 		return -FM_EPARA;
 	}
+
+	if (fm_pwr_state_get(fm) != FM_PWR_RX_ON)
+		return -FM_EPARA;
+
 	if (FM_LOCK(fm_ops_lock))
 		return -FM_ELOCK;
 
@@ -1442,6 +1459,10 @@ signed int fm_rds_bler_ratio_get(struct fm *fm, unsigned short *bbr)
 		WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
 		return -FM_EPARA;
 	}
+
+	if (fm_pwr_state_get(fm) != FM_PWR_RX_ON)
+		return -FM_EPARA;
+
 	if (FM_LOCK(fm_ops_lock))
 		return -FM_ELOCK;
 
@@ -1463,6 +1484,10 @@ signed int fm_rds_group_cnt_get(struct fm *fm, struct rds_group_cnt_t *dst)
 		WCN_DBG(FM_ERR | MAIN, "%s,invalid pointer\n", __func__);
 		return -FM_EPARA;
 	}
+
+	if (fm_pwr_state_get(fm) != FM_PWR_RX_ON)
+		return -FM_EPARA;
+
 	if (FM_LOCK(fm_rds_cnt))
 		return -FM_ELOCK;
 

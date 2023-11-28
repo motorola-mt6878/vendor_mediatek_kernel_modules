@@ -919,6 +919,12 @@ static bool drv_set_own(void)
 	unsigned int tmp1 = 0, tmp2 = 0;
 	int ret = 0;
 
+	/* do not write CR if conninfra is not on */
+	if (!ei->is_power_on) {
+		WCN_DBG(FM_ERR | CHIP, "not power on\n");
+		return false;
+	}
+
 	ret = FM_LOCK(fm_wcn_ops.own_lock);
 	for (i = 0; ret && i < MAX_SET_OWN_COUNT; i++) {
 		fm_delayms(2);
@@ -957,6 +963,7 @@ static bool drv_set_own(void)
 				"%s: conninfra_ready fail!!! 0x%08x:0x%08x\n",
 				__func__,
 				ei->reg_map[CONN_INFRA_CFG_PWRCTRL1], val);
+			FM_UNLOCK(fm_wcn_ops.own_lock);
 			return false;
 		}
 	}
@@ -1521,6 +1528,7 @@ static int fm_conninfra_func_on(void)
 		return 0;
 	}
 
+	ei->is_power_on = true;
 	if (si->set_own && !si->set_own()) {
 		WCN_DBG(FM_ERR | CHIP, "set_own fail\n");
 		return 0;
@@ -1582,6 +1590,7 @@ static int fm_conninfra_func_off(void)
 		return 0;
 	}
 
+	ei->is_power_on = false;
 	ret = conninfra_pwr_off(CONNDRV_TYPE_FM);
 	if (ret == -1) {
 		WCN_DBG(FM_ERR | CHIP, "conninfra power off fail.\n");
@@ -1904,6 +1913,7 @@ static void register_drv_ops_init(void)
 
 	WCN_DBG(FM_NTC | CHIP, "adie=0x%x\n", drv_get_get_adie());
 
+	ei->is_power_on = false;
 #if CFG_FM_CONNAC2
 	ei->enable_eint = drv_enable_eint;
 	ei->disable_eint = drv_disable_eint;
@@ -1977,6 +1987,12 @@ static bool fm_smc_set_own(void)
 	struct fm_ext_interface *ei = &fm_wcn_ops.ei;
 	unsigned int i;
 	int ret = 0;
+
+	/* do not write CR if conninfra is not on */
+	if (!ei->is_power_on) {
+		WCN_DBG(FM_ERR | CHIP, "not power on\n");
+		return false;
+	}
 
 	ret = FM_LOCK(fm_wcn_ops.own_lock);
 	for (i = 0; ret && i < MAX_SET_OWN_COUNT; i++) {
