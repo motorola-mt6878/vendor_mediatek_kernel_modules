@@ -135,6 +135,7 @@ u_int8_t fgIsResetOnEnd;
 u_int8_t fgIsDrvTriggerWholeChipReset;
 enum COREDUMP_SOURCE_TYPE g_Coredump_source;
 u_int8_t fgIsRstPreventFwOwn;
+uint8_t g_IsNeedWaitWholeChipRst;
 #endif
 
 /*******************************************************************************
@@ -266,6 +267,7 @@ void glResetCleanResetFlag(void)
 {
 	glResetUpdateFlag(FALSE);
 	glResetOnEndUpdateFlag(FALSE);
+	g_IsNeedWaitWholeChipRst = FALSE;
 }
 
 #if CFG_CHIP_RESET_SUPPORT
@@ -296,7 +298,7 @@ void glResetInit(struct GLUE_INFO *prGlueInfo)
 	fgIsDrvTriggerWholeChipReset = FALSE;
 	glResetUpdateFlag(FALSE);
 	glResetOnEndUpdateFlag(FALSE);
-
+	g_IsNeedWaitWholeChipRst = FALSE;
 	fgIsRstPreventFwOwn = FALSE;
 	wifi_rst.prGlueInfo = prGlueInfo;
 
@@ -629,6 +631,8 @@ uint32_t glResetTrigger(struct ADAPTER *prAdapter,
 	int ret = 0;
 #endif
 
+	if (!g_IsWholeChipRst && g_IsNeedWaitWholeChipRst)
+		goto exit;
 	if (kalIsResetting())
 		goto exit;
 
@@ -1903,6 +1907,8 @@ void glResetWholeChipResetTrigger(char *pcReason)
 	if (ret == 0) {
 		dump_stack();
 		fgIsDrvTriggerWholeChipReset = TRUE;
+	} else {
+		g_IsNeedWaitWholeChipRst = FALSE;
 	}
 }
 

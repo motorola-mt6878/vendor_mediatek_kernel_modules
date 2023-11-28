@@ -580,6 +580,11 @@ static pci_ers_result_t mtk_pci_error_detected(struct pci_dev *pdev,
 	DBGLOG(HAL, INFO,
 		"mtk_pci_error_detected state: %d, resetting: %d %d\n",
 		state, g_AERRstTriggered, kalIsResetting());
+#if CFG_CHIP_RESET_SUPPORT
+	DBGLOG(HAL, TRACE, "g_IsNeedWaitWholeChipRst:%u\n",
+		g_IsNeedWaitWholeChipRst);
+	g_IsNeedWaitWholeChipRst = TRUE;
+#endif
 
 	if (!pci_is_enabled(pdev)) {
 		DBGLOG(HAL, INFO, "pcie is disable\n");

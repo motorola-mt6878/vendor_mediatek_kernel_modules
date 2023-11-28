@@ -185,7 +185,7 @@ extern enum COREDUMP_SOURCE_TYPE g_Coredump_source;
 #if CFG_CHIP_RESET_HANG
 extern u_int8_t fgIsResetHangState;
 #endif
-
+extern uint8_t g_IsNeedWaitWholeChipRst;
 #endif
 /*******************************************************************************
  *                           P R I V A T E   D A T A
