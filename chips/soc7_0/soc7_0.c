@@ -1901,6 +1901,18 @@ static int wf_pwr_off_consys_mcu(struct ADAPTER *prAdapter)
 	wf_ioremap_write(CONN_SEMAPHORE_CONN_SEMA24_M0_OWN_REL_ADDR, value);
 
 release_wfsys_sem_done:
+
+	/* Clear WFSYS ccif irq with ack
+	 * Address: 0x1803_D014[7:0]
+	 * Data: 8'hff
+	 * Action: write
+	 */
+	HAL_MCR_RD(prAdapter,
+		AP2WF_CONN_INFRA_ON_CCIF4_AP2WF_PCCIF_ACK_ADDR, &value);
+	value |= 0x000000FF;
+	HAL_MCR_WR(prAdapter,
+		AP2WF_CONN_INFRA_ON_CCIF4_AP2WF_PCCIF_ACK_ADDR, value);
+
 	/* Disable A-die top_ck_en_1
 	 * Address: 0x18003124[0]
 	 * Data: 1'b0
