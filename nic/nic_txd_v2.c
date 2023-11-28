@@ -299,14 +299,16 @@ void nic_txd_v2_compose(
 		ucEtherTypeOffsetInWord);
 
 	ucTarPort = nicTxGetTxDestPortIdxByTc(prMsduInfo->ucTC);
+	if (ucTarPort == PORT_INDEX_MCU) {
+		ucTarQueue = nicTxGetTxDestQIdxByTc(prMsduInfo->ucTC);
+		if (prMsduInfo->ucControlFlag & MSDU_CONTROL_FLAG_FORCE_TX) {
 #if (CFG_SUPPORT_FORCE_ALTX == 1)
-	if (ucTarPort == PORT_INDEX_MCU &&
-		prMsduInfo->ucControlFlag & MSDU_CONTROL_FLAG_FORCE_TX) {
-		/* To MCU packet with always tx flag */
-		ucTarQueue = MAC_TXQ_ALTX_0_INDEX;
-	} else
+			ucTarQueue = MAC_TXQ_ALTX_0_INDEX;
+#else
+			ucTarQueue |= MAC_TXQ_ALTX_0_INDEX;
 #endif
-	{
+		}
+	} else {
 		if (prBssInfo) {
 			ucWmmQueSet = prBssInfo->ucWmmQueSet;
 #if CFG_SUPPORT_DROP_INVALID_MSDUINFO
