@@ -1232,6 +1232,7 @@ struct WIFI_VAR {
 	};
 	u_int8_t fgFlushRxReordering;
 	uint32_t u4BaShortMissTimeoutMs;
+	uint32_t u4BaIotApMissTimeoutMs;
 	uint32_t u4BaMissTimeoutMs;
 
 	/* Tx Msdu Queue method */

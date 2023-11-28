@@ -8003,6 +8003,9 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 	INIT_UINT(prWifiVar->u4BaShortMissTimeoutMs,
 		"BaShortMissTimeoutMs", QM_RX_BA_ENTRY_MISS_TIMEOUT_MS_SHORT);
 #endif
+	INIT_UINT(prWifiVar->u4BaIotApMissTimeoutMs,
+		"BaIotApMissTimeoutMs", QM_RX_BA_ENTRY_IOTAP_MISS_TIMEOUT_MS);
+
 	INIT_UINT(prWifiVar->u4BaMissTimeoutMs,
 		"BaMissTimeoutMs", QM_RX_BA_ENTRY_MISS_TIMEOUT_MS);
 
