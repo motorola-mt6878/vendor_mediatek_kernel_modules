@@ -4445,6 +4445,7 @@ void p2pFuncValidateRxActionFrame(struct ADAPTER *prAdapter,
 	u_int8_t fgBufferFrame = FALSE;
 	uint8_t fgIsRoleChannel = FALSE;
 	uint8_t i;
+	uint8_t ucChnlNum;
 	struct P2P_DEV_FSM_INFO *prP2pDevFsmInfo = NULL;
 	struct P2P_ROLE_FSM_INFO *prP2pRoleFsmInfo = NULL;
 	struct BSS_INFO *prP2pBssInfo = NULL;
@@ -4456,6 +4457,9 @@ void p2pFuncValidateRxActionFrame(struct ADAPTER *prAdapter,
 	prActFrame = (struct WLAN_ACTION_FRAME *) prSwRfb->pvHeader;
 
 	prP2pDevFsmInfo = prAdapter->rWifiVar.prP2pDevFsmInfo;
+
+	ucChnlNum = prSwRfb->ucChnlNum;
+	nicRxdChNumTranslate(prSwRfb->eRfBand, &ucChnlNum);
 
 	for (i = 0; i < KAL_P2P_NUM; i++) {
 		prP2pRoleFsmInfo =
@@ -4469,7 +4473,7 @@ void p2pFuncValidateRxActionFrame(struct ADAPTER *prAdapter,
 		    p2pFuncIsAPMode(prAdapter->rWifiVar.prP2PConnSettings[i]))
 			continue;
 
-		if (prP2pBssInfo->ucPrimaryChannel == prSwRfb->ucChnlNum) {
+		if (prP2pBssInfo->ucPrimaryChannel == ucChnlNum) {
 			fgIsRoleChannel = TRUE;
 			break;
 		}
@@ -4484,13 +4488,13 @@ void p2pFuncValidateRxActionFrame(struct ADAPTER *prAdapter,
 		prP2pDevFsmInfo->eCurrentState !=
 			P2P_DEV_STATE_CHNL_ON_HAND) ||
 		prP2pDevFsmInfo->rChnlReqInfo.ucReqChnlNum !=
-			prSwRfb->ucChnlNum)) {
+			ucChnlNum)) {
 		DBGLOG(P2P, INFO,
 			"ignore rx action frame %d on state:%d, ReqChnl:%d, RxChnl:%d\n",
 			prActFrame->ucCategory,
 			prP2pDevFsmInfo->eCurrentState,
 			prP2pDevFsmInfo->rChnlReqInfo.ucReqChnlNum,
-			prSwRfb->ucChnlNum);
+			ucChnlNum);
 		return;
 	}
 
