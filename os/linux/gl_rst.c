@@ -2167,8 +2167,10 @@ void kalSetRstEvent(u_int8_t force_dump)
 {
 	struct RESET_STRUCT *rst = &wifi_rst;
 
-	KAL_WAKE_LOCK(NULL, g_IntrWakeLock);
-
+#if CFG_WMT_RESET_API_SUPPORT && CFG_ENABLE_WAKE_LOCK
+	if (!KAL_WAKE_LOCK_ACTIVE(NULL, g_IntrWakeLock))
+		KAL_WAKE_LOCK(NULL, g_IntrWakeLock);
+#endif
 	rst->force_dump = force_dump;
 	set_bit(GLUE_FLAG_RST_START_BIT, &rst->ulFlag);
 

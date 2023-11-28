@@ -2419,6 +2419,10 @@ static void handle_wfsys_reset(struct ADAPTER *prAdapter)
 			"Ignore fw assert due to whole chip reset ongoing.\n");
 	} else {
 		DBGLOG(HAL, ERROR, "FW trigger assert.\n");
+#if CFG_WMT_RESET_API_SUPPORT && CFG_ENABLE_WAKE_LOCK
+		if (!KAL_WAKE_LOCK_ACTIVE(NULL, g_IntrWakeLock))
+			KAL_WAKE_LOCK(NULL, g_IntrWakeLock);
+#endif
 		g_Coredump_source = COREDUMP_SOURCE_WF_FW;
 
 		glSetRstReason(RST_FW_ASSERT);
@@ -2438,7 +2442,10 @@ static void handle_whole_chip_reset(struct ADAPTER *prAdapter)
 
 	DBGLOG(HAL, ERROR,
 		"FW trigger whole chip reset.\n");
-
+#if CFG_WMT_RESET_API_SUPPORT && CFG_ENABLE_WAKE_LOCK
+	if (!KAL_WAKE_LOCK_ACTIVE(NULL, g_IntrWakeLock))
+		KAL_WAKE_LOCK(NULL, g_IntrWakeLock);
+#endif
 	wifi_coredump_set_enable(TRUE);
 	g_Coredump_source = COREDUMP_SOURCE_WF_FW;
 	glResetUpdateFlag(TRUE);

@@ -236,6 +236,9 @@ extern uint64_t u8ResetTime;
 extern u_int8_t fgSimplifyResetFlow;
 extern char *g_reason;
 #endif
+#if CFG_WMT_RESET_API_SUPPORT
+extern KAL_WAKE_LOCK_T *g_IntrWakeLock;
+#endif
 /*******************************************************************************
  *                              F U N C T I O N S
  *******************************************************************************
