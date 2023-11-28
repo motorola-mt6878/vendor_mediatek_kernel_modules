@@ -162,6 +162,11 @@ struct P2P_DEV_FSM_INFO {
 
 	/* Queued p2p action frame */
 	struct P2P_QUEUED_ACTION_FRAME rQueuedActionFrame;
+
+	/* Record if Go has started to judge if P2P device needs
+	 * to keep active or not.
+	 */
+	uint8_t ucGoStartedBitmap;
 };
 
 struct MSG_P2P_NETDEV_REGISTER {
@@ -275,4 +280,7 @@ p2pDevFsmNotifyP2pRx(struct ADAPTER *prAdapter, uint8_t p2pFrameType,
 
 void p2pDevFsmRunEventTxCancelWait(struct ADAPTER *prAdapter,
 		struct MSG_HDR *prMsgHdr);
+
+void p2pDevFsmNotifyGoState(struct ADAPTER *prAdapter,
+	uint8_t ucBssIndex, uint8_t fgIsGoStarted);
 
