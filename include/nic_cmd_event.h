@@ -1124,6 +1124,9 @@ enum NIC_CAPABILITY_V2_TAG {
 #if (CFG_SUPPORT_REG_STAT_FROM_EMI == 1)
 	TAG_CAP_STATS_REG_MONTR_EMI_OFFSET = 0x23,
 #endif
+
+	TAG_CAP_LIMITED = 0x24,
+
 	TAG_CAP_TOTAL
 };
 
@@ -1247,6 +1250,11 @@ struct CAP_PHY_CAP {
 #if (CFG_SUPPORT_802_11BE == 1)
 	uint8_t ucEht; /* 1:support, 0:not*/
 #endif
+};
+
+struct CAP_LIMITED {
+	uint8_t ucLimitedMaxMcs; /* Limited Max MCS index */
+	uint8_t ucReserved[3];
 };
 
 #if (CFG_SUPPORT_RX_QUOTA_INFO == 1)
@@ -4364,6 +4372,8 @@ uint32_t nicCfgChipCapMacAddr(struct ADAPTER *prAdapter,
 			      uint8_t *pucEventBuf);
 uint32_t nicCfgChipCapPhyCap(struct ADAPTER *prAdapter,
 			     uint8_t *pucEventBuf);
+uint32_t nicCfgChipCapLimited(struct ADAPTER *prAdapter,
+				 uint8_t *pucEventBuf);
 uint32_t nicCfgChipCapMacCap(struct ADAPTER *prAdapter,
 			     uint8_t *pucEventBuf);
 uint32_t nicCfgChipCapFrameBufCap(struct ADAPTER

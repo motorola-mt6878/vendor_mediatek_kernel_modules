@@ -2503,6 +2503,8 @@ struct ADAPTER {
 	u_int8_t fgEnCfg80211Scan;
 #endif /* CFG_SUPPORT_LOWLATENCY_MODE */
 
+	uint8_t ucLimitedMaxMcs;
+
 #if (CFG_SUPPORT_802_11AX == 1)
 	struct __HE_CFG_INFO_T rHeCfg;
 	uint8_t ucMcsMapSetFromSigma;
