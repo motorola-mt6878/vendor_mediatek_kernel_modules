@@ -1190,6 +1190,7 @@ uint32_t saaFsmRunEventRxAssoc(struct ADAPTER *prAdapter,
 			/* Record the Status Code of Authentication Request */
 			prStaRec->u2StatusCode = u2StatusCode;
 			prRetainedSwRfb = prSwRfb;
+			rStatus = WLAN_STATUS_PENDING;
 
 			if (u2StatusCode == STATUS_CODE_SUCCESSFUL) {
 
