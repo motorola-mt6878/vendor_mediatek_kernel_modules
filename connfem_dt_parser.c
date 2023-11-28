@@ -1017,7 +1017,7 @@ static int cfm_dt_epaelna_pctl_state_parse(
 	}
 
 	if (err < 0) {
-		pr_info("[WARN] pctl state name not found, err %d", err);
+		pr_info("[INFO] pctl state name not found, err %d", err);
 		return err;	/* -ENOENT, -EINVAL */
 	}
 
@@ -1103,7 +1103,7 @@ static int cfm_dt_epaelna_pctl_state_find(
 	}
 
 	if (!name) {
-		pr_info("[WARN] pinctrl-names does not have '%s' state",
+		pr_info("[INFO] pinctrl-names does not have '%s' state",
 			state_name);
 		return -ENOENT;
 	}
