@@ -4072,12 +4072,22 @@ int mtk_cfg80211_vendor_get_chip_concurrency_matrix(struct wiphy *wiphy,
 	uint8_t i, j;
 	uint8_t buffer[DEBUG_BUFFER_SZ];
 	int32_t written = 0;
+	static const uint32_t WLAN_DRV_READY =
+		WLAN_DRV_READY_CHECK_WLAN_ON |
+		WLAN_DRV_READY_CHECK_HIF_SUSPEND |
+		WLAN_DRV_READY_CHECK_RESET;
 
 	if (!wiphy || !wdev) {
 		DBGLOG(REQ, ERROR,
 			"wiphy=0x%p, wdev=0x%p\n",
 			wiphy, wdev);
 		return -EINVAL;
+	}
+
+	prGlueInfo = wlanGetGlueInfo();
+	if (!wlanIsDriverReady(prGlueInfo, WLAN_DRV_READY)) {
+		DBGLOG(REQ, ERROR, "driver is not ready\n");
+		return -EFAULT;
 	}
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(*dest));
@@ -4099,12 +4109,6 @@ int mtk_cfg80211_vendor_get_chip_concurrency_matrix(struct wiphy *wiphy,
 	}
 	kalMemZero(dest, sizeof(*dest));
 	kalMemZero(buffer, sizeof(buffer));
-
-	prGlueInfo = wlanGetGlueInfo();
-	if (!prGlueInfo) {
-		DBGLOG(REQ, ERROR, "get glue structure fail.\n");
-		goto nla_put_failure;
-	}
 
 	prChipInfo = prGlueInfo->prAdapter->chip_info;
 	if (!prChipInfo) {
