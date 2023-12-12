@@ -605,8 +605,9 @@ struct STA_RECORD *bssCreateStaRecFromBssDesc(struct ADAPTER *prAdapter,
 	} else {
 		prBssInfo->fgAssoc40mBwAllowed = FALSE;
 	}
-	DBGLOG(RLM, TRACE, "STA 40mAllowed=%d\n",
-	       prBssInfo->fgAssoc40mBwAllowed);
+
+	DBGLOG(RLM, TRACE, "STA 40mAllowed=%d iotap=%d\n",
+	       prBssInfo->fgAssoc40mBwAllowed, prBssDesc->ucIotApAct);
 
 	return prStaRec;
 }				/* end of bssCreateStaRecFromBssDesc() */
