@@ -3067,12 +3067,12 @@ static uint8_t rlmRecIeInfoForClient(struct ADAPTER *prAdapter,
 			prCSAIE = (struct IE_CHANNEL_SWITCH *)pucIE;
 
 			if (prBssInfo->ucPrimaryChannel ==
-					prCSAParams->ucCsaNewCh) {
+					prCSAIE->ucNewChannelNum) {
 				DBGLOG(RLM, WARN,
 					"[CSA] BSS: " MACSTR
 					" already at channel %u\n",
 					MAC2STR(prBssInfo->aucBSSID),
-					prCSAParams->ucCsaNewCh);
+					prCSAIE->ucNewChannelNum);
 				break;
 			}
 
