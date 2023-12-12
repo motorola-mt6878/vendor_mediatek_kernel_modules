@@ -3201,6 +3201,8 @@ send_msg:
 			prAisFsmInfo->ucReasonOfDisconnect =
 				DISCONNECT_REASON_CODE_RESERVED;
 
+			prConnSettings->u2LinkIdBitmap = 0xFFFF;
+
 			break;
 
 		case AIS_STATE_DISCONNECTING:

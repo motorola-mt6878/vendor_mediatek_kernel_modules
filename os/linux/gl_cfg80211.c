@@ -1953,6 +1953,7 @@ int mtk_cfg80211_connect(struct wiphy *wiphy,
 	rNewSsid.pucIEs = (uint8_t *)sme->ie;
 	rNewSsid.u4IesLen = sme->ie_len;
 	rNewSsid.ucBssIdx = ucBssIndex;
+	rNewSsid.u2LinkIdBitmap = 0xFFFF;
 
 	rStatus = kalIoctl(prGlueInfo, wlanoidSetConnect,
 			   (void *)&rNewSsid, sizeof(struct PARAM_CONNECT),
@@ -5320,6 +5321,7 @@ int testmode_reassoc(struct wiphy *wiphy,
 	uint8_t ucSSIDLen;
 	uint8_t aucSSID[ELEM_MAX_LEN_SSID] = {0};
 	uint8_t ucBssIndex = 0;
+	uint16_t u2LinkIdBitmap = 0xFFFF;
 
 	DBGLOG(INIT, TRACE, "command is %s\n", pcCommand);
 	WIPHY_PRIV(wiphy, prGlueInfo);
@@ -5347,6 +5349,14 @@ int testmode_reassoc(struct wiphy *wiphy,
 			prConnSettings->aucSSID, prConnSettings->ucSSIDLen);
 
 		wlanHwAddrToBin(apcArgv[1], bssid);
+		if (i4Argc >= 4)
+			i4Ret = kalkStrtou16(apcArgv[3], 0, &u2LinkIdBitmap);
+		if (i4Ret) {
+			DBGLOG(REQ, ERROR,
+				"parse u2LinkIdBitmap error %d\n", i4Ret);
+			return WLAN_STATUS_INVALID_DATA;
+		}
+
 		kalMemZero(&rNewSsid, sizeof(rNewSsid));
 		rNewSsid.u4CenterFreq = u4FreqInfo;
 		rNewSsid.pucBssid = NULL;
@@ -5355,11 +5365,13 @@ int testmode_reassoc(struct wiphy *wiphy,
 		rNewSsid.u4SsidLen = ucSSIDLen;
 		rNewSsid.ucBssIdx = ucBssIndex;
 		rNewSsid.fgTestMode = TRUE;
+		rNewSsid.u2LinkIdBitmap = u2LinkIdBitmap;
 
 		DBGLOG(INIT, INFO,
-		       "Reassoc ssid=%s(%d) bssid=" MACSTR " freq=%d\n",
-		       rNewSsid.pucSsid, rNewSsid.u4SsidLen,
-		       MAC2STR(bssid), u4FreqInfo);
+		   "Reassoc ssid=%s(%d) bssid= " MACSTR
+		   " freq=%d LinkIdBitmap=%d\n",
+		   rNewSsid.pucSsid, rNewSsid.u4SsidLen,
+		   MAC2STR(bssid), u4FreqInfo, u2LinkIdBitmap);
 
 		rStatus = kalIoctlByBssIdx(prGlueInfo, wlanoidSetConnect,
 			   (void *)&rNewSsid, sizeof(struct PARAM_CONNECT),
