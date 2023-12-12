@@ -8443,13 +8443,13 @@ uint8_t p2pFunGetAcsBestCh(struct ADAPTER *prAdapter,
 
 		if (eBand == BAND_5G && eChnlBw >= MAX_BW_80MHZ &&
 			nicGetVhtS1(aucChannelList[i].ucChannelNum,
-				VHT_OP_CHANNEL_WIDTH_80) == 0)
+				rlmGetVhtOpBwByBssOpBw(eChnlBw)) == 0)
 			continue;
 
 #if (CFG_SUPPORT_WIFI_6G == 1)
 		if (eBand == BAND_6G && eChnlBw >= MAX_BW_80MHZ &&
 			nicGetHe6gS1(aucChannelList[i].ucChannelNum,
-				CW_80MHZ) == 0)
+				rlmGetVhtOpBwByBssOpBw(eChnlBw)) == 0)
 			continue;
 #endif
 		if (rPreferChannel.u4Dirtiness >

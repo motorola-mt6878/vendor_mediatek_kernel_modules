@@ -604,11 +604,6 @@ p2pRoleStatePrepare_To_DFS_CAC_STATE(struct ADAPTER *prAdapter,
 				->cac_time_ms;
 		prChnlReqInfo->eChnlReqType = CH_REQ_TYPE_DFS_CAC;
 
-		prBssInfo->ucVhtChannelWidth =
-			cnmGetBssMaxBwToChnlBW(prAdapter,
-				prBssInfo->ucBssIndex);
-		prChnlReqInfo->eChannelWidth = prBssInfo->ucVhtChannelWidth;
-
 		/* Decide RF BW by own OP BW */
 		ucRfBw = cnmGetDbdcBwCapability(prAdapter,
 			prBssInfo->ucBssIndex);
@@ -619,6 +614,7 @@ p2pRoleStatePrepare_To_DFS_CAC_STATE(struct ADAPTER *prAdapter,
 
 		/* Revise to VHT OP BW */
 		ucRfBw = rlmGetVhtOpBwByBssOpBw(ucRfBw);
+		prBssInfo->ucVhtChannelWidth = ucRfBw;
 		prChnlReqInfo->eChannelWidth =
 			(enum ENUM_CHANNEL_WIDTH) ucRfBw;
 

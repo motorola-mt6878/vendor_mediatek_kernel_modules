@@ -1212,13 +1212,14 @@ uint8_t cnmDecideSapNewChannel(
 	struct BSS_INFO *prBssInfo)
 {
 	uint8_t ucSwitchMode;
+	enum ENUM_MAX_BANDWIDTH_SETTING eChnlMaxBw = MAX_BW_UNKNOWN;
 	uint32_t u4LteSafeChnBitMask_2G  = 0, u4LteSafeChnBitMask_5G_1 = 0,
 		u4LteSafeChnBitMask_5G_2 = 0, u4LteSafeChnBitMask_6G = 0;
 	uint8_t ucCurrentChannel = 0;
 
 	if (!prGlueInfo || !prBssInfo) {
 		DBGLOG(P2P, ERROR, "prGlueInfo or prBssInfo is NULL\n");
-		return -EFAULT;
+		return 0;
 	}
 
 	ucCurrentChannel = prBssInfo->ucPrimaryChannel;
@@ -1235,7 +1236,7 @@ uint8_t cnmDecideSapNewChannel(
 #endif
 	else {
 		DBGLOG(P2P, WARN, "Bss has invalid band\n");
-		return -EFAULT;
+		return 0;
 	}
 	/*
 	*  Get LTE safe channels
@@ -1301,9 +1302,23 @@ uint8_t cnmDecideSapNewChannel(
 		}
 	}
 
+	if (prBssInfo->eBand == BAND_2G4)
+		eChnlMaxBw = prGlueInfo->prAdapter->rWifiVar.ucAp2gBandwidth;
+	else if (prBssInfo->eBand == BAND_5G)
+		eChnlMaxBw = prGlueInfo->prAdapter->rWifiVar.ucAp5gBandwidth;
+#if (CFG_SUPPORT_WIFI_6G == 1)
+	else if (prBssInfo->eBand == BAND_6G)
+		eChnlMaxBw = prGlueInfo->prAdapter->rWifiVar.ucAp6gBandwidth;
+#endif
+	else {
+		DBGLOG(P2P, WARN, "[CSA]Unknown band[%u]\n",
+			prBssInfo->eBand);
+		return 0;
+	}
+
 	return p2pFunGetAcsBestCh(prGlueInfo->prAdapter,
 			prBssInfo->eBand,
-			rlmGetBssOpBwByVhtAndHtOpInfo(prBssInfo),
+			eChnlMaxBw,
 			u4LteSafeChnBitMask_2G,
 			u4LteSafeChnBitMask_5G_1,
 			u4LteSafeChnBitMask_5G_2,
@@ -1317,6 +1332,8 @@ uint8_t cnmIdcCsaReq(struct ADAPTER *prAdapter,
 	struct BSS_INFO *prBssInfo = NULL;
 	uint8_t ucBssIdx = 0;
 	struct RF_CHANNEL_INFO rRfChnlInfo;
+	enum ENUM_MAX_BANDWIDTH_SETTING eChnlMaxBw = MAX_BW_UNKNOWN;
+	uint8_t ucIsApMode;
 
 	ASSERT(ucCh);
 
@@ -1324,6 +1341,41 @@ uint8_t cnmIdcCsaReq(struct ADAPTER *prAdapter,
 		prAdapter, ucRoleIdx, &ucBssIdx) !=
 		WLAN_STATUS_SUCCESS)
 		return -1;
+
+	ucIsApMode = p2pFuncIsAPMode(prAdapter->rWifiVar.prP2PConnSettings
+		[ucRoleIdx]);
+	switch (eBand) {
+	case BAND_2G4:
+		eChnlMaxBw = ucIsApMode ? prAdapter->rWifiVar.ucAp2gBandwidth :
+			prAdapter->rWifiVar.ucP2p2gBandwidth;
+		break;
+	case BAND_5G:
+		eChnlMaxBw = ucIsApMode ? prAdapter->rWifiVar.ucAp5gBandwidth :
+			prAdapter->rWifiVar.ucP2p5gBandwidth;
+		break;
+#if (CFG_SUPPORT_WIFI_6G == 1)
+	case BAND_6G:
+		eChnlMaxBw = ucIsApMode ? prAdapter->rWifiVar.ucAp6gBandwidth :
+			prAdapter->rWifiVar.ucP2p6gBandwidth;
+		break;
+#endif
+	default:
+		DBGLOG(REQ, WARN,
+			"[CSA]Invalid band=%u\n",
+			eBand);
+		break;
+	}
+
+	/* Since CSA call cnmGetBssMaxBw will return the max bw.
+	 * It need prevent to select the channel without max bw.
+	 */
+	if (eChnlMaxBw >= MAX_BW_80MHZ && nicGetS1(eBand, ucCh,
+	    rlmGetVhtOpBwByBssOpBw(eChnlMaxBw)) == 0) {
+		DBGLOG(REQ, WARN,
+			"[CSA]Invalid channel. RoleIdx=%u, Band=%u, CH=%u, BssIdx=%u, eChnlBw=%u\n",
+			ucRoleIdx, eBand, ucCh, ucBssIdx, eChnlMaxBw);
+		return -1;
+	}
 
 	DBGLOG(REQ, INFO,
 		"[CSA]RoleIdx=%d, Band=%d, CH=%d, BssIdx=%d\n",
@@ -2132,16 +2184,6 @@ uint8_t cnmGetBssMaxBw(struct ADAPTER *prAdapter,
 	}
 
 	return ucMaxBandwidth;
-}
-
-uint8_t cnmGetBssMaxBwToChnlBW(struct ADAPTER
-			       *prAdapter,
-			       uint8_t ucBssIndex)
-{
-	uint8_t ucMaxBandwidth = cnmGetBssMaxBw(prAdapter,
-						ucBssIndex);
-	return ucMaxBandwidth == MAX_BW_20MHZ ? ucMaxBandwidth :
-	       (ucMaxBandwidth - 1);
 }
 
 /*----------------------------------------------------------------------------*/
