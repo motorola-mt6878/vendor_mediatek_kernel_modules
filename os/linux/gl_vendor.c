@@ -4028,11 +4028,6 @@ struct mtk_wifi_iface_combination mtk_ifaces_combinations[] = {
 
 struct mtk_wifi_iface_combination mtk_ifaces_combinations_6631[] = {
 	{
-		.max_ifaces = 1,
-		.num_iface_limits = ARRAY_SIZE(ap_ap),
-		.iface_limits = ap_ap,
-	},
-	{
 		.max_ifaces = 2,
 		.num_iface_limits = ARRAY_SIZE(sta_ap),
 		.iface_limits = sta_ap,
