@@ -14140,9 +14140,9 @@ void kalTxDirectClearSkbQ(struct GLUE_INFO *prGlueInfo)
 	}
 
 	while (TRUE) {
-		spin_lock_bh(&prGlueInfo->rSpinLock[SPIN_LOCK_TX_DIRECT]);
+		TX_DIRECT_LOCK(prGlueInfo);
 		prSkb = skb_dequeue(&prGlueInfo->rTxDirectSkbQueue);
-		spin_unlock_bh(&prGlueInfo->rSpinLock[SPIN_LOCK_TX_DIRECT]);
+		TX_DIRECT_UNLOCK(prGlueInfo);
 		if (prSkb == NULL)
 			break;
 
@@ -14215,11 +14215,11 @@ void kalTxDirectTimerCheckHifQ(unsigned long data)
 	struct GLUE_INFO *prGlueInfo = (struct GLUE_INFO *)data;
 #endif
 
-	spin_lock_bh(&prGlueInfo->rSpinLock[SPIN_LOCK_TX_DIRECT]);
+	TX_DIRECT_LOCK(prGlueInfo);
 
 	nicTxDirectTimerCheckHifQ(prGlueInfo->prAdapter);
 
-	spin_unlock_bh(&prGlueInfo->rSpinLock[SPIN_LOCK_TX_DIRECT]);
+	TX_DIRECT_UNLOCK(prGlueInfo);
 
 #if CFG_TX_DIRECT_VIA_HIF_THREAD
 	kalSetTxEvent2Hif(prGlueInfo);
@@ -14253,7 +14253,7 @@ uint32_t kalTxDirectStartXmit(struct sk_buff *prSkb,
 	prTxDirectSkbQ = &prGlueInfo->rTxDirectSkbQueue;
 	__skb_queue_head_init(prLocalSkbQ);
 
-	if (!spin_trylock_bh(&prGlueInfo->rSpinLock[SPIN_LOCK_TX_DIRECT])) {
+	if (!TX_DIRECT_TRY_LOCK(prAdapter->prGlueInfo)) {
 		/* fail to get lock */
 		if (prSkb)
 			skb_queue_tail(prTxDirectSkbQ, prSkb);
@@ -14303,7 +14303,7 @@ uint32_t kalTxDirectStartXmit(struct sk_buff *prSkb,
 		spin_unlock_irqrestore(&prTxDirectSkbQ->lock, u4Flags);
 	}
 
-	spin_unlock_bh(&prGlueInfo->rSpinLock[SPIN_LOCK_TX_DIRECT]);
+	TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
 
 	if (skb_queue_len(prTxDirectSkbQ))
 		kalTxDirectStartCheckSkbQTimer(prGlueInfo,

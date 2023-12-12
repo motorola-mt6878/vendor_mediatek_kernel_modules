@@ -1424,6 +1424,9 @@ extern void connectivity_export_show_stack(struct task_struct *tsk,
 
 #endif
 
+#define TX_DIRECT_TRY_LOCK(glue) \
+	spin_trylock_bh(&glue->rSpinLock[SPIN_LOCK_TX_DIRECT])
+
 #define TX_DIRECT_LOCK(glue) \
 do { \
 	if (irqs_disabled()) \
