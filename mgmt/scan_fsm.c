@@ -2144,7 +2144,15 @@ scnDoScanTimeoutRecoveryCheck(struct ADAPTER *prAdapter,
 		prScanInfo->ucScnTimeoutTimes,
 		prScanInfo->ucScnTimeoutSubsysResetCnt);
 
-	/* If scanDoneTimeout count > 3 and no connection, do L1 SER */
+	/* If scanDoneTimeout count == 2, trigger TX timeout debug SOP */
+	if (prScanInfo->ucScnTimeoutTimes == 2) {
+		prAdapter->u4HifChkFlag |= HIF_TRIGGER_FW_DUMP;
+		prAdapter->u4HifDbgMod = DBG_PLE_INT_MOD_TX;
+		prAdapter->u4HifDbgBss = ucBssIndex;
+		prAdapter->u4HifDbgReason = DBG_PLE_INT_REASON_MANUAL;
+		kalSetHifDbgEvent(prAdapter->prGlueInfo);
+	}
+	/* If scanDoneTimeout count >= 3 and no connection, do L1 SER */
 	if (prScanInfo->ucScnTimeoutTimes >= prWifiVar->ucScanNoApRecoverTh) {
 		if (prScanInfo->ucScnTimeoutSubsysResetCnt < 1 &&
 		   prAisBssInfo->eConnectionState == MEDIA_STATE_DISCONNECTED) {
