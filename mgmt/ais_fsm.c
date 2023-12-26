@@ -6652,7 +6652,6 @@ void aisFsmRunEventChGrant(struct ADAPTER *prAdapter,
 	/* 1. free message */
 	cnmMemFree(prAdapter, prMsgHdr);
 
-#if defined(CFG_STA_CROSS_BAND_CSA)
 	if (prAisBssInfo->prStaRecOfAP &&
 		prAisBssInfo->fgIsAisSwitchingChnl == TRUE) {
 		/* 2. channel privilege has been approved */
@@ -6663,9 +6662,7 @@ void aisFsmRunEventChGrant(struct ADAPTER *prAdapter,
 
 		prAisFsmInfo->fgIsChannelGranted = TRUE;
 		aisFsmReleaseCh(prAdapter, ucBssIndex);
-	} else
-#endif
-	if (prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN
+	} else if (prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN
 	    && prAisFsmInfo->ucSeqNumOfChReq == ucTokenID) {
 		/* 2. channel privilege has been approved */
 		prAisFsmInfo->u4ChGrantedInterval = u4GrantInterval;
@@ -10443,7 +10440,6 @@ static void aisScanResetReq(struct PARAM_SCAN_REQUEST_ADV *prScanRequest)
 	prScanRequest->ucScanType = SCAN_TYPE_ACTIVE_SCAN;
 }
 
-#if defined(CFG_STA_CROSS_BAND_CSA)
 /*----------------------------------------------------------------------------*/
 /*!
  * @brief This function will request new channel once reciving CSA request.
@@ -10539,5 +10535,4 @@ void aisUpdateParamsForCSA(struct ADAPTER *prAdapter,
 
 	cnmDumpStaRec(prAdapter, prStaRec->ucIndex);
 }				/* end of aisUpdateParamsForCSA() */
-#endif
 

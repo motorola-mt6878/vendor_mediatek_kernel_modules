@@ -128,11 +128,10 @@ static u_int8_t rlmCheckOpChangeParamValid(struct ADAPTER *prAdapter,
 					   uint8_t ucChannelWidth,
 					   uint8_t ucOpRxNss,
 					   uint8_t ucOpTxNss);
-#if defined(CFG_STA_CROSS_BAND_CSA)
+
 static void rlmChangeOperationModeAfterCSA(
 					struct ADAPTER *prAdapter,
 					struct BSS_INFO *prBssInfo);
-#endif
 
 static void rlmRecOpModeBwForClient(uint8_t ucVhtOpModeChannelWidth,
 				    struct BSS_INFO *prBssInfo);
@@ -3697,12 +3696,10 @@ static uint8_t rlmRecIeInfoForClient(struct ADAPTER *prAdapter,
 				prBssDesc->e6GPwrMode);
 #endif
 
-#if defined(CFG_STA_CROSS_BAND_CSA)
 		if (IS_BSS_AIS(prBssInfo)) {
 			aisUpdateParamsForCSA(prAdapter, prBssInfo);
 			rlmChangeOperationModeAfterCSA(prAdapter, prBssInfo);
 		}
-#endif
 
 		if (prCSAParams->fgHasStopTx) {
 			qmSetStaRecTxAllowed(prAdapter, prStaRec, TRUE);
@@ -6912,7 +6909,6 @@ void rlmCsaTimeout(struct ADAPTER *prAdapter,
 #endif
 	}
 
-#if defined(CFG_STA_CROSS_BAND_CSA)
 	if (IS_BSS_AIS(prBssInfo) &&
 		!prBssInfo->fgIsAisSwitchingChnl) {
 		struct AIS_FSM_INFO *prAisFsmInfo;
@@ -6931,9 +6927,6 @@ void rlmCsaTimeout(struct ADAPTER *prAdapter,
 		aisReqJoinChPrivilegeForCSA(prAdapter, prAisFsmInfo,
 			prBssInfo, &prAisFsmInfo->ucSeqNumOfChReq);
 	}
-#else
-	rlmSyncOperationParams(prAdapter, prBssInfo);
-#endif
 
 	rlmResetCSAParams(prBssInfo, FALSE);
 }
@@ -8497,7 +8490,6 @@ rlmChangeOperationMode(
 	return OP_CHANGE_STATUS_VALID_CHANGE_CALLBACK_DONE;
 }
 
-#if defined(CFG_STA_CROSS_BAND_CSA)
 void rlmChangeOperationModeAfterCSA(
 	struct ADAPTER *prAdapter, struct BSS_INFO *prBssInfo)
 {
@@ -8527,7 +8519,6 @@ void rlmChangeOperationModeAfterCSA(
 	/* Restore VHT channel width after CSA */
 	prBssInfo->ucVhtChannelWidth = ucVhtChannelWidthAfterCsa;
 }
-#endif
 
 /*----------------------------------------------------------------------------*/
 /*!
