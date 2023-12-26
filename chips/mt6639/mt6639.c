@@ -650,6 +650,9 @@ struct BUS_INFO mt6639_bus_info = {
 		.prMsiLayout = mt6639_pcie_msi_layout,
 		.u4MaxMsiNum = ARRAY_SIZE(mt6639_pcie_msi_layout),
 	},
+#if IS_ENABLED(CFG_MTK_WIFI_PCIE_SUPPORT)
+	.is_en_drv_unmask_pci_msi_irq = TRUE,
+#endif
 	.showDebugInfo = mt6639ShowPcieDebugInfo,
 	.disableDevice = mtk_pci_disable_device,
 #if CFG_SUPPORT_PCIE_GEN_SWITCH
@@ -2212,10 +2215,6 @@ static void mt6639RecoveryMsiStatus(struct ADAPTER *prAdapter)
 	struct WIFI_VAR *prWifiVar = &prAdapter->rWifiVar;
 	struct pcie_msi_info *prMsiInfo = &prBusInfo->pcie_msi_info;
 	uint32_t u4Addr = 0, u4Val = 0, u4WrVal = 0, u4Cnt = 0;
-#if CFG_MTK_WIFI_EN_SW_EMI_READ
-	struct SW_EMI_RING_INFO *prSwEmiRingInfo = &prBusInfo->rSwEmiRingInfo;
-	u_int8_t fgRet = FALSE;
-#endif
 
 	/* tput < 10mbps */
 	if (perf->u4CurrPerfLevel > 0)
@@ -2236,20 +2235,11 @@ static void mt6639RecoveryMsiStatus(struct ADAPTER *prAdapter)
 		return;
 
 	/* read PCIe EP MSI status */
-	u4Addr = 0x740310F0;
-#if CFG_MTK_WIFI_EN_SW_EMI_READ
-	if (IS_FEATURE_ENABLED(prWifiVar->fgEnSwEmiRead) &&
-	    prSwEmiRingInfo->rOps.read) {
-		fgRet = prSwEmiRingInfo->rOps.read(
-			prAdapter->prGlueInfo, u4Addr, &u4Val);
-	}
-	if (!fgRet)
-#endif
-		HAL_MCR_RD(prAdapter, u4Addr, &u4Val);
-
+	u4Val = mtk_pci_read_msi_mask(prAdapter->prGlueInfo);
 	if ((u4Val & 0xff) == 0)
 		return;
 
+	u4Addr = 0x740310F0;
 	u4WrVal = u4Val & 0xffffff00;
 	HAL_MCR_WR(prAdapter, u4Addr, u4WrVal);
 	DBGLOG(HAL, WARN, "Rx[%u] CR[0x%08x]=[0x%08x] WR[0x%08x]",
