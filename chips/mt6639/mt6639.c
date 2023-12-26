@@ -3170,6 +3170,8 @@ static uint32_t mt6639_mcu_init(struct ADAPTER *ad)
 	uint32_t rStatus = WLAN_STATUS_SUCCESS;
 	struct mt66xx_chip_info *prChipInfo = NULL;
 	struct CHIP_DBG_OPS *prDbgOps = NULL;
+	uint8_t fgIsPollingIdleSuccess = FALSE;
+	char *reason = "RST_MCU_INIT_FAIL";
 
 	if (!ad) {
 		DBGLOG(INIT, ERROR, "NULL ADAPTER.\n");
@@ -3211,8 +3213,10 @@ static uint32_t mt6639_mcu_init(struct ADAPTER *ad)
 
 		HAL_MCR_RD(ad, WF_TOP_CFG_ON_ROMCODE_INDEX_ADDR,
 			&u4Value);
-		if (u4Value == MCU_IDLE)
+		if (u4Value == MCU_IDLE) {
+			fgIsPollingIdleSuccess = TRUE;
 			break;
+		}
 
 		u4PollingCnt++;
 		kalUdelay(1000);
@@ -3430,8 +3434,12 @@ dump:
 			CB_INFRA_MISC0_CBTOP_FREQ_METER_STATUS_ADDR,
 			u4Value);
 	}
-
 exit:
+	if (!fgIsPollingIdleSuccess) {
+		glSetRstReasonString(reason);
+		glResetWholeChipResetTrigger(reason);
+		rStatus = WLAN_STATUS_FAILURE;
+	}
 	return rStatus;
 }
 

@@ -110,6 +110,7 @@ uint8_t *apucRstReason[RST_REASON_MAX] = {
 	(uint8_t *) DISP_STRING("Chip reset by AER - MalfTLP"),
 	(uint8_t *) DISP_STRING("Chip reset by AER - RxErr"),
 	(uint8_t *) DISP_STRING("Chip reset by AER - SDES"),
+	(uint8_t *) DISP_STRING("RST_MCU_INIT_FAIL"),
 };
 
 const uint8_t *apucRstAction[] = {
