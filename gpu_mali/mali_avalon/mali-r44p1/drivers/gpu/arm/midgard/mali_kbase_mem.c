@@ -2616,7 +2616,14 @@ int kbase_alloc_phy_pages_helper(struct kbase_mem_phy_alloc *alloc,
 	kbdev = kctx->kbdev;
 
 	if (nr_pages_requested == 0)
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+	{
+		kbase_trace_alloc_pages(kbdev->id, kctx, nr_pages_requested, (size_t)alloc->pages);
 		goto done; /*nothing to do*/
+	}
+#else
+		goto done; /*nothing to do*/
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
 
 	new_page_count = atomic_add_return(
 		nr_pages_requested, &kctx->used_pages);
@@ -2628,6 +2635,10 @@ int kbase_alloc_phy_pages_helper(struct kbase_mem_phy_alloc *alloc,
 	 */
 	kbase_process_page_usage_inc(kctx, nr_pages_requested);
 	kbase_trace_gpu_mem_usage_inc(kctx->kbdev, kctx, nr_pages_requested);
+
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+	kbase_trace_alloc_pages(kbdev->id, kctx, nr_pages_requested, (size_t)alloc->pages);
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
 
 #if IS_ENABLED(CONFIG_MALI_MTK_PAGE_TABLE_CLUSTERING)
 	curr_apc = *apc;
@@ -2812,6 +2823,10 @@ alloc_failed:
 	atomic_sub(nr_left, &kctx->used_pages);
 	atomic_sub(nr_left, &kctx->kbdev->memdev.used_pages);
 
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+	kbase_trace_free_pages(kbdev->id, kctx, nr_left, (size_t)alloc->pages);
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
+
 invalid_request:
 	return -ENOMEM;
 }
@@ -2890,7 +2905,14 @@ struct tagged_addr *kbase_alloc_phy_pages_helper_locked(
 	lockdep_assert_held(&kctx->mem_partials_lock);
 
 	if (nr_pages_requested == 0)
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+	{
+		kbase_trace_alloc_pages(kbdev->id, kctx, nr_pages_requested, (size_t)alloc->pages);
 		goto done; /*nothing to do*/
+	}
+#else
+		goto done; /*nothing to do*/
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
 
 	new_page_count = atomic_add_return(
 		nr_pages_requested, &kctx->used_pages);
@@ -2902,6 +2924,10 @@ struct tagged_addr *kbase_alloc_phy_pages_helper_locked(
 	 */
 	kbase_process_page_usage_inc(kctx, nr_pages_requested);
 	kbase_trace_gpu_mem_usage_inc(kctx->kbdev, kctx, nr_pages_requested);
+
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+	kbase_trace_alloc_pages(kbdev->id, kctx, nr_pages_requested, (size_t)alloc->pages);
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
 
 #if IS_ENABLED(CONFIG_MALI_MTK_PAGE_TABLE_CLUSTERING)
 	curr_apc = *apc;
@@ -3087,6 +3113,10 @@ alloc_failed:
 	atomic_sub(nr_pages_requested, &kctx->used_pages);
 	atomic_sub(nr_pages_requested, &kctx->kbdev->memdev.used_pages);
 
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+	kbase_trace_free_pages(kbdev->id, kctx, nr_pages_requested, (size_t)alloc->pages);
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
+
 invalid_request:
 	return NULL;
 }
@@ -3210,6 +3240,10 @@ int kbase_free_phy_pages_helper(
 			(u64)new_page_count);
 
 		kbase_trace_gpu_mem_usage_dec(kctx->kbdev, kctx, freed);
+
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+		kbase_trace_free_pages(kbdev->id, kctx, freed, (size_t)alloc->pages);
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
 	}
 
 	return 0;
@@ -3334,6 +3368,10 @@ void kbase_free_phy_pages_helper_locked(struct kbase_mem_phy_alloc *alloc,
 				(u64)new_page_count);
 
 		kbase_trace_gpu_mem_usage_dec(kctx->kbdev, kctx, freed);
+
+#if IS_ENABLED(CONFIG_MALI_MTK_MEMORY_TP_DEBUG)
+		kbase_trace_free_pages(kbdev->id, kctx, freed, (size_t)alloc->pages);
+#endif /* CONFIG_MALI_MTK_MEMORY_TP_DEBUG */
 	}
 }
 KBASE_EXPORT_TEST_API(kbase_free_phy_pages_helper_locked);
