@@ -2444,9 +2444,11 @@ void rsnParserCheckForRSNCCMPPSK(struct ADAPTER *prAdapter,
 			return;
 		}
 
-		if (prAdapter->rWifiVar.fgSapCheckPmkidInDriver
-			&& rsnKeyMgmtSae(prBssInfo->u4RsnSelectedAKMSuite)
-			&& rRsnIe.u2PmkidCount > 0) {
+		if (p2pFuncIsAPMode(prAdapter->rWifiVar.prP2PConnSettings
+		    [prBssInfo->u4PrivateData])
+		    && prAdapter->rWifiVar.fgSapCheckPmkidInDriver
+		    && rsnKeyMgmtSae(prBssInfo->u4RsnSelectedAKMSuite)
+		    && rRsnIe.u2PmkidCount > 0) {
 			struct PMKID_ENTRY *entry;
 
 			entry = rsnSearchPmkidEntry(prAdapter,
@@ -3049,6 +3051,8 @@ uint32_t rsnCheckBipKeyInstalled(struct ADAPTER
 		if (prStaRec->rPmfCfg.fgApplyPmf)
 			DBGLOG(RSN, INFO, "AP-STA PMF capable\n");
 		return prStaRec->rPmfCfg.fgApplyPmf;
+	} else if (IS_BSS_P2P(prBssInfo)) {
+		return prBssInfo->fgBipKeyInstalled;
 	} else
 		return FALSE;
 }

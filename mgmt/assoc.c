@@ -1652,10 +1652,7 @@ uint32_t assocProcessRxAssocReqFrameImpl(
 #if CFG_ENABLE_WIFI_DIRECT && CFG_ENABLE_HOTSPOT_PRIVACY_CHECK
 			/* Check only SAP clients */
 			if (prAdapter->fgIsP2PRegistered &&
-				IS_STA_IN_P2P(prStaRec) &&
-				p2pFuncIsAPMode(
-					prAdapter->rWifiVar.prP2PConnSettings
-					[prBssInfo->u4PrivateData])) {
+				IS_STA_IN_P2P(prStaRec)) {
 				prIeRsn = RSN_IE(pucIE);
 				rsnParserCheckForRSNCCMPPSK(prAdapter, prIeRsn,
 							    prStaRec,
