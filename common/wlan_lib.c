@@ -8549,6 +8549,8 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 		  PMK_REFRESH_THRESHOLD_SEC);
 	INIT_INT(prWifiVar->icRegPwrLmtMin, "RegPwrLmtMin",
 		TX_PWR_REG_LMT_MIN);
+	INIT_INT(prWifiVar->icRegPwrLmtMax, "RegPwrLmtMax",
+		TX_PWR_REG_LMT_MAX);
 #if WLAN_INCLUDE_SYS
 	sysGetExtCfg(prAdapter);
 #endif

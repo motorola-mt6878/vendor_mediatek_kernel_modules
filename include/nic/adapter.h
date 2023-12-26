@@ -1623,6 +1623,7 @@ struct WIFI_VAR {
 
 	uint32_t u4PmkRefreshThreshold;
 	int8_t icRegPwrLmtMin;
+	int8_t icRegPwrLmtMax;
 
 	uint32_t u4RecoveryMsiRxCnt;
 	uint32_t u4RecoveryMsiTime;
