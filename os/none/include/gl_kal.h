@@ -2134,6 +2134,10 @@ u_int8_t kalIsChFlagMatch(uint32_t uFlags, enum CHAN_FLAGS matchFlag);
 
 #define kalVendorEvtRssiBeyondRange(_prAdapter, _ucBssIdx, _i4Rssi) \
 	KAL_NEED_IMPLEMENT(__FILE__, __func__, __LINE__)
+
+int kalTimeCompare(uint32_t *pu4Ts1, uint32_t *pu4Ts2);
+u_int8_t kalGetDeltaTime(uint32_t *pu4Ts1, uint32_t *pu4Ts2,
+			 uint32_t *pu4TsRst);
 uint32_t kalSyncTimeToFW(struct ADAPTER *prAdapter,
 	u_int8_t fgInitCmd);
 void kalSetLogTooMuch(uint32_t u4DriverLevel,

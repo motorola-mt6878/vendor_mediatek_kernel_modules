@@ -1499,11 +1499,11 @@ void halReturnTimeoutMsduToken(struct ADAPTER *prAdapter)
 		if (!prToken->fgInUsed)
 			continue;
 
-		if (!halGetDeltaTime(&rNowTs, &prToken->rTs, &rTime))
+		if (!kalGetDeltaTime(&rNowTs, &prToken->rTs, &rTime))
 			continue;
 
 		/* Return token to free stack */
-		if (halTimeCompare(&rTime, &rTimeout) >= 0) {
+		if (kalTimeCompare(&rTime, &rTimeout) >= 0) {
 			DBGLOG(HAL, INFO,
 			       "Free TokenId[%u] timeout[sec:%ld, nsec:%ld]\n",
 			       u4Idx, rTime.tv_sec,
