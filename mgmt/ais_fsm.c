@@ -1181,7 +1181,7 @@ struct PMKID_ENTRY *aisSearchPmkidEntry(struct ADAPTER *prAdapter,
 	 * 3. auth type is SAE
 	 */
 	if (entry &&
-	    (rsnApInvalidPMK(entry->u2StatusCode) ||
+	    (rsnApInvalidPMK(entry->u2StatusCode, prConnSettings->eAuthMode) ||
 	     rsnCheckPmkExpiration(prAdapter,
 				entry, prAisBssInfo->ucBssIndex) ||
 	     prStaRec->ucAuthAlgNum == AUTH_ALGORITHM_NUM_SAE))
@@ -1726,8 +1726,10 @@ u_int8_t aisFsmStateInit_RetryJOIN(struct ADAPTER *prAdapter,
 {
 	struct AIS_FSM_INFO *prAisFsmInfo;
 	struct MSG_SAA_FSM_START *prJoinReqMsg;
+	struct CONNECTION_SETTINGS *prConnSettings;
 
 	prAisFsmInfo = aisGetAisFsmInfo(prAdapter, ucBssIndex);
+	prConnSettings = aisGetConnSettings(prAdapter, ucBssIndex);
 
 	/* Retry other AuthType if possible */
 	if (!prAisFsmInfo->ucAvailableAuthTypes)
@@ -1736,7 +1738,8 @@ u_int8_t aisFsmStateInit_RetryJOIN(struct ADAPTER *prAdapter,
 	if (prStaRec->u2StatusCode != STATUS_CODE_AUTH_ALGORITHM_NOT_SUPPORTED
 	    && prStaRec->u2StatusCode != STATUS_CODE_AUTH_TIMEOUT
 	    /* try without invalid PMKID */
-	    && !rsnApInvalidPMK(prStaRec->u2StatusCode)) {
+	    && !rsnApInvalidPMK(prStaRec->u2StatusCode,
+			prConnSettings->eAuthMode)) {
 		prAisFsmInfo->ucAvailableAuthTypes = 0;
 		return FALSE;
 	}
