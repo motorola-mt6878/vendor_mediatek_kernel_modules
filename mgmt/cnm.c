@@ -2081,7 +2081,7 @@ uint8_t cnmGetBssMaxBw(struct ADAPTER *prAdapter,
 		if (eBand == BAND_2G4) {
 			ucMaxBandwidth = prAdapter->rWifiVar.ucSta2gBandwidth;
 #if CFG_SUPPORT_IOT_AP_BLACKLIST
-			if (ucMaxBandwidth == BW_40 && prBssDesc &&
+			if (ucMaxBandwidth == MAX_BW_40MHZ && prBssDesc &&
 			    bssGetIotApAction(prAdapter, prBssDesc) ==
 			    WLAN_IOT_AP_DIS_2GHT40) {
 				ucMaxBandwidth = MAX_BW_20MHZ;
