@@ -166,11 +166,11 @@ void mt6639_dumpN45CoreReg(struct ADAPTER *ad);
 void mt6639_dumpWfTopReg(struct ADAPTER *ad);
 void mt6639_dumpHostVdnrTimeoutInfo(struct ADAPTER *ad);
 void mt6639_dumpWfBusReg(struct ADAPTER *ad);
-void mt6639_dumpCbtopReg(struct ADAPTER *ad);
+uint8_t mt6639_dumpCbtopReg(struct ADAPTER *ad);
 
 #if IS_ENABLED(CFG_MTK_WIFI_CONNV3_SUPPORT)
-void mt6639_dumpPcieReg(void);
-void mt6639_dumpPcieRegWithScanDump(void);
+uint8_t mt6639_dumpPcieReg(void);
+uint8_t mt6639_dumpPcieRegWithScanDump(void);
 bool mt6639_CheckDumpViaBt(void);
 #endif
 
