@@ -1927,6 +1927,12 @@ void glResetSubsysRstProcedure(struct RESET_STRUCT *rst,
 	struct ADAPTER *prAdapter = NULL;
 	bool fgIsTimeout;
 
+	while (get_wifi_process_status() == 1) {
+		DBGLOG(INIT, WARN,
+			"Wi-Fi on/off process is ongoing.\n");
+		msleep(100);
+	}
+
 	if (prGlueInfo && prGlueInfo->u4ReadyFlag) {
 		struct WIFI_VAR *prWifiVar = NULL;
 
