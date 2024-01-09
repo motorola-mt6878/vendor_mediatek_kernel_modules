@@ -8816,7 +8816,10 @@ wlanNotifyFwSuspend(struct GLUE_INFO *prGlueInfo,
 
 	prNetDevPrivate = (struct NETDEV_PRIVATE_GLUE_INFO *)
 			  netdev_priv(prDev);
-
+	if (!prNetDevPrivate) {
+		DBGLOG(REQ, WARN, "prNetDevPrivate is NULL!\n");
+		return;
+	}
 	if (prNetDevPrivate->prGlueInfo != prGlueInfo)
 		DBGLOG(REQ, WARN, "%s: unexpected prGlueInfo(0x%p)!\n",
 			   __func__, prNetDevPrivate->prGlueInfo);
