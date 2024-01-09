@@ -954,9 +954,20 @@ void cnmChMngrHandleChEvent(struct ADAPTER *prAdapter,
 	       prEventBody->ucRfCenterFreqSeg2,
 	       prEventBody->u4GrantInterval);
 
-	ASSERT(prEventBody->ucBssIndex <=
-	       prAdapter->ucHwBssIdNum);
-	ASSERT(prEventBody->ucStatus == EVENT_CH_STATUS_GRANT);
+	if (prEventBody->ucBssIndex > prAdapter->ucHwBssIdNum) {
+		DBGLOG(CNM, ERROR, "BssIdx:%d>[%d]\n",
+			prEventBody->ucBssIndex,
+			prAdapter->ucHwBssIdNum);
+		ASSERT(0);
+		return;
+	}
+
+	if (prEventBody->ucStatus != EVENT_CH_STATUS_GRANT) {
+		DBGLOG(CNM, ERROR, "ucStatus:%d\n",
+			prEventBody->ucStatus);
+		ASSERT(0);
+		return;
+	}
 
 	prBssInfo =
 		prAdapter->aprBssInfo[prEventBody->ucBssIndex];
