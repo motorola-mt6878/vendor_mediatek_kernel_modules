@@ -1387,7 +1387,7 @@ struct CMD_SET_NETWORK_ADDRESS_LIST {
 	uint8_t      ucAddressCount;
 	uint8_t      ucVersion;
 	uint8_t      ucReserved[1];
-	struct CMD_IPV4_NETWORK_ADDRESS arNetAddress[1];
+	struct CMD_IPV4_NETWORK_ADDRESS arNetAddress[];
 };
 
 struct CMD_IPV6_NETWORK_ADDRESS {
@@ -1398,7 +1398,7 @@ struct CMD_IPV6_NETWORK_ADDRESS_LIST {
 	uint8_t  ucBssIndex;
 	uint8_t  ucAddressCount;
 	uint8_t  ucReserved[2];
-	struct CMD_IPV6_NETWORK_ADDRESS arNetAddress[1];
+	struct CMD_IPV6_NETWORK_ADDRESS arNetAddress[];
 };
 
 struct CMD_SET_RRM_CAPABILITY {
