@@ -3189,6 +3189,7 @@ void nicTxFreePacket(struct ADAPTER *prAdapter,
 			 * while will lead write free packet
 			 */
 			prMsduInfo->prPacket = NULL;
+			TX_INC_CNT(&prAdapter->rTxCtrl, TX_FREE_PACKET_COUNT);
 		}
 		if (fgDrop)
 			wlanUpdateTxStatistics(prAdapter, prMsduInfo,

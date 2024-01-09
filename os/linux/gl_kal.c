@@ -3755,6 +3755,7 @@ kalHardStartXmit(struct sk_buff *prOrgSkb,
 		}
 		dev_kfree_skb(prOrgSkb);
 		prSkb = prSkbNew;
+		TX_INC_CNT(&prAdapter->rTxCtrl, TX_IN_COPY_COUNT);
 	}
 #endif
 
@@ -10270,7 +10271,7 @@ static uint32_t kalPerMonUpdate(struct ADAPTER *prAdapter)
 	DYNAMIC_RFB_TEMPLATE \
 	CPU_STAT_CNT_TEMPLATE \
 	" TxDp[ST:BS:FO:QM:DP]:%u:%u:%u:%u:%u" \
-	" Tx[SQ:TI:TM:TDD:TDM]:%u:%u:%u:%u:%u" \
+	" Tx[SQ:TI:TM:TDD:TDM:TIC:TFP]:%u:%u:%u:%u:%u:%u:%u" \
 	" MgmtSub[%s]" \
 	"\n"
 
@@ -10349,6 +10350,8 @@ static uint32_t kalPerMonUpdate(struct ADAPTER *prAdapter)
 		TX_GET_CNT(&prAdapter->rTxCtrl, TX_MSDUINFO_COUNT),
 		TX_GET_CNT(&prAdapter->rTxCtrl, TX_DIRECT_DEQUEUE_COUNT),
 		TX_GET_CNT(&prAdapter->rTxCtrl, TX_DIRECT_MSDUINFO_COUNT),
+		TX_GET_CNT(&prAdapter->rTxCtrl, TX_IN_COPY_COUNT),
+		TX_GET_CNT(&prAdapter->rTxCtrl, TX_FREE_PACKET_COUNT),
 		head5
 		);
 #undef TEMP_LOG_TEMPLATE
