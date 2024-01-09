@@ -2998,6 +2998,9 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 	prBssDesc->fgIsRWMValid = FALSE;
 	prBssDesc->u2ReducedWanMetrics = 0;
 
+	/* Support 802.11k rrm */
+	prBssDesc->u2CurrCountryCode = COUNTRY_CODE_NULL;
+
 	if (fgIsProbeResp == FALSE) {
 		/* Probe response doesn't have TIM IE. Thus, we should
 		 * reset TIM when handling beacon frame only.
@@ -3661,7 +3664,8 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 #endif
 
 #if CFG_SUPPORT_802_11K
-	 if (prCountryIE) {
+	if (prCountryIE) {
+		prBssDesc->u2CurrCountryCode = u2CurrCountryCode;
 		DBGLOG(SCN, LOUD,
 			"Country IE present,BSSID[" MACSTR "] SSID:%s(%c%c)\n",
 			MAC2STR(prBssDesc->aucBSSID),

@@ -1384,7 +1384,8 @@ void mldGenerateRnrIE(struct ADAPTER *prAdapter,
 		info->ucOpClass =
 			rlmGetOpClassForChannel(
 				bss->ucPrimaryChannel,
-				bss->eBand, eSco, bss->ucVhtChannelWidth);
+				bss->eBand, eSco, bss->ucVhtChannelWidth,
+				COUNTRY_CODE_NULL);
 		info->ucChannelNum = bss->ucPrimaryChannel;
 
 		cp = info->aucTbttInfoSet;

@@ -460,6 +460,7 @@ struct BSS_DESC {
 #if CFG_SUPPORT_802_11K
 	struct NEIGHBOR_AP *prNeighbor;
 	uint8_t fgQueriedCandidates;
+	uint16_t u2CurrCountryCode;
 #endif
 	uint8_t fgIsDisallowed;
 	uint8_t fgExistEspIE;
