@@ -8295,7 +8295,6 @@ static int initWlan(void)
 #if CFG_WIFI_LEROY_MP2
 	rtnl_lock();
 #endif
-	g_prPlatDev = NULL;
 	ret = ((glRegisterBus(wlanProbe,
 			      wlanRemove) == WLAN_STATUS_SUCCESS) ? 0 : -EIO);
 	if (ret == -EIO) {

@@ -957,10 +957,10 @@ static int mtk_axi_probe(struct platform_device *pdev)
 	struct mt66xx_chip_info *prChipInfo;
 	int ret = 0;
 
-	g_prPlatDev = pdev;
 	prDriverData = (struct mt66xx_hif_driver_data *)
 			mtk_axi_ids[0].driver_data;
 	prChipInfo = prDriverData->chip_info;
+	prChipInfo->platform_device = (void *) pdev;
 
 	platform_set_drvdata(pdev, (void *)prDriverData);
 
@@ -1515,7 +1515,7 @@ static void glPopulateMemOps(struct mt66xx_chip_info *prChipInfo,
 	prMemOps->dumpRx = halZeroCopyPathDumpRx;
 #endif
 
-	if (g_prPlatDev) {
+	if (prChipInfo->platform_device) {
 		DBGLOG(HAL, TRACE, "Use pre-alloc mem ops instead.\n");
 		prMemOps->allocTxDesc = halCopyPathAllocTxDesc;
 		prMemOps->allocRxDesc = halCopyPathAllocRxDesc;
@@ -1558,6 +1558,7 @@ void glSetHifInfo(struct GLUE_INFO *prGlueInfo, unsigned long ulCookie)
 	struct GL_HIF_INFO *prHif = NULL;
 	struct BUS_INFO *prBusInfo;
 	struct HIF_MEM_OPS *prMemOps;
+	struct platform_device *pdev;
 
 	prHif = &prGlueInfo->rHifInfo;
 	glGetChipInfo((void **)&prChipInfo);
@@ -1571,8 +1572,9 @@ void glSetHifInfo(struct GLUE_INFO *prGlueInfo, unsigned long ulCookie)
 
 	prHif->CSRBaseAddress = prChipInfo->CSRBaseAddress;
 
-	if (g_prPlatDev)
-		SET_NETDEV_DEV(prGlueInfo->prDevHandler, &g_prPlatDev->dev);
+	pdev = prChipInfo->platform_device;
+	if (pdev)
+		SET_NETDEV_DEV(prGlueInfo->prDevHandler, &pdev->dev);
 	else
 		SET_NETDEV_DEV(prGlueInfo->prDevHandler, &prHif->pdev->dev);
 
@@ -1847,6 +1849,7 @@ int32_t glBusSetIrq(void *pvData, void *pfnIsr, void *pvCookie)
 {
 	struct net_device *prNetDevice = NULL;
 	struct GLUE_INFO *prGlueInfo = NULL;
+	struct mt66xx_chip_info *prChipInfo;
 	struct BUS_INFO *prBusInfo = NULL;
 	struct GL_HIF_INFO *prHifInfo = NULL;
 	struct pcie_msi_info *prMsiInfo = NULL;
@@ -1859,7 +1862,8 @@ int32_t glBusSetIrq(void *pvData, void *pfnIsr, void *pvCookie)
 	if (!prGlueInfo)
 		return -1;
 
-	prBusInfo = prGlueInfo->prAdapter->chip_info->bus_info;
+	prChipInfo = prGlueInfo->prAdapter->chip_info;
+	prBusInfo = prChipInfo->bus_info;
 	prMsiInfo = &prBusInfo->pcie_msi_info;
 	prHifInfo = &prGlueInfo->rHifInfo;
 	pdev = prHifInfo->pdev;
@@ -1877,7 +1881,7 @@ int32_t glBusSetIrq(void *pvData, void *pfnIsr, void *pvCookie)
 		prBusInfo->initPcieInt(prGlueInfo);
 
 #if (CFG_SUPPORT_HOST_OFFLOAD == 1)
-	setupPlatDevIrq(g_prPlatDev, &prHifInfo->u4IrqId_1);
+	setupPlatDevIrq(prChipInfo->platform_device, &prHifInfo->u4IrqId_1);
 #endif /* CFG_SUPPORT_HOST_OFFLOAD */
 
 exit:
@@ -1960,6 +1964,7 @@ void glBusFreeIrq(void *pvData, void *pvCookie)
 {
 	struct GLUE_INFO *prGlueInfo = NULL;
 	struct GL_HIF_INFO *prHifInfo = NULL;
+	struct mt66xx_chip_info *prChipInfo;
 	struct BUS_INFO *prBusInfo = NULL;
 	struct pcie_msi_info *prMsiInfo = NULL;
 	struct pci_dev *pdev = NULL;
@@ -1972,7 +1977,8 @@ void glBusFreeIrq(void *pvData, void *pvCookie)
 	}
 
 	prHifInfo = &prGlueInfo->rHifInfo;
-	prBusInfo = prGlueInfo->prAdapter->chip_info->bus_info;
+	prChipInfo = prGlueInfo->prAdapter->chip_info;
+	prBusInfo = prChipInfo->bus_info;
 	prMsiInfo = &prBusInfo->pcie_msi_info;
 	pdev = prHifInfo->pdev;
 
@@ -1984,7 +1990,7 @@ void glBusFreeIrq(void *pvData, void *pvCookie)
 		glBusFreeLegacyIrq(pdev, prGlueInfo, prBusInfo);
 
 #if (CFG_SUPPORT_HOST_OFFLOAD == 1)
-	freePlatDevIrq(g_prPlatDev, prHifInfo->u4IrqId_1);
+	freePlatDevIrq(prChipInfo->platform_device, prHifInfo->u4IrqId_1);
 	prHifInfo->u4IrqId_1 = 0;
 #endif /* CFG_SUPPORT_HOST_OFFLOAD */
 
