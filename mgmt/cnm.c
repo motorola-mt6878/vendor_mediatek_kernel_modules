@@ -2084,7 +2084,7 @@ uint8_t cnmGetBssMaxBw(struct ADAPTER *prAdapter,
 			if (ucMaxBandwidth == BW_40 && prBssDesc &&
 			    bssGetIotApAction(prAdapter, prBssDesc) ==
 			    WLAN_IOT_AP_DIS_2GHT40) {
-				ucMaxBandwidth = BW_20;
+				ucMaxBandwidth = MAX_BW_20MHZ;
 			}
 #endif
 		} else if (eBand == BAND_5G)
