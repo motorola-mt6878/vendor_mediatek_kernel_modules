@@ -5251,7 +5251,8 @@ void rlmProcessAssocReq(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb,
 	prStaRec = cnmGetStaRecByIndex(prAdapter, prSwRfb->ucStaRecIdx);
 	if (!prStaRec)
 		return;
-	ASSERT(prStaRec->ucBssIndex <= prAdapter->ucHwBssIdNum);
+	if (prStaRec->ucBssIndex > prAdapter->ucHwBssIdNum)
+		return;
 
 	prBssInfo = prAdapter->aprBssInfo[prStaRec->ucBssIndex];
 

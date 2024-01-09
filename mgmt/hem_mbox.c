@@ -459,8 +459,11 @@ void mboxSetup(struct ADAPTER *prAdapter,
 
 	KAL_SPIN_LOCK_DECLARATION();
 
-	ASSERT(eMboxId < MBOX_ID_TOTAL_NUM);
 	ASSERT(prAdapter);
+	if (eMboxId >= MBOX_ID_TOTAL_NUM) {
+		DBGLOG(CNM, ERROR, "eMboxId %d is invalid\n", eMboxId);
+		return;
+	}
 
 	prMbox = &(prAdapter->arMbox[eMboxId]);
 
@@ -487,10 +490,13 @@ mboxSendMsg(struct ADAPTER *prAdapter,
 
 	KAL_SPIN_LOCK_DECLARATION();
 
-	ASSERT(eMboxId < MBOX_ID_TOTAL_NUM);
 	ASSERT(prMsg);
 	if (!prMsg) {
 		DBGLOG(CNM, ERROR, "prMsg is NULL\n");
+		return;
+	}
+	if (eMboxId >= MBOX_ID_TOTAL_NUM) {
+		DBGLOG(CNM, ERROR, "eMboxId %d is invalid\n", eMboxId);
 		return;
 	}
 
@@ -540,8 +546,11 @@ void mboxRcvAllMsg(struct ADAPTER *prAdapter,
 
 	KAL_SPIN_LOCK_DECLARATION();
 
-	ASSERT(eMboxId < MBOX_ID_TOTAL_NUM);
 	ASSERT(prAdapter);
+	if (eMboxId >= MBOX_ID_TOTAL_NUM) {
+		DBGLOG(CNM, ERROR, "eMboxId %d is invalid\n", eMboxId);
+		return;
+	}
 
 	prMbox = &(prAdapter->arMbox[eMboxId]);
 
