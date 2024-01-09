@@ -4425,9 +4425,6 @@ uint8_t aisHandleJoinFailure(struct ADAPTER *prAdapter,
 			prAisBssInfo->prStaRecOfAP->fgIsTxAllowed = TRUE;
 #if CFG_SUPPORT_ROAMING
 		roamingFsmNotifyEvent(prAdapter, ucBssIndex, TRUE, prBssDesc);
-
-		/* Restore rlmFillSync or nicBssUpdate if needed */
-		roamingFsmDoRecover(prAdapter, ucBssIndex);
 		prAisFsmInfo->ucIsStaRoaming = FALSE;
 #endif
 	} else if (prAisFsmInfo->rJoinReqTime != 0 &&
@@ -4623,15 +4620,14 @@ enum ENUM_AIS_STATE aisFsmJoinCompleteAction(struct ADAPTER *prAdapter,
 
 			/* 1. Reset retry count */
 			prAisFsmInfo->ucConnTrialCount = 0;
-#if CFG_SUPPORT_ROAMING
-			prAisFsmInfo->ucIsStaRoaming = FALSE;
-#endif
 
 #if ARP_MONITER_ENABLE
 			qmResetArpDetect(prAdapter, prStaRec->ucBssIndex);
 #endif
 
 #if CFG_SUPPORT_ROAMING
+			prAisFsmInfo->ucIsStaRoaming = FALSE;
+
 			/* if roaming fsm is monitoring old AP, abort it
 			 * abort before aisFsmRoamingDisconnectPrevAllAP because
 			 * bssinfo is deactivated when roaming 2 -> 1 link
@@ -5142,14 +5138,12 @@ static void aisFsmDisconnectedAction(struct ADAPTER *prAdapter,
 	prAisFsmInfo->ucConnTrialCountLimit = 0;
 
 #if CFG_SUPPORT_ROAMING
+	prAisFsmInfo->ucIsStaRoaming = FALSE;
 	if (prRoamingFsmInfo != NULL)
 		prRoamingFsmInfo->eReason = ROAMING_REASON_POOR_RCPI;
 #endif
 	aisRemoveDeauthBlocklist(prAdapter);
 	aisClearAllLink(prAisFsmInfo);
-#if CFG_SUPPORT_ROAMING
-	prAisFsmInfo->ucIsStaRoaming = FALSE;
-#endif
 
 #if CFG_SUPPORT_NCHO
 	wlanNchoInit(prAdapter, TRUE);
