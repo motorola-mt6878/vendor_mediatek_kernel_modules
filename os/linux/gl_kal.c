@@ -8388,6 +8388,8 @@ u_int8_t kalSendUevent(const char *src)
 	envp[0] = event_string;
 	envp[1] = NULL;
 
+	DBGLOG(INIT, INFO, "Send UEvent = %s", src);
+
 	/*send uevent*/
 	strlcpy(event_string, src, sizeof(event_string));
 	if (event_string[0] == '\0') { /*string is null*/
