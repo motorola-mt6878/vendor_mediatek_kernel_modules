@@ -3113,6 +3113,10 @@ static uint8_t rlmRecIeInfoForClient(struct ADAPTER *prAdapter,
 				 */
 				if (!prCSAParams->fgHasStopTx) {
 					prCSAParams->fgHasStopTx = TRUE;
+					kalIndicateAllQueueTxAllowed(
+						prAdapter->prGlueInfo,
+						prBssInfo->ucBssIndex,
+						FALSE);
 					/* AP */
 					qmSetStaRecTxAllowed(prAdapter,
 						prStaRec,
@@ -3724,6 +3728,11 @@ static uint8_t rlmRecIeInfoForClient(struct ADAPTER *prAdapter,
 			rlmChangeOperationModeAfterCSA(prAdapter, prBssInfo);
 			if (prCSAParams->fgIsCrossBand)
 				aisFunFlushTxQueue(prAdapter, prStaRec);
+			if (prCSAParams->ucCsaMode == MODE_DISALLOW_TX)
+				kalIndicateAllQueueTxAllowed(
+				    prAdapter->prGlueInfo,
+				    prBssInfo->ucBssIndex,
+				    TRUE);
 		}
 
 		if (prCSAParams->fgHasStopTx) {
@@ -6434,6 +6443,10 @@ void rlmProcessExCsaIE(struct ADAPTER *prAdapter,
 		/* Need to stop data transmission immediately */
 		if (!prCSAParams->fgHasStopTx) {
 			prCSAParams->fgHasStopTx = TRUE;
+			kalIndicateAllQueueTxAllowed(
+				prAdapter->prGlueInfo,
+				prStaRec->ucBssIndex,
+				FALSE);
 			/* AP */
 			qmSetStaRecTxAllowed(prAdapter,
 				   prStaRec,
@@ -6642,6 +6655,10 @@ void rlmProcessSpecMgtAction(struct ADAPTER *prAdapter, struct SW_RFB *prSwRfb)
 					 */
 					if (!prCSAParams->fgHasStopTx) {
 						prCSAParams->fgHasStopTx = TRUE;
+						kalIndicateAllQueueTxAllowed(
+							prAdapter->prGlueInfo,
+							prStaRec->ucBssIndex,
+							FALSE);
 						/* AP */
 						qmSetStaRecTxAllowed(prAdapter,
 							   prStaRec,

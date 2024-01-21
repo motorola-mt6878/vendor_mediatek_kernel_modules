@@ -949,6 +949,8 @@ void aisFunFlushTxQueue(struct ADAPTER *prAdapter,
 	struct STA_RECORD *prStaRec);
 void aisFunSwitchChannel(struct ADAPTER *prAdapter,
 	struct BSS_INFO *prBssInfo);
+void aisFunSwitchChannelAbort(struct ADAPTER *prAdapter,
+	struct BSS_INFO *prBssInfo);
 void aisUpdateParamsForCSA(struct ADAPTER *prAdapter,
 	struct BSS_INFO *prBssInfo);
 void aisReqJoinChPrivilegeForCSA(struct ADAPTER *prAdapter,

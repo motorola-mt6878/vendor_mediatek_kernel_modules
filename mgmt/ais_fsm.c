@@ -3802,6 +3802,9 @@ void aisFsmRunEventAbort(struct ADAPTER *prAdapter,
 		aisFsmAddBlockList(prAdapter, prAisFsmInfo,
 			u2DeauthReason);
 
+	if (prBssInfo->fgIsAisSwitchingChnl)
+		aisFunSwitchChannelAbort(prAdapter, prBssInfo);
+
 	/* to support user space triggered roaming */
 	if ((ucReasonOfDisconnect == DISCONNECT_REASON_CODE_ROAMING ||
 	     ucReasonOfDisconnect == DISCONNECT_REASON_CODE_TEST_MODE) &&
@@ -10511,6 +10514,14 @@ void aisFunSwitchChannel(struct ADAPTER *prAdapter,
 	aisFsmReleaseCh(prAdapter, prBssInfo->ucBssIndex);
 	aisReqJoinChPrivilegeForCSA(prAdapter, prAisFsmInfo,
 		prBssInfo, &prAisFsmInfo->ucSeqNumOfChReq);
+}
+
+void aisFunSwitchChannelAbort(struct ADAPTER *prAdapter,
+				struct BSS_INFO *prBssInfo)
+{
+	prBssInfo->fgIsAisSwitchingChnl = FALSE;
+	aisFsmReleaseCh(prAdapter, prBssInfo->ucBssIndex);
+	aisChangeMediaState(prBssInfo, MEDIA_STATE_CONNECTED);
 }
 
 /*----------------------------------------------------------------------------*/
