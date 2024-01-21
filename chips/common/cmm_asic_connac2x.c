@@ -1171,7 +1171,65 @@ void asicConnac2xLowPowerOwnClear(
 
 	if (prChipInfo->is_support_asic_lp) {
 		u_int32_t u4RegValue = 0;
+#if (CFG_CHECK_DRVOWN_EINT == 1)
+		uint8_t retry = 0;
 
+		while (1) {
+			/* EINT CR select */
+			/* WR 0x7c06_0B00[0] = 0x1 */
+			HAL_MCR_RD(prAdapter, 0x7c060B00, &u4RegValue);
+			u4RegValue |= 0x1;
+			HAL_MCR_WR(prAdapter, 0x7c060B00, u4RegValue);
+
+			/* WR 0x7c06_0B04[4:0] = 0x6 */
+			HAL_MCR_RD(prAdapter, 0x7c060B04, &u4RegValue);
+			u4RegValue &= ~BITS(0, 4);
+			u4RegValue |= 0x6;
+			HAL_MCR_WR(prAdapter, 0x7c060B04, u4RegValue);
+
+			/* WR 0x7c06_0B14[2:0] = 0x1 */
+			HAL_MCR_RD(prAdapter, 0x7c060B14, &u4RegValue);
+			u4RegValue &= ~BITS(0, 2);
+			u4RegValue |= 0x1;
+			HAL_MCR_WR(prAdapter, 0x7c060B14, u4RegValue);
+
+			/* Check MCU wake, RD 0x7c06_0A10[4] */
+			HAL_MCR_RD(prAdapter, 0x7c060A10, &u4RegValue);
+			DBGLOG(HAL, TRACE, "RD 0x7c060A10 = %08x\n"
+				, u4RegValue);
+
+			/* Clear FW own */
+			HAL_MCR_WR(prAdapter,
+				CONNAC2X_BN0_LPCTL_ADDR,
+				PCIE_LPCR_HOST_CLR_OWN);
+
+			if (!(u4RegValue & BIT(4))) {
+				kalUdelay(LP_OWN_EINT_CHECK_DELAY);
+			} else {
+				DBGLOG(HAL, TRACE, "MCU not in sleep\n");
+				break;
+			}
+
+			/* Check EINT, RD 0x7c06_0B10 (WF_AON_DBG_FLAG) */
+			HAL_MCR_RD(prAdapter, 0x7c060B10, &u4RegValue);
+			if (((u4RegValue & BIT(0)) != 0)
+				&& ((u4RegValue & BIT(10)) != 0)) {
+				DBGLOG(HAL, ERROR,
+					"EINT trigger failed [%u]\n",
+					u4RegValue);
+				if (retry == LP_OWN_EINT_CHECK_RETRY_CNT)
+					break;
+				retry++;
+			} else {
+				break;
+			}
+		}
+		HAL_MCR_RD(prAdapter,
+			CONNAC2X_BN0_LPCTL_ADDR,
+			&u4RegValue);
+		*pfgResult = (u4RegValue &
+				PCIE_LPCR_AP_HOST_OWNER_STATE_SYNC) == 0;
+#else
 		HAL_MCR_WR(prAdapter,
 			CONNAC2X_BN0_LPCTL_ADDR,
 			PCIE_LPCR_HOST_CLR_OWN);
@@ -1180,6 +1238,7 @@ void asicConnac2xLowPowerOwnClear(
 			&u4RegValue);
 		*pfgResult = (u4RegValue &
 				PCIE_LPCR_AP_HOST_OWNER_STATE_SYNC) == 0;
+#endif
 	} else
 		*pfgResult = TRUE;
 }

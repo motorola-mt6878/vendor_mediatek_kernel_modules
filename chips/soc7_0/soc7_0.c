@@ -119,6 +119,10 @@ static u_int8_t soc7_0_get_sw_interrupt_status(struct ADAPTER *prAdapter,
 
 static void soc7_0_DumpWfsyscpupcr(struct ADAPTER *prAdapter);
 
+#if (CFG_CHECK_DRVOWN_EINT == 1)
+static void soc7_0_CheckDrvownEint(struct ADAPTER *prAdapter);
+#endif
+
 static uint32_t soc7_0_SetupRomEmi(struct ADAPTER *prAdapter);
 static void soc7_0_SetupFwDateInfo(struct ADAPTER *prAdapter,
 	enum ENUM_IMG_DL_IDX_T eDlIdx,
@@ -1543,6 +1547,30 @@ static int wf_pwr_on_consys_mcu(struct ADAPTER *prAdapter)
 	value |= 0x00000100;
 	wf_ioremap_write(DEBUG_CTRL_AO_WFMCU_PWA_CTRL3, value);
 
+#if (CFG_CHECK_DRVOWN_EINT == 1)
+	/* Set conn2wf remapping window
+	 * Address: 0x830C_0120
+	 * Data: 32'h81050000
+	 * Action: write
+	 */
+	kalDevRegWrite(NULL, WF_MCU_BUS_CR_AP2WF_REMAP_1_ADDR,
+		0x81050000);
+
+	/* Set cirq IRQ_DBGSEL for dump eint status
+	 * Address: 0x1850_00F4[7:0]
+	 * Data: 8'h80
+	 * Action: write
+	 */
+	wf_ioremap_read(0x185000f4, &value);
+	DBGLOG(HAL, INFO, "RD 0x810500f4 = %08x\n", value);
+	value &= 0xffffff00;
+	value |= 0x00000080;
+	wf_ioremap_write(0x185000f4, value);
+	DBGLOG(HAL, INFO, "WR 0x810500f4 = %08x\n", value);
+	wf_ioremap_read(0x185000f4, &value);
+	DBGLOG(HAL, INFO, "RD 0x810500f4 = %08x\n", value);
+#endif
+
 	/* Enable wfsys bus timeout (debug ctrl ao)
 	 * Address: 0x1850_0000[4] 0x1850_0000[3] 0x1850_0000[2]
 	 * Data: 1'b1 1'b1 1'b1
@@ -2183,6 +2211,36 @@ static void soc7_0_DumpWfsyscpupcr(struct ADAPTER *prAdapter)
 	       log_buf_lp[4]);
 }
 
+#if (CFG_CHECK_DRVOWN_EINT == 1)
+static void soc7_0_CheckDrvownEint(struct ADAPTER *prAdapter)
+{
+	u_int32_t u4RegValue = 0;
+
+	DBGLOG(INIT, INFO, "Dump driver own EINT\n");
+
+	/* WR 0x1806_0B00[0] = 0x1 */
+	HAL_MCR_RD(prAdapter, 0x7c060B00, &u4RegValue);
+	u4RegValue |= 0x1;
+	HAL_MCR_WR(prAdapter, 0x7c060B00, u4RegValue);
+
+	/* WR 0x1806_0B04[4:0] = 0x6 */
+	HAL_MCR_RD(prAdapter, 0x7c060B04, &u4RegValue);
+	u4RegValue &= ~BITS(0, 4);
+	u4RegValue |= 0x6;
+	HAL_MCR_WR(prAdapter, 0x7c060B04, u4RegValue);
+
+	/* WR 0x1806_0B14[2:0] = 0x1 */
+	HAL_MCR_RD(prAdapter, 0x7c060B14, &u4RegValue);
+	u4RegValue &= ~BITS(0, 2);
+	u4RegValue |= 0x1;
+	HAL_MCR_WR(prAdapter, 0x7c060B14, u4RegValue);
+
+	/* RD 0x1806_0B10 (WF_AON_DBG_FLAG) */
+	HAL_MCR_RD(prAdapter, 0x7c060B10, &u4RegValue);
+	DBGLOG(HAL, INFO, "RD 0x7c060B10 = %08x\n", u4RegValue);
+}
+#endif
+
 static void soc7_0_DumpPcLrLog(struct ADAPTER *prAdapter)
 {
 #define	HANG_PC_LOG_NUM			32
@@ -2447,6 +2505,10 @@ static void soc7_0_DumpOtherCr(struct ADAPTER *prAdapter)
 	DBGLOG(INIT, INFO, "0x180600f0=[0x%08x]\n", u4Val);
 	connac2x_DbgCrRead(prAdapter, 0x18400120, &u4Val);
 	DBGLOG(INIT, INFO, "0x18400120=[0x%08x]\n", u4Val);
+
+#if (CFG_CHECK_DRVOWN_EINT == 1)
+	soc7_0_CheckDrvownEint(prAdapter);
+#endif
 
 	set_wf_monflg_on_mailbox_wf();
 
