@@ -6651,13 +6651,20 @@ void aisFsmRunEventChGrant(struct ADAPTER *prAdapter,
 	if (prAisBssInfo->prStaRecOfAP &&
 		prAisBssInfo->fgIsAisSwitchingChnl == TRUE) {
 		/* 2. channel privilege has been approved */
+		aisChangeMediaState(prAisBssInfo, MEDIA_STATE_CONNECTED);
 		nicUpdateBss(prAdapter, ucBssIndex);
 
 		/* 3. switch to new channel */
 		prAisBssInfo->fgIsAisSwitchingChnl = FALSE;
-
 		prAisFsmInfo->fgIsChannelGranted = TRUE;
 		aisFsmReleaseCh(prAdapter, ucBssIndex);
+
+		kalIndicateChannelSwitch(
+			prAdapter->prGlueInfo,
+			prAisBssInfo->eBssSCO,
+			prAisBssInfo->ucPrimaryChannel,
+			prAisBssInfo->eBand,
+			prAisBssInfo->ucBssIndex);
 	} else if (prAisFsmInfo->eCurrentState == AIS_STATE_REQ_CHANNEL_JOIN
 	    && prAisFsmInfo->ucSeqNumOfChReq == ucTokenID) {
 		/* 2. channel privilege has been approved */
@@ -9255,6 +9262,21 @@ uint8_t aisGetDefaultLinkBssIndex(struct ADAPTER *prAdapter)
 	return	prBssInfo ? prBssInfo->ucBssIndex : AIS_DEFAULT_BSS_INDEX;
 }
 
+uint8_t aisGetLinkIndex(struct ADAPTER *prAdapter,
+	uint8_t ucBssIndex)
+{
+	struct AIS_FSM_INFO *ais = aisGetAisFsmInfo(prAdapter, ucBssIndex);
+
+	if (IS_BSS_INDEX_VALID(ucBssIndex) &&
+			ais->arBssId2LinkMap[ucBssIndex] != MLD_LINK_ID_NONE)
+		return ais->arBssId2LinkMap[ucBssIndex];
+
+	DBGLOG(AIS, WARN,
+		"Use default, invalid index=%d caller=%pS\n",
+		ucBssIndex, KAL_TRACE);
+	return AIS_MAIN_LINK_INDEX;
+}
+
 struct STA_RECORD *aisGetDefaultStaRecOfAP(struct ADAPTER *prAdapter)
 {
 	return	aisGetDefaultLinkBssInfo(prAdapter)->prStaRecOfAP;
@@ -10434,6 +10456,61 @@ static void aisScanResetReq(struct PARAM_SCAN_REQUEST_ADV *prScanRequest)
 {
 	kalMemZero(prScanRequest, sizeof(struct PARAM_SCAN_REQUEST_ADV));
 	prScanRequest->ucScanType = SCAN_TYPE_ACTIVE_SCAN;
+}
+
+void aisFunFlushTxQueue(struct ADAPTER *prAdapter,
+		struct STA_RECORD *prStaRec)
+{
+	DBGLOG(AIS, TRACE, "STA[%d] Flush TX queue filled at old channel.\n",
+			prStaRec->ucIndex);
+	if (HAL_IS_TX_DIRECT(prAdapter)) {
+		nicTxDirectClearStaAcmQ(prAdapter, prStaRec->ucIndex);
+		nicTxDirectClearStaPendQ(prAdapter, prStaRec->ucIndex);
+		nicTxDirectClearStaPsQ(prAdapter, prStaRec->ucIndex);
+	} else {
+		struct MSDU_INFO *prFlushedTxPacketList = NULL;
+
+		prFlushedTxPacketList = qmFlushStaTxQueues(prAdapter,
+						prStaRec->ucIndex);
+		if (prFlushedTxPacketList)
+			wlanProcessQueuedMsduInfo(prAdapter,
+					prFlushedTxPacketList);
+	}
+}
+
+void aisFunSwitchChannel(struct ADAPTER *prAdapter,
+				struct BSS_INFO *prBssInfo)
+{
+	struct AIS_FSM_INFO *prAisFsmInfo;
+
+	if (prBssInfo->fgIsAisSwitchingChnl) {
+		DBGLOG(AIS, WARN, "Channel switch is ongoing\n");
+		return;
+	}
+
+	prAisFsmInfo = aisGetAisFsmInfo(prAdapter, prBssInfo->ucBssIndex);
+
+	/* Indicate PM abort to sync BSS state with FW */
+	nicPmIndicateBssAbort(prAdapter, prBssInfo->ucBssIndex);
+	prBssInfo->ucDTIMPeriod = 0;
+
+	/* Update BSS with temp. disconnect state to FW */
+	if (IS_NET_ACTIVE(prAdapter, prBssInfo->ucBssIndex))
+		nicDeactivateNetworkEx(prAdapter,
+			NETWORK_ID(prBssInfo->ucBssIndex,
+			  aisGetLinkIndex(prAdapter, prBssInfo->ucBssIndex)),
+			  FALSE);
+	aisChangeMediaState(prBssInfo, MEDIA_STATE_DISCONNECTED);
+	nicUpdateBssEx(prAdapter,
+		prBssInfo->ucBssIndex,
+		FALSE);
+
+	prBssInfo->fgIsAisSwitchingChnl = TRUE;
+
+	/* Release channel if CSA immediately before set authorized */
+	aisFsmReleaseCh(prAdapter, prBssInfo->ucBssIndex);
+	aisReqJoinChPrivilegeForCSA(prAdapter, prAisFsmInfo,
+		prBssInfo, &prAisFsmInfo->ucSeqNumOfChReq);
 }
 
 /*----------------------------------------------------------------------------*/
