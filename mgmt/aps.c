@@ -1325,8 +1325,6 @@ uint8_t apsSanityCheckBssDesc(struct ADAPTER *prAdapter,
 	uint8_t ucBssIndex)
 {
 	struct AIS_FSM_INFO *ais = aisGetAisFsmInfo(prAdapter, ucBssIndex);
-	uint32_t bmap = aisGetBssIndexBmap(ais);
-	uint8_t connected = !!(prBssDesc->fgIsConnected & bmap);
 	struct BSS_INFO *prAisBssInfo = aisGetAisBssInfo(prAdapter, ucBssIndex);
 	struct CONNECTION_SETTINGS *conn =
 				aisGetConnSettings(prAdapter, ucBssIndex);
@@ -1334,15 +1332,6 @@ uint8_t apsSanityCheckBssDesc(struct ADAPTER *prAdapter,
 	struct PARAM_BSS_DISALLOWED_LIST *disallow;
 	uint32_t i = 0;
 #endif
-
-	/* Don't skip connected AP if reassociation or btm */
-	if (eRoamReason != ROAMING_REASON_UPPER_LAYER_TRIGGER &&
-	    eRoamReason != ROAMING_REASON_BTM &&
-	    connected) {
-		DBGLOG(APS, WARN, MACSTR" connected\n",
-				MAC2STR(prBssDesc->aucBSSID));
-		return FALSE;
-	}
 
 #if CFG_SUPPORT_MBO
 	disallow = &prAdapter->rWifiVar.rBssDisallowedList;
@@ -1674,6 +1663,7 @@ uint8_t apsIntraUpdateCandi(struct ADAPTER *ad, struct AP_COLLECTION *ap,
 {
 	struct AIS_FSM_INFO *ais = aisGetAisFsmInfo(ad, bidx);
 	uint32_t bmap = aisGetBssIndexBmap(ais);
+	uint8_t connected;
 	struct CONNECTION_SETTINGS *conn = aisGetConnSettings(ad, bidx);
 	enum ENUM_PARAM_CONNECTION_POLICY policy = conn->eConnectionPolicy;
 	struct LINK *link = &ap->arLinks[link_idx];
@@ -1684,6 +1674,17 @@ uint8_t apsIntraUpdateCandi(struct ADAPTER *ad, struct AP_COLLECTION *ap,
 try_again:
 	LINK_FOR_EACH_ENTRY(bss, link, rLinkEntryEss[aidx], struct BSS_DESC) {
 		if (!search_blk) {
+			/* Skip connected AP */
+			connected = !!(bss->fgIsConnected & bmap);
+
+			if (reason != ROAMING_REASON_UPPER_LAYER_TRIGGER &&
+			    reason != ROAMING_REASON_BTM &&
+			    connected) {
+				DBGLOG(APS, WARN, MACSTR" connected\n",
+					MAC2STR(bss->aucBSSID));
+				continue;
+			}
+
 			/* calculate bss score to filter non-qualify bsses */
 			bss->u2Score = apsCalculateApScore(
 				ad, bss, reason, bidx);
