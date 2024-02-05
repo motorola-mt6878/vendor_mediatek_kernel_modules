@@ -3646,22 +3646,6 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 		prBssDesc->ucCenterFreqS2 = 0;
 		prBssDesc->eSco = CHNL_EXT_SCN;
 	}
-#if (CFG_SUPPORT_TX_PWR_ENV == 1)
-	if (prTxPwrEnvIE) {
-		DBGLOG(SCN, LOUD,
-			"TPE present,BSSID[" MACSTR "] SSID:%s\n",
-			MAC2STR(prBssDesc->aucBSSID),
-			prBssDesc->aucSSID);
-
-		DBGLOG_MEM8(SCN, LOUD, prTxPwrEnvIE, IE_SIZE(prTxPwrEnvIE));
-
-		rlmTxPwrEnvMaxPwrUpdate(
-			prAdapter,
-			prBssDesc,
-			eHwBand,
-			prTxPwrEnvIE);
-	}
-#endif
 
 #if CFG_SUPPORT_802_11K
 	if (prCountryIE) {
@@ -3697,6 +3681,22 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 				}
 			}
 		}
+	}
+#endif
+#if (CFG_SUPPORT_TX_PWR_ENV == 1)
+	if (prTxPwrEnvIE) {
+		DBGLOG(SCN, TRACE,
+			"TPE present,BSSID[" MACSTR "] SSID:%s\n",
+			MAC2STR(prBssDesc->aucBSSID),
+			prBssDesc->aucSSID);
+
+		DBGLOG_MEM8(SCN, TRACE, prTxPwrEnvIE, IE_SIZE(prTxPwrEnvIE));
+
+		rlmTxPwrEnvMaxPwrUpdate(
+			prAdapter,
+			prBssDesc,
+			eHwBand,
+			prTxPwrEnvIE);
 	}
 #endif
 
