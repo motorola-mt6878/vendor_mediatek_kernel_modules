@@ -469,6 +469,9 @@ uint8_t rsnIsFilsAuthAlg(uint8_t alg);
 uint8_t rsnKeyMgmtFils(uint32_t akm);
 uint8_t rsnIsKeyMgmtSha256(uint32_t akm);
 uint8_t rsnIsKeyMgmtSha384(uint32_t akm);
+uint8_t rsnIsKeyMgmtIeee8021x(uint32_t akm);
+uint8_t rsnIsKeyMgmtForEht(struct ADAPTER *ad,
+	struct BSS_DESC *prBss, uint8_t bssidx);
 uint8_t rsnKekLen(uint32_t akmp, uint16_t pmk_len);
 uint8_t rsnCipherKeyLen(uint32_t cipher);
 void rsnReqDumpWTBL(struct ADAPTER *prAdapter,

@@ -7815,6 +7815,8 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 	INIT_UINT(prWifiVar->fgDisAgingLostDetection,
 		"DisAgingLostDetection", 0);
 	INIT_UINT(prWifiVar->fgDisRoaming, "DisRoaming", 0);
+	INIT_UINT(prWifiVar->fgDisGTKCipherCheck, "DisGTKCipherCheck", 0);
+	INIT_UINT(prWifiVar->fgDisSecurityCheck, "DisSecurityCheck", 0);
 	INIT_UINT(prWifiVar->u4RejectBtmReqReason, "RejectBtmReqReason", 0);
 	INIT_UINT(prWifiVar->fgRoamByBTO, "RoamByBTO", 0);
 	INIT_UINT(prWifiVar->u4AisRoamingNumber,
