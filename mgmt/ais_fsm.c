@@ -1184,8 +1184,11 @@ struct PMKID_ENTRY *aisSearchPmkidEntry(struct ADAPTER *prAdapter,
 	    (rsnApInvalidPMK(entry->u2StatusCode, prConnSettings->eAuthMode) ||
 	     rsnCheckPmkExpiration(prAdapter,
 				entry, prAisBssInfo->ucBssIndex) ||
-	     prStaRec->ucAuthAlgNum == AUTH_ALGORITHM_NUM_SAE))
+	     prStaRec->ucAuthAlgNum == AUTH_ALGORITHM_NUM_SAE)) {
+		DBGLOG(RSN, INFO,
+			"Do not apply PMKID in RSNIE if invalidPMK or auth type is SAE");
 		entry = NULL;
+	}
 
 	if (entry && prConnSettings->eAuthMode == AUTH_MODE_WPA3_OWE
 		&& bssGetIotApAction(prAdapter, prBssDesc) ==
@@ -1722,11 +1725,13 @@ void aisFsmStateInit_JOIN(struct ADAPTER *prAdapter,
  */
 /*----------------------------------------------------------------------------*/
 u_int8_t aisFsmStateInit_RetryJOIN(struct ADAPTER *prAdapter,
-	struct STA_RECORD *prStaRec, uint8_t ucBssIndex)
+	struct STA_RECORD *prMainStaRec, uint8_t ucBssIndex)
 {
 	struct AIS_FSM_INFO *prAisFsmInfo;
 	struct MSG_SAA_FSM_START *prJoinReqMsg;
 	struct CONNECTION_SETTINGS *prConnSettings;
+	struct STA_RECORD *prStaRec;
+	uint8_t i;
 
 	prAisFsmInfo = aisGetAisFsmInfo(prAdapter, ucBssIndex);
 	prConnSettings = aisGetConnSettings(prAdapter, ucBssIndex);
@@ -1735,11 +1740,12 @@ u_int8_t aisFsmStateInit_RetryJOIN(struct ADAPTER *prAdapter,
 	if (!prAisFsmInfo->ucAvailableAuthTypes)
 		return FALSE;
 
-	if (prStaRec->u2StatusCode != STATUS_CODE_AUTH_ALGORITHM_NOT_SUPPORTED
-	    && prStaRec->u2StatusCode != STATUS_CODE_AUTH_TIMEOUT
+	if (prMainStaRec->u2StatusCode !=
+		STATUS_CODE_AUTH_ALGORITHM_NOT_SUPPORTED &&
+	    prMainStaRec->u2StatusCode != STATUS_CODE_AUTH_TIMEOUT &&
 	    /* try without invalid PMKID */
-	    && !rsnApInvalidPMK(prStaRec->u2StatusCode,
-			prConnSettings->eAuthMode)) {
+	    !rsnApInvalidPMK(prMainStaRec->u2StatusCode,
+		prConnSettings->eAuthMode)) {
 		prAisFsmInfo->ucAvailableAuthTypes = 0;
 		return FALSE;
 	}
@@ -1751,10 +1757,14 @@ u_int8_t aisFsmStateInit_RetryJOIN(struct ADAPTER *prAdapter,
 		prAisFsmInfo->ucAvailableAuthTypes &=
 		    ~(uint8_t) AUTH_TYPE_SAE;
 
-		prStaRec->ucAuthAlgNum =
-		    (uint8_t) AUTH_ALGORITHM_NUM_SAE;
-	} else if (prAisFsmInfo->ucAvailableAuthTypes & (uint8_t)
-	    AUTH_TYPE_OPEN_SYSTEM) {
+		for (i = 0; i < MLD_LINK_MAX; i++) {
+			prStaRec = aisGetLinkStaRec(prAisFsmInfo, i);
+			if (prStaRec)
+				prStaRec->ucAuthAlgNum =
+				    (uint8_t) AUTH_ALGORITHM_NUM_SAE;
+		}
+	} else if (prAisFsmInfo->ucAvailableAuthTypes &
+		   (uint8_t) AUTH_TYPE_OPEN_SYSTEM) {
 
 		DBGLOG(AIS, INFO,
 		       "RETRY JOIN INIT: Retry Authentication with AuthType == OPEN_SYSTEM.\n");
@@ -1762,8 +1772,12 @@ u_int8_t aisFsmStateInit_RetryJOIN(struct ADAPTER *prAdapter,
 		prAisFsmInfo->ucAvailableAuthTypes &=
 		    ~(uint8_t) AUTH_TYPE_OPEN_SYSTEM;
 
-		prStaRec->ucAuthAlgNum =
-		    (uint8_t) AUTH_ALGORITHM_NUM_OPEN_SYSTEM;
+		for (i = 0; i < MLD_LINK_MAX; i++) {
+			prStaRec = aisGetLinkStaRec(prAisFsmInfo, i);
+			if (prStaRec)
+				prStaRec->ucAuthAlgNum =
+				    (uint8_t) AUTH_ALGORITHM_NUM_OPEN_SYSTEM;
+		}
 	} else {
 		DBGLOG(AIS, ERROR,
 		       "RETRY JOIN INIT: Retry Authentication with Unexpected AuthType: %d.\n",
@@ -1786,7 +1800,7 @@ u_int8_t aisFsmStateInit_RetryJOIN(struct ADAPTER *prAdapter,
 
 	prJoinReqMsg->rMsgHdr.eMsgId = MID_AIS_SAA_FSM_START;
 	prJoinReqMsg->ucSeqNum = ++prAisFsmInfo->ucSeqNumOfReqMsg;
-	prJoinReqMsg->prStaRec = prStaRec;
+	prJoinReqMsg->prStaRec = prMainStaRec;
 
 	mboxSendMsg(prAdapter, MBOX_ID_0, (struct MSG_HDR *)prJoinReqMsg,
 		    MSG_SEND_METHOD_BUF);
