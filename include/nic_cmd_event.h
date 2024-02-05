@@ -1253,9 +1253,9 @@ struct CAP_PHY_CAP {
 };
 
 struct CAP_LIMITED {
-	uint8_t ucLimitedMaxMcs2g; /* Limited 2G Max MCS index */
-	uint8_t ucLimitedMaxMcs5g; /* Limited 5G Max MCS index */
-	uint8_t ucLimitedMaxMcs6g; /* Limited 6G Max MCS index */
+	uint8_t ucLimitedMaxMcsMap2g; /* Limited 2G Max MCS map */
+	uint8_t ucLimitedMaxMcsMap5g; /* Limited 5G Max MCS map */
+	uint8_t ucLimitedMaxMcsMap6g; /* Limited 6G Max MCS map */
 	uint8_t ucReserved[1];
 };
 
