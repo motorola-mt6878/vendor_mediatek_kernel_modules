@@ -2402,7 +2402,7 @@ static int delete_queue(struct kbase_context *kctx, u32 id)
 		destroy_workqueue(queue->cmds_timeout_wq);
 #endif /* CONFIG_MALI_MTK_FENCE_DEBUG */
 
-		kfree(queue);
+		vfree(queue);
 	} else {
 		dev_dbg(kctx->kbdev->dev,
 			"Attempt to delete a non-existent KCPU queue");
@@ -3231,7 +3231,7 @@ int kbase_csf_kcpu_queue_new(struct kbase_context *kctx, struct kbase_ioctl_kcpu
 		goto out;
 	}
 
-	queue = kzalloc(sizeof(*queue), GFP_KERNEL);
+	queue = vzalloc(sizeof(*queue));
 
 	if (!queue) {
 #if IS_ENABLED(CONFIG_MALI_MTK_CREATE_KCPU_QUEUE_DEBUG)
@@ -3266,7 +3266,7 @@ int kbase_csf_kcpu_queue_new(struct kbase_context *kctx, struct kbase_ioctl_kcpu
 			"%s: Fail to allocate workqueue", __func__);
 #endif /* CONFIG_MALI_MTK_LOG_BUFFER */
 #endif
-		kfree(queue);
+		vfree(queue);
 		ret = -ENOMEM;
 
 		goto out;
@@ -3289,7 +3289,7 @@ int kbase_csf_kcpu_queue_new(struct kbase_context *kctx, struct kbase_ioctl_kcpu
 #endif /* CONFIG_MALI_MTK_LOG_BUFFER */
 #endif
 			destroy_workqueue(queue->wq);
-			kfree(queue);
+			vfree(queue);
 			ret = -ENOMEM;
 			goto out;
 		}
@@ -3325,7 +3325,7 @@ int kbase_csf_kcpu_queue_new(struct kbase_context *kctx, struct kbase_ioctl_kcpu
 			"%s: Fail to allocate workqueue for cmds timeout", __func__);
 #endif /* CONFIG_MALI_MTK_LOG_BUFFER */
 #endif
-		kfree(queue);
+		vfree(queue);
 		ret = -ENOMEM;
 
 		goto out;
