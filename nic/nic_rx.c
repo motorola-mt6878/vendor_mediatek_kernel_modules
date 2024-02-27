@@ -437,9 +437,6 @@ void nicRxUninitialize(struct ADAPTER *prAdapter)
 	ASSERT(prRxCtrl);
 
 	nicRxFlush(prAdapter);
-#if CFG_RFB_TRACK
-	nicRxRfbTrackCheck(prAdapter, TRUE);
-#endif /* CFG_RFB_TRACK */
 
 	for (i = 0; i < CFG_RX_MAX_PKT_NUM; i++) {
 		prSwRfb = prRxCtrl->aprSwRfbPool[i];
@@ -4400,29 +4397,22 @@ void nicRxRfbTrackUpdate(struct ADAPTER *prAdapter,
 		prRfbTrack->rTrackTime);
 }
 
-void nicRxRfbTrackCheck(struct ADAPTER *prAdapter,
-	u_int8_t fgAtWifiOffFlow)
+void nicRxRfbTrackCheck(struct ADAPTER *prAdapter)
 {
-	struct GLUE_INFO *prGlueInfo = prAdapter->prGlueInfo;
 	struct WIFI_VAR *prWifiVar = &prAdapter->rWifiVar;
 	struct RX_CTRL *prRxCtrl = &prAdapter->rRxCtrl;
 	static OS_SYSTIME last;
 	OS_SYSTIME now;
 	uint32_t i = 0;
 	struct RFB_TRACK *prRfbTrack;
-	u_int8_t fgMemLeak = FALSE;
 
 	if (IS_FEATURE_DISABLED(prWifiVar->fgRfbTrackEn))
 		return;
 
-	if (RX_GET_TOTAL_RFB_CNT(prGlueInfo) == CFG_RX_MAX_PKT_NUM)
-		return;
-
 	GET_BOOT_SYSTIME(&now);
 
-	if (!fgAtWifiOffFlow
-		&& !CHECK_FOR_TIMEOUT(now, last,
-			SEC_TO_SYSTIME(prWifiVar->u4RfbTrackInterval)))
+	if (!CHECK_FOR_TIMEOUT(now, last,
+		SEC_TO_SYSTIME(prWifiVar->u4RfbTrackInterval)))
 		return;
 
 	for (i = 0 ; i < CFG_RX_MAX_PKT_NUM; i++) {
@@ -4440,12 +4430,11 @@ void nicRxRfbTrackCheck(struct ADAPTER *prAdapter,
 		if (rTrackTime > now)
 			continue;
 
-		if (!fgAtWifiOffFlow
-			&& !CHECK_FOR_TIMEOUT(now, rTrackTime,
-				SEC_TO_SYSTIME(prWifiVar->u4RfbTrackTimeout)))
+		if (!CHECK_FOR_TIMEOUT(now, rTrackTime,
+			SEC_TO_SYSTIME(prWifiVar->u4RfbTrackTimeout)))
 			continue;
 
-		DBGLOG(NIC, WARN,
+		DBGLOG(NIC, INFO,
 			"prSwRfb[%p] TrackId[%u] State[%s] Line[%s] Time[%u] Diff[%u ms]\n",
 			prRfbTrack->prSwRfb,
 			i,
@@ -4454,11 +4443,7 @@ void nicRxRfbTrackCheck(struct ADAPTER *prAdapter,
 			rTrackTime,
 			now - rTrackTime
 			);
-		fgMemLeak = TRUE;
 	}
-
-	if (fgAtWifiOffFlow && fgMemLeak)
-		KAL_WARN_ON(TRUE);
 
 	last = now;
 }

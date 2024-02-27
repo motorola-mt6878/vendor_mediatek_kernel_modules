@@ -8266,11 +8266,7 @@ void wlanInitFeatureOptionImpl(struct ADAPTER *prAdapter, uint8_t *pucKey)
 
 
 #if CFG_RFB_TRACK
-#if CFG_RFB_TRACK_ENABLE
-	INIT_UINT(prWifiVar->fgRfbTrackEn, "RfbTrackEn", FEATURE_ENABLED);
-#else
 	INIT_UINT(prWifiVar->fgRfbTrackEn, "RfbTrackEn", FEATURE_DISABLED);
-#endif
 	/* unit: second */
 	INIT_UINT(prWifiVar->u4RfbTrackInterval,
 		"RfbTrackInterval", RFB_TRACK_INTERVAL);

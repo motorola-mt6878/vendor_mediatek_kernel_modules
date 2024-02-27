@@ -2342,10 +2342,6 @@
 #define CFG_RFB_TRACK 0
 #endif /* CFG_RFB_TRACK */
 
-#ifndef CFG_RFB_TRACK_ENABLE
-#define CFG_RFB_TRACK_ENABLE 0
-#endif /* CFG_RFB_TRACK_ENABLE */
-
 /* Check the buffer pointer in SWRFB, and attempt to correct from skb->data
  * if the skb->head recognized as a valid address.
  */

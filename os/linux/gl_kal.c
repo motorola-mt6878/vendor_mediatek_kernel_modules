@@ -6050,7 +6050,7 @@ int main_thread(void *data)
 #endif
 
 #if CFG_RFB_TRACK
-		nicRxRfbTrackCheck(prGlueInfo->prAdapter, FALSE);
+		nicRxRfbTrackCheck(prGlueInfo->prAdapter);
 #endif /* CFG_RFB_TRACK */
 
 #if CFG_SUPPORT_SKIP_RX_GRO_FOR_TC

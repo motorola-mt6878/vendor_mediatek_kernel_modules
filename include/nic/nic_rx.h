@@ -1790,8 +1790,7 @@ void nicRxRfbTrackInit(struct ADAPTER *prAdapter,
 void nicRxRfbTrackUpdate(struct ADAPTER *prAdapter,
 	struct SW_RFB *prSwRfb, uint8_t ucTrackState,
 	uint8_t *fileAndLine);
-void nicRxRfbTrackCheck(struct ADAPTER *prAdapter,
-	u_int8_t fgAtWifiOffFlow);
+void nicRxRfbTrackCheck(struct ADAPTER *prAdapter);
 #endif /* CFG_RFB_TRACK */
 #if CFG_DYNAMIC_RFB_ADJUSTMENT
 u_int8_t nicRxSetRfbCntByLevel(struct ADAPTER *prAdapter, uint32_t u4Lv);
