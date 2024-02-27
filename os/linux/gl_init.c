@@ -3093,7 +3093,8 @@ static void wlanSetMulticastListWorkQueue(
 
 		kalMemFree(prMCAddrList, VIR_MEM_TYPE,
 			   MAX_NUM_GROUP_ADDR * ETH_ALEN);
-	} else if (u4PacketFilter & PARAM_PACKET_FILTER_ALL_MULTICAST) {
+	} else if (!prGlueInfo->fgIsInSuspendMode &&
+			u4PacketFilter & PARAM_PACKET_FILTER_ALL_MULTICAST) {
 		DBGLOG(INIT, TRACE,
 			"Clear previous MAR settings to rx all mc pkt\n");
 		rStatus = kalIoctlByBssIdx(prGlueInfo,
@@ -4798,7 +4799,7 @@ void wlanSetSuspendMode(struct GLUE_INFO *prGlueInfo,
 			&u4SetInfoLen) != WLAN_STATUS_SUCCESS)
 			DBGLOG(INIT, ERROR, "set packet filter failed.\n");
 
-#if (!CFG_SUPPORT_DROP_ALL_MC_PACKET && !CFG_WOW_SUPPORT)
+#if (!CFG_SUPPORT_DROP_ALL_MC_PACKET)
 		if (fgEnable) {
 			/* Prepare IPv6 RA packet when suspend */
 			uint8_t MC_address[ETH_ALEN] = {0x33, 0x33, 0, 0, 0, 1};
