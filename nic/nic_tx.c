@@ -5262,17 +5262,18 @@ void nicTxDirectClearStaPsQ(struct ADAPTER *prAdapter,
 	struct QUE rNeedToFreeQue;
 	struct QUE *prNeedToFreeQue = &rNeedToFreeQue;
 
-	if (QUEUE_IS_EMPTY(&prAdapter->rStaPsQueue[ucStaRecIndex]))
-		return;
-
 	QUEUE_INITIALIZE(prNeedToFreeQue);
 
 	TX_DIRECT_LOCK(prAdapter->prGlueInfo);
-	QUEUE_MOVE_ALL(prNeedToFreeQue,
-			&prAdapter->rStaPsQueue[ucStaRecIndex]);
-	TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
-
-	wlanProcessQueuedMsduInfo(prAdapter, QUEUE_GET_HEAD(prNeedToFreeQue));
+	if (QUEUE_IS_NOT_EMPTY(&prAdapter->rStaPsQueue[ucStaRecIndex])) {
+		QUEUE_MOVE_ALL(prNeedToFreeQue,
+				&prAdapter->rStaPsQueue[ucStaRecIndex]);
+		TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
+		wlanProcessQueuedMsduInfo(prAdapter,
+			QUEUE_GET_HEAD(prNeedToFreeQue));
+	} else {
+		TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
+	}
 }
 
 void nicTxDirectClearBssAbsentQ(struct ADAPTER
@@ -5281,17 +5282,18 @@ void nicTxDirectClearBssAbsentQ(struct ADAPTER
 	struct QUE rNeedToFreeQue;
 	struct QUE *prNeedToFreeQue = &rNeedToFreeQue;
 
-	if (QUEUE_IS_EMPTY(&prAdapter->rBssAbsentQueue[ucBssIndex]))
-		return;
-
 	QUEUE_INITIALIZE(prNeedToFreeQue);
 
 	TX_DIRECT_LOCK(prAdapter->prGlueInfo);
-	QUEUE_MOVE_ALL(prNeedToFreeQue,
-			&prAdapter->rBssAbsentQueue[ucBssIndex]);
-	TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
-
-	wlanProcessQueuedMsduInfo(prAdapter, QUEUE_GET_HEAD(prNeedToFreeQue));
+	if (QUEUE_IS_NOT_EMPTY(&prAdapter->rBssAbsentQueue[ucBssIndex])) {
+		QUEUE_MOVE_ALL(prNeedToFreeQue,
+				&prAdapter->rBssAbsentQueue[ucBssIndex]);
+		TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
+		wlanProcessQueuedMsduInfo(prAdapter,
+			QUEUE_GET_HEAD(prNeedToFreeQue));
+	} else {
+		TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
+	}
 }
 
 void nicTxDirectClearStaPendQ(struct ADAPTER *prAdapter,
@@ -5300,18 +5302,18 @@ void nicTxDirectClearStaPendQ(struct ADAPTER *prAdapter,
 	struct QUE rNeedToFreeQue;
 	struct QUE *prNeedToFreeQue = &rNeedToFreeQue;
 
-
-	if (QUEUE_IS_EMPTY(&prAdapter->rStaPendQueue[ucStaRecIdx]))
-		return;
-
 	QUEUE_INITIALIZE(prNeedToFreeQue);
 
 	TX_DIRECT_LOCK(prAdapter->prGlueInfo);
-	QUEUE_MOVE_ALL(prNeedToFreeQue,
-			&prAdapter->rStaPendQueue[ucStaRecIdx]);
-	TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
-
-	wlanProcessQueuedMsduInfo(prAdapter, QUEUE_GET_HEAD(prNeedToFreeQue));
+	if (QUEUE_IS_NOT_EMPTY(&prAdapter->rStaPendQueue[ucStaRecIdx])) {
+		QUEUE_MOVE_ALL(prNeedToFreeQue,
+				&prAdapter->rStaPendQueue[ucStaRecIdx]);
+		TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
+		wlanProcessQueuedMsduInfo(prAdapter,
+			QUEUE_GET_HEAD(prNeedToFreeQue));
+	} else {
+		TX_DIRECT_UNLOCK(prAdapter->prGlueInfo);
+	}
 
 	prAdapter->u4StaPendBitmap &= ~BIT(ucStaRecIdx);
 }

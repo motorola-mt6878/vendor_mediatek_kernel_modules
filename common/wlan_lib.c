@@ -3712,7 +3712,9 @@ uint32_t wlanProcessQueuedMsduInfo(struct ADAPTER *prAdapter,
 				   struct MSDU_INFO *prMsduInfoListHead)
 {
 	ASSERT(prAdapter);
-	ASSERT(prMsduInfoListHead);
+
+	if (!prMsduInfoListHead)
+		return WLAN_STATUS_FAILURE;
 
 	nicTxFreeMsduInfoPacket(prAdapter, prMsduInfoListHead);
 	nicTxReturnMsduInfo(prAdapter, prMsduInfoListHead);
