@@ -896,6 +896,13 @@ static inline void kalCfg80211VendorEvent(void *pvPacket)
 	kfifo_is_empty((_prFiFoQ))
 #define KAL_FIFO_IS_FULL(_prFiFoQ) \
 	kfifo_is_full((_prFiFoQ))
+#if CFG_SUPPORT_RX_NAPI
+#define KAL_GET_FIFO_CNT(_prGlueInfo) \
+	((unsigned int) (KAL_FIFO_LEN((&_prGlueInfo->rRxKfifoQ)) \
+		/ sizeof(void *)))
+#else
+#define KAL_GET_FIFO_CNT(_prGlueInfo) (0)
+#endif
 
 #define KAL_MB_RW() \
 ({ \

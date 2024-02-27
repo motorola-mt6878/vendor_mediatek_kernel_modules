@@ -1187,6 +1187,13 @@ struct ACTION_FRAME_SIZE_MAP {
 #define RX_GET_UNUSE_RFB_CNT(prRxCtrl) (0)
 #endif /* CFG_DYNAMIC_RFB_ADJUSTMENT */
 
+#define RX_GET_TOTAL_RFB_CNT(prGlueInfo) \
+	(RX_GET_FREE_RFB_CNT(&prGlueInfo->prAdapter->rRxCtrl) \
+	+ RX_GET_RECEIVED_RFB_CNT(&prGlueInfo->prAdapter->rRxCtrl) \
+	+ RX_GET_INDICATED_RFB_CNT(&prGlueInfo->prAdapter->rRxCtrl) \
+	+ RX_GET_UNUSE_RFB_CNT(&prGlueInfo->prAdapter->rRxCtrl) \
+	+ KAL_GET_FIFO_CNT(prGlueInfo))
+
 #define FILE_AND_LINE_NUMBER \
 	(__FILE__ ":" STRLINE(__LINE__))
 
@@ -1782,7 +1789,8 @@ void nicRxRfbTrackInit(struct ADAPTER *prAdapter,
 void nicRxRfbTrackUpdate(struct ADAPTER *prAdapter,
 	struct SW_RFB *prSwRfb, uint8_t ucTrackState,
 	uint8_t *fileAndLine);
-void nicRxRfbTrackCheck(struct ADAPTER *prAdapter);
+void nicRxRfbTrackCheck(struct ADAPTER *prAdapter,
+	u_int8_t fgAtWifiOffFlow);
 #endif /* CFG_RFB_TRACK */
 #if CFG_DYNAMIC_RFB_ADJUSTMENT
 u_int8_t nicRxSetRfbCntByLevel(struct ADAPTER *prAdapter, uint32_t u4Lv);
