@@ -371,6 +371,7 @@ void nicRxInitialize(struct ADAPTER *prAdapter)
 #endif /* CFG_SUPPORT_DYNAMIC_PAGE_POOL */
 	for (i = CFG_RX_MAX_PKT_NUM; i != 0; i--) {
 		prSwRfb = (struct SW_RFB *) pucMemHandle;
+		prRxCtrl->aprSwRfbPool[i-1] = prSwRfb;
 #if CFG_RFB_TRACK
 		RX_RFB_TRACK_INIT(prAdapter, prSwRfb, (i-1));
 #endif /* CFG_RFB_TRACK */
@@ -429,8 +430,7 @@ void nicRxUninitialize(struct ADAPTER *prAdapter)
 {
 	struct RX_CTRL *prRxCtrl;
 	struct SW_RFB *prSwRfb = (struct SW_RFB *) NULL;
-
-	KAL_SPIN_LOCK_DECLARATION();
+	uint32_t i;
 
 	ASSERT(prAdapter);
 	prRxCtrl = &prAdapter->rRxCtrl;
@@ -441,36 +441,15 @@ void nicRxUninitialize(struct ADAPTER *prAdapter)
 	nicRxRfbTrackCheck(prAdapter, TRUE);
 #endif /* CFG_RFB_TRACK */
 
-	do {
-		KAL_ACQUIRE_SPIN_LOCK(prAdapter, SPIN_LOCK_RX_QUE);
-		QUEUE_REMOVE_HEAD(&prRxCtrl->rReceivedRfbList, prSwRfb,
-				  struct SW_RFB *);
-		KAL_RELEASE_SPIN_LOCK(prAdapter, SPIN_LOCK_RX_QUE);
+	for (i = 0; i < CFG_RX_MAX_PKT_NUM; i++) {
+		prSwRfb = prRxCtrl->aprSwRfbPool[i];
 		if (prSwRfb) {
 			if (prSwRfb->pvPacket)
 				kalPacketFree(prAdapter->prGlueInfo,
 				prSwRfb->pvPacket);
 			prSwRfb->pvPacket = NULL;
-		} else {
-			break;
 		}
-	} while (TRUE);
-
-	do {
-		KAL_ACQUIRE_SPIN_LOCK(prAdapter, SPIN_LOCK_RX_FREE_QUE);
-		QUEUE_REMOVE_HEAD(&prRxCtrl->rFreeSwRfbList, prSwRfb,
-				  struct SW_RFB *);
-		KAL_RELEASE_SPIN_LOCK(prAdapter, SPIN_LOCK_RX_FREE_QUE);
-		if (prSwRfb) {
-			if (prSwRfb->pvPacket)
-				kalPacketFree(prAdapter->prGlueInfo,
-				prSwRfb->pvPacket);
-			prSwRfb->pvPacket = NULL;
-		} else {
-			break;
-		}
-	} while (TRUE);
-
+	}
 }				/* end of nicRxUninitialize() */
 
 void nicRxFillSSN(struct ADAPTER *prAdapter,

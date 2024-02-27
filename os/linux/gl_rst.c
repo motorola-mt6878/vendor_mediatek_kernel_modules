@@ -111,6 +111,7 @@ uint8_t *apucRstReason[RST_REASON_MAX] = {
 	(uint8_t *) DISP_STRING("Chip reset by AER - RxErr"),
 	(uint8_t *) DISP_STRING("Chip reset by AER - SDES"),
 	(uint8_t *) DISP_STRING("RST_MCU_INIT_FAIL"),
+	(uint8_t *) DISP_STRING("RST_RFB_FAIL"),
 };
 
 const uint8_t *apucRstAction[] = {
@@ -576,6 +577,7 @@ uint32_t glResetSelectAction(struct ADAPTER *prAdapter)
 	case RST_P2P_CHNL_GRANT_INVALID_STATE:
 	case RST_SCAN_RECOVERY:
 	case RST_CMD_EVT_FAIL:
+	case RST_RFB_FAIL:
 #if IS_ENABLED(CFG_SUPPORT_CONNAC1X)
 		u4RstFlag = RST_FLAG_CHIP_RESET;
 #else

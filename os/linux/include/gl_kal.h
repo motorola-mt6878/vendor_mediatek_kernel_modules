@@ -1633,6 +1633,8 @@ uint32_t kalRxIndicatePkts(struct GLUE_INFO *prGlueInfo,
 uint32_t kalRxIndicateOnePkt(struct GLUE_INFO
 			     *prGlueInfo, void *pvPkt);
 
+void kalRxRFBFailRecoveryCheck(struct GLUE_INFO *prGlueInfo);
+
 #if CFG_SUPPORT_NAN
 int kalIndicateNetlink2User(struct GLUE_INFO *prGlueInfo, void *pvBuf,
 			    uint32_t u4BufLen);

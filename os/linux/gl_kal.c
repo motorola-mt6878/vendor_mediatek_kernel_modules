@@ -2124,6 +2124,27 @@ skip_gro:
 	return WLAN_STATUS_SUCCESS;
 }
 
+/*----------------------------------------------------------------------------*/
+/*!
+ * \brief to check whether SWRFB has severe memory leaks and trigger wifi
+ *        reset .
+ *
+ * \param[in] prGlueInfo Pointer to the Adapter structure.
+ *
+ * \return (none)
+ *
+ */
+/*----------------------------------------------------------------------------*/
+void kalRxRFBFailRecoveryCheck(struct GLUE_INFO *prGlueInfo)
+{
+	if (RX_GET_TOTAL_RFB_CNT(prGlueInfo) < CFG_RX_RFB_MEM_LEAK_THRESHOLD) {
+		DBGLOG_LIMITED(RX, ERROR,
+			"Trigger chip reset due to RFB memory leak, RFB List[%d]\n",
+			RX_GET_TOTAL_RFB_CNT(prGlueInfo));
+		GL_DEFAULT_RESET_TRIGGER(prGlueInfo->prAdapter, RST_RFB_FAIL);
+	}
+}
+
 #if CFG_SUPPORT_NAN
 /*----------------------------------------------------------------------------*/
 /*!

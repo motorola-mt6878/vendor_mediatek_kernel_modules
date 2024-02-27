@@ -1015,6 +1015,7 @@ struct RX_CTRL {
 #if CFG_DYNAMIC_RFB_ADJUSTMENT
 	struct QUE rUnUseRfbList;
 #endif /* CFG_DYNAMIC_RFB_ADJUSTMENT */
+	struct SW_RFB *aprSwRfbPool[CFG_RX_MAX_PKT_NUM];
 
 #if CFG_SDIO_RX_AGG
 	uint8_t *pucRxCoalescingBufPtr;

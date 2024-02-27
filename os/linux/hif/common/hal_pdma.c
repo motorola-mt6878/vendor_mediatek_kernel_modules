@@ -2311,6 +2311,7 @@ void halRxReceiveRFBs(struct ADAPTER *prAdapter, uint32_t u4Port,
 	if (!RX_GET_FREE_RFB_CNT(prRxCtrl)) {
 		DBGLOG_LIMITED(RX, WARN, "No More RFB for P[%u], Ind=%u\n",
 				u4Port, RX_GET_INDICATED_RFB_CNT(prRxCtrl));
+		kalRxRFBFailRecoveryCheck(prGlueInfo);
 		KAL_SET_BIT(u4Port, prAdapter->ulNoMoreRfb);
 		goto end;
 	}
@@ -6231,16 +6232,20 @@ void halDumpHifStats(struct ADAPTER *prAdapter)
 				(i == NUM_OF_RX_RING - 1) ? "]" : " ");
 	}
 	pos += kalSnprintf(buf + pos, u4BufferSize - pos,
-			" Msdu:F[%u/%u]P[%u]D[%u] Tok[%u/%u] Rfb[%u/%u/%u/%u]",
+			" Msdu:F[%u/%u]P[%u]D[%u] Tok[%u/%u]",
 			prTxCtrl->rFreeMsduInfoList.u4NumElem,
 			CFG_TX_MAX_PKT_NUM,
 			prTxCtrl->rTxMgmtTxingQueue.u4NumElem,
 			prAdapter->rTxDataDoneQueue.u4NumElem,
 			prHifInfo->rTokenInfo.u4UsedCnt,
-			prTokenInfo->u4TokenNum,
+			prTokenInfo->u4TokenNum);
+	pos += kalSnprintf(buf + pos, u4BufferSize - pos,
+			" Rfb[%u/%u/%u/%u/%u/%u]",
 			RX_GET_FREE_RFB_CNT(prRxCtrl),
+			RX_GET_RECEIVED_RFB_CNT(prRxCtrl),
 			RX_GET_INDICATED_RFB_CNT(prRxCtrl),
 			RX_GET_UNUSE_RFB_CNT(prRxCtrl),
+			KAL_GET_FIFO_CNT(prGlueInfo),
 			CFG_RX_MAX_PKT_NUM);
 #if CFG_SUPPORT_DYNAMIC_PAGE_POOL
 	pos += kalSnprintf(buf + pos, u4BufferSize - pos,

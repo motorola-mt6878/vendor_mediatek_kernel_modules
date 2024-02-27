@@ -697,6 +697,8 @@
 						CFG_NUM_OF_RX1_HIF_DESC) * 3 \
 						+ CFG_NUM_OF_QM_RX_PKT_NUM)
 
+#define CFG_RX_RFB_MEM_LEAK_THRESHOLD		(CFG_RX_MAX_PKT_NUM / 10)
+
 #define CFG_RX_REORDER_Q_THRESHOLD              8
 
 #ifndef LINUX
