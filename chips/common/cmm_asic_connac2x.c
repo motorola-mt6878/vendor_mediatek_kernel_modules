@@ -1170,9 +1170,9 @@ void asicConnac2xLowPowerOwnClear(
 	prChipInfo = prAdapter->chip_info;
 
 	if (prChipInfo->is_support_asic_lp) {
-		u_int32_t u4RegValue = 0;
+		uint32_t u4RegValue = 0;
 #if (CFG_CHECK_DRVOWN_EINT == 1)
-		uint8_t retry = 0;
+		uint32_t u4Retry = 0;
 
 		while (1) {
 			/* EINT CR select */
@@ -1217,9 +1217,9 @@ void asicConnac2xLowPowerOwnClear(
 				DBGLOG(HAL, ERROR,
 					"EINT trigger failed [%u]\n",
 					u4RegValue);
-				if (retry == LP_OWN_EINT_CHECK_RETRY_CNT)
+				if (u4Retry == LP_OWN_EINT_CHECK_RETRY_CNT)
 					break;
-				retry++;
+				u4Retry++;
 			} else {
 				break;
 			}
