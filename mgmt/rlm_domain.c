@@ -346,8 +346,7 @@ static const uint16_t g_u2CountryGroup3[] = {
 	COUNTRY_CODE_CU, COUNTRY_CODE_DM, COUNTRY_CODE_GT
 };
 static const uint16_t g_u2CountryGroup4[] = {
-	COUNTRY_CODE_AR, COUNTRY_CODE_CC, COUNTRY_CODE_CX, COUNTRY_CODE_HM,
-	COUNTRY_CODE_MX, COUNTRY_CODE_NF
+	COUNTRY_CODE_CC, COUNTRY_CODE_CX, COUNTRY_CODE_HM, COUNTRY_CODE_NF
 };
 static const uint16_t g_u2CountryGroup5[] = {
 	COUNTRY_CODE_BH, COUNTRY_CODE_CN, COUNTRY_CODE_MV, COUNTRY_CODE_UY,
@@ -360,7 +359,7 @@ static const uint16_t g_u2CountryGroup7[] = {
 	COUNTRY_CODE_NG
 };
 static const uint16_t g_u2CountryGroup8[] = {
-	COUNTRY_CODE_CA
+	COUNTRY_CODE_AR, COUNTRY_CODE_CA
 };
 static const uint16_t g_u2CountryGroup9[] = {
 	COUNTRY_CODE_ER, COUNTRY_CODE_RKS,
@@ -417,7 +416,7 @@ static const uint16_t g_u2CountryGroup23[] = {
 	COUNTRY_CODE_GU, COUNTRY_CODE_MP, COUNTRY_CODE_UM, COUNTRY_CODE_VI
 };
 static const uint16_t g_u2CountryGroup24[] = {
-	COUNTRY_CODE_AU
+	COUNTRY_CODE_AU, COUNTRY_CODE_MX
 };
 static const uint16_t g_u2CountryGroup25[] = {
 	COUNTRY_CODE_SA
