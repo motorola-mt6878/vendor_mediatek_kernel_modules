@@ -106,7 +106,7 @@ void cfm_cfg_process(char *filename)
 			GFP_KERNEL);
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] alloc mem for connfem_ctx fail, not parsing conf\n");
+		pr_info("alloc mem for connfem_ctx fail, not parsing conf\n");
 		release_firmware(data);
 		return;
 	}
@@ -114,7 +114,7 @@ void cfm_cfg_process(char *filename)
 	if (cfm_cfg_parse(connfem_ctx, data) == 0) {
 		connfem_ctx->src = CFM_SRC_CFG_FILE;
 	} else {
-		pr_info("[WARN] conf parsing fail\n");
+		pr_info("conf parsing fail\n");
 		if (connfem_ctx) {
 			cfm_context_free(connfem_ctx);
 			kfree(connfem_ctx);
@@ -142,7 +142,7 @@ static int cfm_cfg_parse_id(struct connfem_context *ctx,
 				struct cfm_cfg_tlv *tlv)
 {
 	if (tlv->length != sizeof(ctx->id)) {
-		pr_info("[WARN] id length (%d) should be (%zu)",
+		pr_info("id length (%d) should be (%zu)",
 				tlv->length,
 				sizeof(ctx->id));
 		return -EINVAL;
@@ -172,7 +172,7 @@ static int cfm_cfg_parse_femid(struct connfem_epaelna_fem_info *fem_info,
 				struct cfm_cfg_tlv *tlv)
 {
 	if (tlv->length != sizeof(fem_info->id)) {
-		pr_info("[WARN] fem id length (%d) should be (%zu)",
+		pr_info("fem id length (%d) should be (%zu)",
 				tlv->length,
 				sizeof(fem_info->id));
 		return -EINVAL;
@@ -211,12 +211,12 @@ static int cfm_cfg_parse_pin_info(struct cfm_epaelna_config *cfg,
 {
 	if (tlv->length == 0 ||
 		tlv->length > sizeof(cfg->pin_cfg.pin_info.pin)) {
-		pr_info("[WARN] invalid pin info length (%d)", tlv->length);
+		pr_info("invalid pin info length (%d)", tlv->length);
 		return -EINVAL;
 	}
 
 	if ((tlv->length % sizeof(struct connfem_epaelna_pin)) != 0) {
-		pr_info("[WARN] pin info length needs to be multiple of %zu, currently %d",
+		pr_info("pin info length needs to be multiple of %zu, currently %d",
 			sizeof(struct connfem_epaelna_pin),
 			tlv->length);
 		return -EINVAL;
@@ -254,12 +254,12 @@ static int cfm_cfg_parse_flags(enum connfem_subsys subsys,
 	struct connfem_epaelna_subsys_cb *subsys_cb = NULL;
 
 	if (tlv->length == 0 ) {
-		pr_info("[WARN] invalid flag pair length (%d)", tlv->length);
+		pr_info("invalid flag pair length (%d)", tlv->length);
 		return -EINVAL;
 	}
 
 	if ((tlv->length % sizeof(struct connfem_epaelna_flag_pair)) != 0) {
-		pr_info("[WARN] flag pair length needs to be multiple of %zu, currently %d",
+		pr_info("flag pair length needs to be multiple of %zu, currently %d",
 			sizeof(struct connfem_epaelna_flag_pair),
 			tlv->length);
 		return -EINVAL;
@@ -280,7 +280,7 @@ static int cfm_cfg_parse_flags(enum connfem_subsys subsys,
 
 	ctx->epaelna.flags_cfg[subsys].obj = subsys_cb->flags_get();
 	if (!ctx->epaelna.flags_cfg[subsys].obj) {
-		pr_info("[WARN] %s flags structure is NULL",
+		pr_info("%s flags structure is NULL",
 			cfm_subsys_name[subsys]);
 		return -EINVAL;
 	}
@@ -307,13 +307,13 @@ static int cfm_cfg_parse_part_name(enum connfem_rf_port port,
 				struct cfm_cfg_tlv *tlv)
 {
 	if (port >= CONNFEM_PORT_NUM) {
-		pr_info("[WARN] invalid port (%d)", port);
+		pr_info("invalid port (%d)", port);
 		return -EINVAL;
 	}
 
 	if (tlv->length == 0 ||
 		tlv->length > sizeof(fem_info->part_name[port])) {
-		pr_info("[WARN] invalid part name length (%d)", tlv->length);
+		pr_info("invalid part name length (%d)", tlv->length);
 		return -EINVAL;
 	}
 
@@ -345,14 +345,14 @@ static int cfm_cfg_parse(struct connfem_context *ctx,
 	int ret = 0;
 
 	if (!ctx || !data || !data->data) {
-		pr_info("%s,[WARN] ctx, data, or data->data is NULL", __func__);
+		pr_info("%s,ctx, data, or data->data is NULL", __func__);
 		return -EINVAL;
 	}
 
 	while (offset < data->size) {
 		tlv = (struct cfm_cfg_tlv *) (data->data + offset);
 		if (offset + sizeof(struct cfm_cfg_tlv) + tlv->length > data->size) {
-			pr_info("%s,[WARN] tlv->length > data->size (%zu>%zu)",
+			pr_info("%s,tlv->length > data->size (%zu>%zu)",
 				__func__,
 				(offset + sizeof(struct cfm_cfg_tlv) + tlv->length),
 				data->size);
@@ -438,7 +438,7 @@ static int cfm_cfg_parse_flags_helper(int count,
 	tbl_size = subsys_cb->flags_cnt();
 
 	if (count == 0 || count > tbl_size) {
-		pr_info("[WARN] invalid flags count(%d), max(%d)",
+		pr_info("invalid flags count(%d), max(%d)",
 			count,
 			tbl_size);
 		return -EINVAL;
@@ -451,7 +451,7 @@ static int cfm_cfg_parse_flags_helper(int count,
 	/* Retrieves flags name from tlv */
 	while (offset < tlv->length) {
 		if (offset + sizeof(struct connfem_epaelna_flag_pair) > tlv->length) {
-			pr_info("%s,[WARN] tlv->data > tlv->length (%zu>%hu)",
+			pr_info("%s,tlv->data > tlv->length (%zu>%hu)",
 				__func__,
 				offset + sizeof(struct connfem_epaelna_flag_pair),
 				tlv->length);

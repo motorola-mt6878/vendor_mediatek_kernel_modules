@@ -42,7 +42,7 @@
 bool connfem_is_available(enum connfem_type fem_type)
 {
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, No ConnFem context", __func__);
+		pr_info("%s, No ConnFem context", __func__);
 		return false;
 	}
 
@@ -54,7 +54,7 @@ bool connfem_is_available(enum connfem_type fem_type)
 		return connfem_ctx->epaelna.available;
 
 	default:
-		pr_info("[WARN] %s, Unknown fem_type: %d", __func__, fem_type);
+		pr_info("%s, Unknown fem_type: %d", __func__, fem_type);
 		break;
 	}
 
@@ -65,14 +65,14 @@ EXPORT_SYMBOL(connfem_is_available);
 int connfem_epaelna_get_fem_info(struct connfem_epaelna_fem_info *fem_info)
 {
 	if (!fem_info) {
-		pr_info("[WARN] %s, input parameter is NULL", __func__);
+		pr_info("%s, input parameter is NULL", __func__);
 		return -EINVAL;
 	}
 
 	memset(fem_info, 0, sizeof(*fem_info));
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, No ConnFem context", __func__);
+		pr_info("%s, No ConnFem context", __func__);
 		return -EOPNOTSUPP;
 	}
 
@@ -88,14 +88,14 @@ EXPORT_SYMBOL(connfem_epaelna_get_fem_info);
 int connfem_epaelna_get_bt_fem_info(struct connfem_epaelna_fem_info *fem_info)
 {
 	if (!fem_info) {
-		pr_info("[WARN] %s, input parameter is NULL", __func__);
+		pr_info("%s, input parameter is NULL", __func__);
 		return -EINVAL;
 	}
 
 	memset(fem_info, 0, sizeof(*fem_info));
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, No ConnFem context", __func__);
+		pr_info("%s, No ConnFem context", __func__);
 		return -EOPNOTSUPP;
 	}
 
@@ -115,14 +115,14 @@ int connfem_epaelna_get_pin_info(struct connfem_epaelna_pin_info *pin_info)
 	int pin_count = 0;
 
 	if (!pin_info) {
-		pr_info("[WARN] %s, input parameter is NULL", __func__);
+		pr_info("%s, input parameter is NULL", __func__);
 		return -EINVAL;
 	}
 
 	memset(pin_info, 0, sizeof(*pin_info));
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, No ConnFem context", __func__);
+		pr_info("%s, No ConnFem context", __func__);
 		return -EOPNOTSUPP;
 	}
 
@@ -130,7 +130,7 @@ int connfem_epaelna_get_pin_info(struct connfem_epaelna_pin_info *pin_info)
 		connfem_ctx->epaelna.bt_pin_cfg.pin_info.count;
 
 	if (total_pin_count >= CONNFEM_EPAELNA_PIN_COUNT) {
-		pr_info("[WARN] %s, pin count:%d > %d",
+		pr_info("%s, pin count:%d > %d",
 			__func__,
 			total_pin_count,
 			CONNFEM_EPAELNA_PIN_COUNT);
@@ -165,14 +165,14 @@ int connfem_epaelna_laa_get_pin_info(
 		struct connfem_epaelna_laa_pin_info *laa_pin_info)
 {
 	if (!laa_pin_info) {
-		pr_info("[WARN] %s, input parameter is NULL", __func__);
+		pr_info("%s, input parameter is NULL", __func__);
 		return -EINVAL;
 	}
 
 	memset(laa_pin_info, 0, sizeof(*laa_pin_info));
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, No ConnFem context", __func__);
+		pr_info("%s, No ConnFem context", __func__);
 		return -EOPNOTSUPP;
 	}
 
@@ -194,23 +194,23 @@ EXPORT_SYMBOL(connfem_epaelna_laa_get_pin_info);
 int connfem_epaelna_get_flags(enum connfem_subsys subsys, void *flags)
 {
 	if (subsys >= CONNFEM_SUBSYS_NUM) {
-		pr_info("[WARN] %s, invalid subsys %d",
+		pr_info("%s, invalid subsys %d",
 			__func__, subsys);
 		return -EINVAL;
 	}
 
 	if (!flags) {
-		pr_info("[WARN] %s, input parameter is NULL", __func__);
+		pr_info("%s, input parameter is NULL", __func__);
 		return -EINVAL;
 	}
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, No ConnFem context", __func__);
+		pr_info("%s, No ConnFem context", __func__);
 		return -EOPNOTSUPP;
 	}
 
 	if (!connfem_ctx->epaelna.flags_cfg[subsys].obj) {
-		pr_info("[WARN] %s, subsys %d '%s' flags is NULL",
+		pr_info("%s, subsys %d '%s' flags is NULL",
 			__func__, subsys, cfm_subsys_name[subsys]);
 		return -EINVAL;
 	}

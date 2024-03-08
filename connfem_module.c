@@ -282,7 +282,7 @@ static int cfm_ioc_epa_fn_stat_hdlr(unsigned long usr_arg)
 	}
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, %d '%s', No ConnFem context",
+		pr_info("%s, %d '%s', No ConnFem context",
 			__func__, data.subsys, cfm_subsys_name[data.subsys]);
 		err = -EOPNOTSUPP;
 		goto fn_stat_done;
@@ -357,7 +357,7 @@ static int cfm_ioc_epa_fn_hdlr(unsigned long usr_arg)
 	}
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, %d '%s', No ConnFem context",
+		pr_info("%s, %d '%s', No ConnFem context",
 			__func__, data.subsys, cfm_subsys_name[data.subsys]);
 		return -EOPNOTSUPP;
 	}
@@ -456,7 +456,7 @@ static int cfm_ioc_epa_flags_stat_hdlr(unsigned long usr_arg)
 	}
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, %d '%s', No ConnFem context",
+		pr_info("%s, %d '%s', No ConnFem context",
 			__func__, data.subsys, cfm_subsys_name[data.subsys]);
 		err = -EOPNOTSUPP;
 		goto flags_stat_done;
@@ -522,7 +522,7 @@ static int cfm_ioc_epa_flags_hdlr(unsigned long usr_arg)
 	}
 
 	if (!connfem_ctx) {
-		pr_info("[WARN] %s, %d '%s', No ConnFem context",
+		pr_info("%s, %d '%s', No ConnFem context",
 			__func__, data.subsys, cfm_subsys_name[data.subsys]);
 		return -EOPNOTSUPP;
 	}
@@ -705,7 +705,7 @@ static int __init connfem_mod_init(void)
 	/* Platform device */
 	ret = platform_driver_register(&connfem_plat_drv);
 	if (ret < 0) {
-		pr_info("[WARN] ConnFem platform driver registration failed: %d",
+		pr_info("ConnFem platform driver registration failed: %d",
 				ret);
 		goto mod_init_err_skip_free;
 	}
@@ -715,7 +715,7 @@ static int __init connfem_mod_init(void)
 	ret = alloc_chrdev_region(&connfem_cdev_ctx.devId, 0, CONNFEM_DEV_NUM,
 							  CONNFEM_DRIVER_NAME);
 	if (ret < 0) {
-		pr_info("[WARN] ConnFem alloc chrdev region failed: %d", ret);
+		pr_info("ConnFem alloc chrdev region failed: %d", ret);
 		ret = -20;
 		goto mod_init_err_skip_free;
 	}
@@ -725,7 +725,7 @@ static int __init connfem_mod_init(void)
 	/* Char Device: Create class */
 	connfem_cdev_ctx.class = class_create(THIS_MODULE, CONNFEM_DRIVER_NAME);
 	if (IS_ERR(connfem_cdev_ctx.class)) {
-		pr_info("[WARN] ConnFem create class failed");
+		pr_info("ConnFem create class failed");
 		ret = -30;
 		goto mod_init_err;
 	}
@@ -735,7 +735,7 @@ static int __init connfem_mod_init(void)
 						connfem_cdev_ctx.devId, NULL,
 						CONNFEM_DRIVER_NAME);
 	if (!connfem_cdev_ctx.chrdev) {
-		pr_info("[WARN] ConnFem create device failed");
+		pr_info("ConnFem create device failed");
 		ret = -40;
 		goto mod_init_err;
 	}
@@ -748,7 +748,7 @@ static int __init connfem_mod_init(void)
 	ret = cdev_add(&connfem_cdev_ctx.cdev, connfem_cdev_ctx.devId,
 				   CONNFEM_DEV_NUM);
 	if (ret < 0) {
-		pr_info("[WARN] ConnFem add device failed");
+		pr_info("ConnFem add device failed");
 		ret = -50;
 		goto mod_init_err;
 	}
