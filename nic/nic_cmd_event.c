@@ -2767,36 +2767,26 @@ uint32_t nicCfgChipCapLimited(struct ADAPTER *prAdapter,
 
 	prCapLimited = (struct CAP_LIMITED *)pucEventBuf;
 
-	DBGLOG(INIT, INFO, "Limited max MCS map: [2G][%u],[5G][%u],[6G][%u]\n",
+	DBGLOG(INIT, INFO,
+		"Limited max MCS map from FW: [2G][%u],[5G][%u],[6G][%u]\n",
 		prCapLimited->ucLimitedMaxMcsMap2g,
 		prCapLimited->ucLimitedMaxMcsMap5g,
 		prCapLimited->ucLimitedMaxMcsMap6g);
 
-	if (prCapLimited->ucLimitedMaxMcsMap2g >= HE_CAP_INFO_MCS_NOT_SUPPORTED)
-		prCapLimited->ucLimitedMaxMcsMap2g =
-				HE_CAP_INFO_MCS_NOT_SUPPORTED;
-	else
-		prAdapter->rWifiVar.ucHeMaxMcsMap2g = kal_min_t(uint8_t,
-				prCapLimited->ucLimitedMaxMcsMap2g,
-				prAdapter->rWifiVar.ucHeMaxMcsMap2g);
+	prAdapter->rWifiVar.ucHeMaxMcsMap2g = kal_min_t(uint8_t,
+			prCapLimited->ucLimitedMaxMcsMap2g,
+			prAdapter->rWifiVar.ucHeMaxMcsMap2g);
 
-	if (prCapLimited->ucLimitedMaxMcsMap5g >= HE_CAP_INFO_MCS_NOT_SUPPORTED)
-		prCapLimited->ucLimitedMaxMcsMap5g =
-				HE_CAP_INFO_MCS_NOT_SUPPORTED;
-	else
-		prAdapter->rWifiVar.ucHeMaxMcsMap5g = kal_min_t(uint8_t,
-				prCapLimited->ucLimitedMaxMcsMap5g,
-				prAdapter->rWifiVar.ucHeMaxMcsMap5g);
+	prAdapter->rWifiVar.ucHeMaxMcsMap5g = kal_min_t(uint8_t,
+			prCapLimited->ucLimitedMaxMcsMap5g,
+			prAdapter->rWifiVar.ucHeMaxMcsMap5g);
 
-	if (prCapLimited->ucLimitedMaxMcsMap6g >= HE_CAP_INFO_MCS_NOT_SUPPORTED)
-		prCapLimited->ucLimitedMaxMcsMap6g =
-				HE_CAP_INFO_MCS_NOT_SUPPORTED;
-	else
-		prAdapter->rWifiVar.ucHeMaxMcsMap6g = kal_min_t(uint8_t,
-				prCapLimited->ucLimitedMaxMcsMap6g,
-				prAdapter->rWifiVar.ucHeMaxMcsMap6g);
+	prAdapter->rWifiVar.ucHeMaxMcsMap6g = kal_min_t(uint8_t,
+			prCapLimited->ucLimitedMaxMcsMap6g,
+			prAdapter->rWifiVar.ucHeMaxMcsMap6g);
 
-	DBGLOG(INIT, INFO, "Limited max MCS map: [2G][%u],[5G][%u],[6G][%u]\n",
+	DBGLOG(INIT, INFO,
+		"Limited max MCS map: [2G][%u],[5G][%u],[6G][%u]\n",
 		prAdapter->rWifiVar.ucHeMaxMcsMap2g,
 		prAdapter->rWifiVar.ucHeMaxMcsMap5g,
 		prAdapter->rWifiVar.ucHeMaxMcsMap6g);
