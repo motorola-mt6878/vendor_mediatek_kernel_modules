@@ -1625,6 +1625,14 @@ struct mt66xx_chip_info {
 	void (*asicSerInit)(struct ADAPTER *prAdapter,
 			    const u_int8_t fgAtResetFlow);
 
+#if IS_ENABLED(CFG_MTK_WIFI_HOST_CSR_IRQ_EN_CHK)
+	void (*checkHostCsrIrqEnable)(struct ADAPTER *prAdapter);
+#endif
+
+#if IS_ENABLED(CFG_MTK_WIFI_FORCE_HOST_CSR_IRQ_EN)
+	void (*forceEnableHostCsrIrq)(struct ADAPTER *prAdapter);
+#endif
+
 	/* If you want to explicitly specify the max AMPDU length exponent in
 	 * HE CAP IE instead of using default one specified by
 	 * prWifiVar->ucMaxAmpduLenExp, then you shall set

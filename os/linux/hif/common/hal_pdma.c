@@ -608,38 +608,9 @@ u_int8_t halSetDriverOwn(struct ADAPTER *prAdapter)
 		{
 #if IS_ENABLED(CFG_MTK_WIFI_HOST_CSR_IRQ_EN_CHK)
 			/* Check HOST_CSR_IRQ_EN */
-			if ((u4chkTick - u4CurrTick) > 1000) {
-
-				uint32_t u4RegValue = 0;
-				uint32_t u4RegStore = 0;
-
-				HAL_MCR_RD(prAdapter, 0x7c001600, &u4RegValue);
-				DBGLOG(HAL, INFO, "RD 0x7c001600 = %08x\n",
-					u4RegValue);
-				u4RegStore = u4RegValue;
-
-				/* Check bit 1, 4, 8 is 0 */
-				if ((u4RegValue & BIT(1)) == 0)
-					u4RegValue |= BIT(1);
-
-				if ((u4RegValue & BIT(4)) == 0)
-					u4RegValue |= BIT(4);
-
-				if ((u4RegValue & BIT(8)) == 0)
-					u4RegValue |= BIT(8);
-
-				if (u4RegStore != u4RegValue) {
-					DBGLOG(HAL, INFO,
-						"WR 0x7c001600 = %08x\n",
-						u4RegValue);
-					HAL_MCR_WR(prAdapter, 0x7c001600,
-						u4RegValue);
-				}
-
-				HAL_MCR_RD(prAdapter, 0x7c001600, &u4RegValue);
-				DBGLOG(HAL, INFO, "RD 0x7c001600 = %08x\n",
-					u4RegValue);
-			}
+			if ((u4chkTick - u4CurrTick) > 1000 &&
+				prChipInfo->checkHostCsrIrqEnable)
+				prChipInfo->checkHostCsrIrqEnable(prAdapter);
 #endif
 			u4chkTick = kalGetTimeTick();
 			if (prAdapter->u4CasanLoadType == 1)

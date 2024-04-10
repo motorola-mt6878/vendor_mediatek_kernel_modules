@@ -1195,7 +1195,7 @@ ifneq ($(filter 6779, $(WLAN_CHIP_ID)),)
 endif
 
 ifneq ($(filter 6878, $(WLAN_CHIP_ID)),)
-    ccflags-y += -DCFG_MTK_WIFI_HOST_CSR_IRQ_EN_CHK
+    ccflags-y += -DCFG_MTK_WIFI_FORCE_HOST_CSR_IRQ_EN
 endif
 
 ifeq ($(MTK_ANDROID_WMT), y)

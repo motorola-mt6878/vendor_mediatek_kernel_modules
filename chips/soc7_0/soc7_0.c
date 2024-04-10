@@ -123,6 +123,14 @@ static void soc7_0_DumpWfsyscpupcr(struct ADAPTER *prAdapter);
 static void soc7_0_CheckDrvownEint(struct ADAPTER *prAdapter);
 #endif
 
+#if IS_ENABLED(CFG_MTK_WIFI_HOST_CSR_IRQ_EN_CHK)
+static void soc7_0CheckHostCsrIrqEnable(struct ADAPTER *prAdapter);
+#endif
+
+#if IS_ENABLED(CFG_MTK_WIFI_FORCE_HOST_CSR_IRQ_EN)
+static void soc7_0ForceEnableHostCsrIrq(struct ADAPTER *prAdapter);
+#endif
+
 static uint32_t soc7_0_SetupRomEmi(struct ADAPTER *prAdapter);
 static void soc7_0_SetupFwDateInfo(struct ADAPTER *prAdapter,
 	enum ENUM_IMG_DL_IDX_T eDlIdx,
@@ -636,6 +644,12 @@ struct mt66xx_chip_info mt66xx_chip_info_soc7_0 = {
 	.fw_log_info = {
 		.ops = &soc7_0_fw_log_ops,
 	},
+#if IS_ENABLED(CFG_MTK_WIFI_HOST_CSR_IRQ_EN_CHK)
+	.checkHostCsrIrqEnable = soc7_0CheckHostCsrIrqEnable,
+#endif
+#if IS_ENABLED(CFG_MTK_WIFI_FORCE_HOST_CSR_IRQ_EN)
+	.forceEnableHostCsrIrq = soc7_0ForceEnableHostCsrIrq,
+#endif
 };
 
 struct mt66xx_hif_driver_data mt66xx_driver_data_soc7_0 = {
@@ -2238,6 +2252,98 @@ static void soc7_0_CheckDrvownEint(struct ADAPTER *prAdapter)
 	/* RD 0x1806_0B10 (WF_AON_DBG_FLAG) */
 	HAL_MCR_RD(prAdapter, 0x7c060B10, &u4RegValue);
 	DBGLOG(HAL, INFO, "RD 0x7c060B10 = %08x\n", u4RegValue);
+}
+#endif
+
+#if IS_ENABLED(CFG_MTK_WIFI_HOST_CSR_IRQ_EN_CHK)
+static void soc7_0CheckHostCsrIrqEnable(struct ADAPTER *prAdapter)
+{
+	uint32_t u4RegValue = 0;
+	uint32_t u4RegStore = 0;
+
+	HAL_MCR_RD(prAdapter, 0x7c001600, &u4RegValue);
+	DBGLOG(HAL, INFO, "RD 0x7c001600 = %08x\n", u4RegValue);
+	u4RegStore = u4RegValue;
+
+	/* Check bit 1, 4, 8 is 0 */
+	if ((u4RegValue & BIT(1)) == 0)
+		u4RegValue |= BIT(1);
+
+	if ((u4RegValue & BIT(4)) == 0)
+		u4RegValue |= BIT(4);
+
+	if ((u4RegValue & BIT(8)) == 0)
+		u4RegValue |= BIT(8);
+
+	if (u4RegStore != u4RegValue) {
+		DBGLOG(HAL, INFO, "WR 0x7c001600 = %08x\n", u4RegValue);
+		HAL_MCR_WR(prAdapter, 0x7c001600, u4RegValue);
+	}
+
+	HAL_MCR_RD(prAdapter, 0x7c001600, &u4RegValue);
+	DBGLOG(HAL, INFO, "RD 0x7c001600 = %08x\n", u4RegValue);
+}
+#endif
+
+#if IS_ENABLED(CFG_MTK_WIFI_FORCE_HOST_CSR_IRQ_EN)
+static void soc7_0ForceEnableHostCsrIrq(struct ADAPTER *prAdapter)
+{
+	uint32_t u4RegValue = 0;
+	uint8_t	ucPollingCnt = 0;
+
+	/* wake up conn_infra */
+	HAL_MCR_RD(prAdapter, 0x7c0601a4, &u4RegValue);
+	DBGLOG(HAL, INFO, "RD 0x7c0601a4 = %08x\n", u4RegValue);
+	u4RegValue |= BIT(0);
+	DBGLOG(HAL, INFO, "WR 0x7c0601a4 = %08x\n", u4RegValue);
+	HAL_MCR_WR(prAdapter, 0x7c0601a4, u4RegValue);
+	kalUdelay(200);
+
+	/* check conn_infra off ID */
+	while (1) {
+		kalMdelay(1);
+		HAL_MCR_RD(prAdapter, 0x7c011000, &u4RegValue);
+		DBGLOG(HAL, INFO, "RD 0x7c011000 = %08x\n", u4RegValue);
+		if (u4RegValue == 0x02050401)
+			break;
+		if (ucPollingCnt >= 10) {
+			DBGLOG(HAL, ERROR,
+				"Polling conn_infra ID failed.\n");
+			return;
+		}
+		ucPollingCnt++;
+	}
+
+	/* check conn_infra cmdbt restore done */
+	ucPollingCnt = 0;
+	while (1) {
+		kalUdelay(500);
+		HAL_MCR_RD(prAdapter, 0x7c001210, &u4RegValue);
+		DBGLOG(HAL, INFO, "RD 0x7c001210 = %08x\n", u4RegValue);
+		if ((u4RegValue & BIT(16)) == BIT(16))
+			break;
+		if (ucPollingCnt >= 10) {
+			DBGLOG(HAL, ERROR,
+				"conn_infra cmdbt restore failed.\n");
+			return;
+		}
+		ucPollingCnt++;
+	}
+
+	/* force enable HOST_CSR_IRQ_EN */
+	HAL_MCR_RD(prAdapter, 0x7c001600, &u4RegValue);
+	DBGLOG(HAL, INFO, "RD 0x7c001600 = %08x\n", u4RegValue);
+	DBGLOG(HAL, INFO, "WR 0x7c001600 = 0x3FF\n");
+	HAL_MCR_WR(prAdapter, 0x7c001600, 0x3FF);
+	HAL_MCR_RD(prAdapter, 0x7c001600, &u4RegValue);
+	DBGLOG(HAL, INFO, "RD 0x7c001600 = %08x\n", u4RegValue);
+
+	/* let conn_infra sleep */
+	HAL_MCR_RD(prAdapter, 0x7c0601a4, &u4RegValue);
+	DBGLOG(HAL, INFO, "RD 0x7c0601a4 = %08x\n", u4RegValue);
+	u4RegValue &= ~0x1;
+	DBGLOG(HAL, INFO, "WR 0x7c0601a4 = %08x\n", u4RegValue);
+	HAL_MCR_WR(prAdapter, 0x7c0601a4, u4RegValue);
 }
 #endif
 
