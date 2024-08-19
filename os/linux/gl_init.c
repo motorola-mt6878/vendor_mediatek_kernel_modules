@@ -6089,11 +6089,6 @@ static void ics_log_event_notification(int cmd, int value)
 		}
 	}
 
-	if (kalIsHalted()) {
-		DBGLOG(INIT, INFO, "device not ready return");
-		return;
-	}
-
 	WIPHY_PRIV(wlanGetWiphy(), prGlueInfo);
 	if (!prGlueInfo) {
 		DBGLOG(INIT, INFO, "prGlueInfo is NULL return");
@@ -6103,6 +6098,11 @@ static void ics_log_event_notification(int cmd, int value)
 	prAdapter = prGlueInfo->prAdapter;
 	if (!prAdapter) {
 		DBGLOG(INIT, INFO, "prAdapter is NULL return");
+		return;
+	}
+
+	if (kalIsHalted() || !prGlueInfo->u4ReadyFlag) {
+		DBGLOG(INIT, INFO, "device not ready return");
 		return;
 	}
 
