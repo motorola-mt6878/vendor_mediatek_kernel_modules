@@ -887,6 +887,7 @@ struct WIFI_VAR {
 	u_int8_t fgEnEpcs;
 #endif
 #endif
+	uint8_t ucGoBcnIntrvl;
 	uint8_t ucApHt;
 	uint8_t ucApVht;
 	uint8_t ucP2pGoHt;
