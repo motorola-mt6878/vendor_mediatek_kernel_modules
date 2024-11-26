@@ -658,7 +658,7 @@ mtk_nan_wext_set_Multicastlist(struct GLUE_INFO *prGlueInfo)
 			   MAX_NUM_GROUP_ADDR * ETH_ALEN);
 	}
 	g_aprNanMultiDev[ucRoleIdx].fgBMCFilterSet = FALSE;
-} /* end of p2pSetMulticastList() */
+} /* end of mtk_nan_wext_set_Multicastlist() */
 
 void
 nanSetMulticastListWorkQueueWrapper(struct GLUE_INFO *prGlueInfo)

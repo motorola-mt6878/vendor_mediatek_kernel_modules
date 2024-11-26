@@ -3052,8 +3052,8 @@ static void wlanSetMulticastListWorkQueue(
 
 	if (u4PacketFilter & PARAM_PACKET_FILTER_MULTICAST) {
 		/* Prepare multicast address list */
+		struct PARAM_MULTICAST_LIST rMcAddrList;
 		struct netdev_hw_addr *ha;
-		uint8_t *prMCAddrList = NULL;
 		uint32_t i = 0;
 
 		down(&g_halt_sem);
@@ -3062,44 +3062,56 @@ static void wlanSetMulticastListWorkQueue(
 			return;
 		}
 
-		prMCAddrList = kalMemAlloc(MAX_NUM_GROUP_ADDR * ETH_ALEN,
-					   VIR_MEM_TYPE);
-		if (!prMCAddrList) {
-			DBGLOG(INIT, WARN, "prMCAddrList memory alloc fail!\n");
-			up(&g_halt_sem);
-			return;
-		}
-
 		/* Avoid race condition with kernel net subsystem */
 		netif_addr_lock_bh(prDev);
 
+		kalMemZero(&rMcAddrList,
+			   sizeof(struct PARAM_MULTICAST_LIST));
+
 		netdev_for_each_mc_addr(ha, prDev) {
 			if (i < MAX_NUM_GROUP_ADDR) {
-				kalMemCopy((prMCAddrList + i * ETH_ALEN),
-					   GET_ADDR(ha), ETH_ALEN);
+				COPY_MAC_ADDR(
+					&rMcAddrList.aucMcAddrList[i],
+					GET_ADDR(ha));
 				DBGLOG(INIT, LOUD, "%u MAC: "MACSTR"\n",
 					i, MAC2STR(GET_ADDR(ha)));
 				i++;
 			}
 		}
 
+		rMcAddrList.ucBssIdx = ucBssIndex;
+		rMcAddrList.ucAddrNum = i;
+		rMcAddrList.fgIsOid = TRUE;
+
 		netif_addr_unlock_bh(prDev);
 
 		up(&g_halt_sem);
 
 		rStatus = kalIoctlByBssIdx(prGlueInfo,
-			 wlanoidSetMulticastList, prMCAddrList, (i * ETH_ALEN),
-			 &u4SetInfoLen, ucBssIndex);
-
-		kalMemFree(prMCAddrList, VIR_MEM_TYPE,
-			   MAX_NUM_GROUP_ADDR * ETH_ALEN);
+					   wlanoidSetMulticastList,
+					   &rMcAddrList,
+					   sizeof(struct PARAM_MULTICAST_LIST),
+					   &u4SetInfoLen,
+					   ucBssIndex);
 	} else if (!prGlueInfo->fgIsInSuspendMode &&
 			u4PacketFilter & PARAM_PACKET_FILTER_ALL_MULTICAST) {
+		struct PARAM_MULTICAST_LIST rMcAddrList;
+
+		kalMemZero(&rMcAddrList,
+			   sizeof(struct PARAM_MULTICAST_LIST));
+
+		rMcAddrList.ucBssIdx = ucBssIndex;
+		rMcAddrList.ucAddrNum = 0;
+		rMcAddrList.fgIsOid = TRUE;
+
 		DBGLOG(INIT, TRACE,
 			"Clear previous MAR settings to rx all mc pkt\n");
 		rStatus = kalIoctlByBssIdx(prGlueInfo,
-			 wlanoidSetMulticastList, NULL, 0,
-			 &u4SetInfoLen, ucBssIndex);
+					   wlanoidSetMulticastList,
+					   &rMcAddrList,
+					   sizeof(struct PARAM_MULTICAST_LIST),
+					   &u4SetInfoLen,
+					   ucBssIndex);
 	}
 	if (rStatus != WLAN_STATUS_SUCCESS)
 		DBGLOG(REQ, ERROR,
@@ -3153,18 +3165,16 @@ void wlanSchedScanStoppedWorkQueue(struct work_struct *work)
 void p2pSetMulticastListWorkQueueWrapper(struct GLUE_INFO
 		*prGlueInfo)
 {
-
-
 	if (!prGlueInfo) {
 		DBGLOG(INIT, WARN,
 		       "abnormal dev or skb: prGlueInfo(0x%p)\n", prGlueInfo);
 		return;
 	}
+
 #if CFG_ENABLE_WIFI_DIRECT
 	if (prGlueInfo->prAdapter->fgIsP2PRegistered)
 		mtk_p2p_wext_set_Multicastlist(prGlueInfo);
 #endif
-
 } /* end of p2pSetMulticastListWorkQueueWrapper() */
 
 /*----------------------------------------------------------------------------*/
@@ -4802,14 +4812,29 @@ void wlanSetSuspendMode(struct GLUE_INFO *prGlueInfo,
 #if (!CFG_SUPPORT_DROP_ALL_MC_PACKET)
 		if (fgEnable) {
 			/* Prepare IPv6 RA packet when suspend */
-			uint8_t MC_address[ETH_ALEN] = {0x33, 0x33, 0, 0, 0, 1};
+			struct PARAM_MULTICAST_LIST rMcAddrList;
+			uint8_t aucDefaultAddr[ETH_ALEN] = {
+				0x33, 0x33, 0, 0, 0, 1};
 
-			kalIoctl(prGlueInfo, wlanoidSetMulticastList,
-					MC_address, ETH_ALEN, &u4SetInfoLen);
+			kalMemZero(&rMcAddrList,
+				   sizeof(struct PARAM_MULTICAST_LIST));
+
+			COPY_MAC_ADDR(
+				&rMcAddrList.aucMcAddrList[0],
+				aucDefaultAddr);
+			rMcAddrList.ucBssIdx = u4Idx;
+			rMcAddrList.ucAddrNum = 1;
+			rMcAddrList.fgIsOid = TRUE;
+
+			kalIoctl(prGlueInfo,
+				 wlanoidSetMulticastList,
+				 &rMcAddrList,
+				 sizeof(rMcAddrList),
+				 &u4SetInfoLen);
 		} else if (u4PacketFilter & PARAM_PACKET_FILTER_MULTICAST) {
 			/* Prepare multicast address list when resume */
+			struct PARAM_MULTICAST_LIST rMcAddrList;
 			struct netdev_hw_addr *ha;
-			uint8_t *prMCAddrList = NULL;
 			uint32_t i = 0;
 
 			down(&g_halt_sem);
@@ -4818,23 +4843,17 @@ void wlanSetSuspendMode(struct GLUE_INFO *prGlueInfo,
 				return;
 			}
 
-			prMCAddrList = kalMemAlloc(
-				MAX_NUM_GROUP_ADDR * ETH_ALEN, VIR_MEM_TYPE);
-			if (!prMCAddrList) {
-				DBGLOG(INIT, WARN,
-					"prMCAddrList memory alloc fail!\n");
-				up(&g_halt_sem);
-				continue;
-			}
+			kalMemZero(&rMcAddrList,
+				   sizeof(struct PARAM_MULTICAST_LIST));
 
 			/* Avoid race condition with kernel net subsystem */
 			netif_addr_lock_bh(prDev);
 
 			netdev_for_each_mc_addr(ha, prDev) {
 				if (i < MAX_NUM_GROUP_ADDR) {
-					kalMemCopy(
-						(prMCAddrList + i * ETH_ALEN),
-						ha->addr, ETH_ALEN);
+					COPY_MAC_ADDR(
+						&rMcAddrList.aucMcAddrList[i],
+						ha->addr);
 					i++;
 				}
 			}
@@ -4843,11 +4862,15 @@ void wlanSetSuspendMode(struct GLUE_INFO *prGlueInfo,
 
 			up(&g_halt_sem);
 
-			kalIoctl(prGlueInfo, wlanoidSetMulticastList,
-				prMCAddrList, (i * ETH_ALEN), &u4SetInfoLen);
+			rMcAddrList.ucBssIdx = u4Idx;
+			rMcAddrList.ucAddrNum = i;
+			rMcAddrList.fgIsOid = TRUE;
 
-			kalMemFree(prMCAddrList, VIR_MEM_TYPE,
-				MAX_NUM_GROUP_ADDR * ETH_ALEN);
+			kalIoctl(prGlueInfo,
+				 wlanoidSetMulticastList,
+				 &rMcAddrList,
+				 sizeof(rMcAddrList),
+				 &u4SetInfoLen);
 		}
 #endif
 
