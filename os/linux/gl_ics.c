@@ -227,6 +227,13 @@ static long fw_log_ics_unlocked_ioctl(struct file *filp, unsigned int cmd,
 	case ICS_FW_LOG_IOCTL_SET_LEVEL:{
 		unsigned int level = (unsigned int) arg;
 
+		/* level = 0:stop, 1:start, 2:set */
+		if (level > 2) {
+			DBGLOG(INIT, ERROR, "ics level[%u] is invaild!\n",
+				level);
+			break;
+		}
+
 		DBGLOG(ICS, INFO, "ICS_FW_LOG_IOCTL_SET_LEVEL start\n");
 
 		if (gIcsDev->pfFwEventFuncCB) {
@@ -245,6 +252,13 @@ static long fw_log_ics_unlocked_ioctl(struct file *filp, unsigned int cmd,
 	}
 	case ICS_FW_LOG_IOCTL_ON_OFF:{
 		unsigned int log_on_off = (unsigned int) arg;
+
+		/* log_on_off = 0:stop, 1:start */
+		if (log_on_off > 1) {
+			DBGLOG(INIT, ERROR, "ics log_on_off[%u] is invaild!\n",
+				log_on_off);
+			break;
+		}
 
 		DBGLOG(ICS, INFO, "ICS_FW_LOG_IOCTL_ON_OFF start\n");
 

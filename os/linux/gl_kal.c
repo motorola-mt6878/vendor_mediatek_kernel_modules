@@ -4950,7 +4950,7 @@ kalIoctlByBssIdx(struct GLUE_INFO *prGlueInfo,
 			prIoReq->pfnOidHandler, prIoReq->u4InfoBufLen,
 			prIoReq->pu4QryInfoLen);
 	waitRet = wait_for_completion_timeout(&prGlueInfo->rPendComp,
-				MSEC_TO_JIFFIES(30*1000));
+			MSEC_TO_JIFFIES(KAL_OID_WAIT_TIME));
 	DBGLOG(OID, TRACE, "wait=%u, pfnOidHandler=%ps, BufLen=%u, QryLen=%p",
 			waitRet, prIoReq->pfnOidHandler,
 			prIoReq->u4InfoBufLen, prIoReq->pu4QryInfoLen);
