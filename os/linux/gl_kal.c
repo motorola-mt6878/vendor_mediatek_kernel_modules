@@ -3774,6 +3774,7 @@ kalHardStartXmit(struct sk_buff *prOrgSkb,
 			DBGLOG(INIT, ERROR, "cloned_skb copy fail\n");
 			return WLAN_STATUS_NOT_ACCEPTED;
 		}
+		kmemleak_not_leak(prSkbNew); /* Omit memleak check */
 		dev_kfree_skb(prOrgSkb);
 		prSkb = prSkbNew;
 		TX_INC_CNT(&prAdapter->rTxCtrl, TX_IN_COPY_COUNT);
