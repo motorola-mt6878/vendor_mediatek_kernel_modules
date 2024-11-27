@@ -4973,6 +4973,7 @@ kalIoctlByBssIdx(struct GLUE_INFO *prGlueInfo,
 			wlanReleasePendingOid(prGlueInfo->prAdapter, 0);
 		}
 #endif
+		prGlueInfo->fgOidWaiting = FALSE;
 		/* note: do not dump main_thread's call stack here, */
 		/*       because it may be running on other cpu.    */
 		DBGLOG(OID, WARN,
