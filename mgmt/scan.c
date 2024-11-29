@@ -1526,6 +1526,7 @@ void scanParsingMBSSIDSubelement(struct ADAPTER *prAdapter,
 	u2IELength = IE_SIZE(prMbssidIe) - sizeof(struct IE_MBSSID);
 	IE_FOR_EACH(pucIE, u2IELength, u2Offset)
 	{
+		fgIsValidSsid = FALSE;
 		pucProfileIE = NULL;
 		/*search for each nontransmitted bssid profile*/
 		if (IE_ID(pucIE) == NON_TX_BSSID_PROFILE) {
@@ -1568,7 +1569,7 @@ void scanParsingMBSSIDSubelement(struct ADAPTER *prAdapter,
 				prMbssidIdxIe->ucBSSIDIndex;
 
 			DBGLOG(SCN, TRACE, "MBSS["MACSTR
-				"][%s] % MaxBSSIDIndicator=%d, ucMBSSIDIndex=%d\n",
+				"][%s] MaxBSSIDIndicator=%d, ucMBSSIDIndex=%d\n",
 				MAC2STR(aucBSSID), rSsid.aucSsid,
 				prBssDesc->ucMaxBSSIDIndicator,
 				prBssDesc->ucMBSSIDIndex);
