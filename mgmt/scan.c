@@ -2549,13 +2549,6 @@ void scanParseExtCapIE(uint8_t *pucIE, struct BSS_DESC *prBssDesc)
 	if (!prExtCap)
 		return;
 
-	DBGLOG(SCN, TRACE,
-		"Extented capabilities IE present,BSSID[" MACSTR "] SSID:%s\n",
-		MAC2STR(prBssDesc->aucBSSID),
-		prBssDesc->aucSSID);
-
-	DBGLOG_MEM8(SCN, TRACE, prExtCap, IE_SIZE(prExtCap));
-
 #if CFG_SUPPORT_802_11V_BSS_TRANSITION_MGT
 	GET_EXT_CAP(prExtCap->aucCapabilities, prExtCap->ucLength,
 		ELEM_EXT_CAP_BSS_TRANSITION_BIT, prBssDesc->fgSupportBTM);
@@ -2572,6 +2565,14 @@ void scanParseExtCapIE(uint8_t *pucIE, struct BSS_DESC *prBssDesc)
 		MAC2STR(prBssDesc->aucBSSID),
 		prBssDesc->aucSSID,
 		prBssDesc->fgExtSpecMgmtCap);
+#else
+	DBGLOG(SCN, TRACE,
+		"Extented capabilities IE present,BSSID[" MACSTR "] SSID:%s\n",
+		MAC2STR(prBssDesc->aucBSSID),
+		prBssDesc->aucSSID);
+
+	DBGLOG_MEM8(SCN, LOUD, prExtCap, IE_SIZE(prExtCap));
+
 #endif
 }
 

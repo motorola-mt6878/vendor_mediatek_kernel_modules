@@ -3300,7 +3300,7 @@ void halWpdmaProcessCmdDmaDone(struct GLUE_INFO *prGlueInfo,
 		if (pTxD->DMADONE == 0)
 			break;
 
-		log_dbg(HAL, TRACE, "DMA done: port[%u] dma[%u] idx[%u] done[%u] pkt[0x%p] used[%u]\n",
+		log_dbg(HAL, LOUD, "DMA done: port[%u] dma[%u] idx[%u] done[%u] pkt[0x%p] used[%u]\n",
 			u2Port, u4DmaIdx, u4SwIdx, pTxD->DMADONE,
 			prTxRing->Cell[u4SwIdx].pPacket, prTxRing->u4UsedCnt);
 
@@ -3663,7 +3663,7 @@ enum ENUM_CMD_TX_RESULT halWpdmaWriteCmd(struct GLUE_INFO *prGlueInfo,
 	       __func__, prCmdInfo, prCmdInfo->pucTxd, prCmdInfo->u4TxdLen,
 	       prCmdInfo->pucTxp, prCmdInfo->u4TxpLen,
 	       prTxRing->TxCpuIdx, prTxRing->u4UsedCnt);
-	DBGLOG_MEM32(HAL, TRACE, prCmdInfo->pucTxd, prCmdInfo->u4TxdLen);
+	DBGLOG_MEM32(HAL, LOUD, prCmdInfo->pucTxd, prCmdInfo->u4TxdLen);
 
 	if (prSwWfdmaInfo->fgIsEnSwWfdma) {
 		if (prSwWfdmaInfo->rOps.setCidx)
