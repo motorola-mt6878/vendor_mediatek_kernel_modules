@@ -11212,7 +11212,7 @@ uint32_t rlmTxPwrEnvMaxPwrUpdate(
 		 && (eHwBand != BAND_6G)
 #endif
 	) {
-		DBGLOG(RLM, TRACE,
+		DBGLOG_LIMITED(RLM, TRACE,
 			"Skip TxPwrEnv update,band[%d]SpecMgmt[%d]\n",
 			eHwBand,
 			prBssDesc->fgExtSpecMgmtCap);

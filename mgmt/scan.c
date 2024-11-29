@@ -21,8 +21,6 @@
  */
 #define REPLICATED_BEACON_STRENGTH_THRESHOLD    (32)
 #define ROAMING_NO_SWING_RCPI_STEP              (10)
-#define REPLICATED_BEACON_FRESH_PERIOD          (10000)
-#define REPLICATED_BEACON_TIME_THRESHOLD        (3000)
 
 /*******************************************************************************
  *                             D A T A   T Y P E S
@@ -1959,7 +1957,7 @@ void scanParsingRnrElement(struct ADAPTER *prAdapter,
 	struct IE_RNR *prRnr = (struct IE_RNR *) pucIE;
 
 	if (!scanIsNeedRnrScan(prAdapter, prScanInfo)) {
-		DBGLOG(SCN, TRACE, "Skip oob scan Rnr parsing\n");
+		DBGLOG_LIMITED(SCN, TRACE, "Skip oob scan Rnr parsing\n");
 		return;
 	}
 
@@ -2569,7 +2567,7 @@ void scanParseExtCapIE(uint8_t *pucIE, struct BSS_DESC *prBssDesc)
 		ELEM_EXT_CAP_EXT_SPEC_MGMT_CAPABLE_BIT,
 		prBssDesc->fgExtSpecMgmtCap);
 
-	DBGLOG(SCN, TRACE,
+	DBGLOG_LIMITED(SCN, TRACE,
 		"BSSID[" MACSTR "] SSID:%s: Ext Spec Mgmt Cap[%d]\n",
 		MAC2STR(prBssDesc->aucBSSID),
 		prBssDesc->aucSSID,
@@ -2915,35 +2913,6 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 #endif
 		if (prBssDesc->eBSSType != eBSSType) {
 			prBssDesc->eBSSType = eBSSType;
-		} else if (ucChnlNum !=
-			prBssDesc->ucChannelNum
-			&& prBssDesc->ucRCPI
-			> nicRxGetRcpiValueFromRxv(
-				prAdapter, RCPI_MODE_MAX, prSwRfb)) {
-			uint8_t ucRcpi = 0;
-
-			/* for signal strength is too much weaker and
-			 * previous beacon is not stale
-			 */
-			ASSERT(prSwRfb->prRxStatusGroup3);
-			ucRcpi = nicRxGetRcpiValueFromRxv(prAdapter,
-				RCPI_MODE_MAX,
-				prSwRfb);
-			if ((prBssDesc->ucRCPI - ucRcpi)
-			    >= REPLICATED_BEACON_STRENGTH_THRESHOLD
-			    && rCurrentTime - prBssDesc->rUpdateTime
-			    <= REPLICATED_BEACON_FRESH_PERIOD) {
-				log_dbg(SCN, TRACE, "rssi(%u) is too much weaker and previous one(%u) is fresh\n",
-					ucRcpi, prBssDesc->ucRCPI);
-				return prBssDesc;
-			}
-			/* for received beacons too close in time domain */
-			else if (rCurrentTime - prBssDesc->rUpdateTime
-				<= REPLICATED_BEACON_TIME_THRESHOLD) {
-				log_dbg(SCN, TRACE, "receive beacon/probe responses too soon(%u:%u)\n",
-					prBssDesc->rUpdateTime, rCurrentTime);
-				return prBssDesc;
-			}
 		}
 
 		/* if Timestamp has been reset, re-generate BSS
@@ -3789,12 +3758,12 @@ struct BSS_DESC *scanAddToBssDesc(struct ADAPTER *prAdapter,
 #endif
 #if (CFG_SUPPORT_TX_PWR_ENV == 1)
 	if (prTxPwrEnvIE) {
-		DBGLOG(SCN, TRACE,
+		DBGLOG_LIMITED(SCN, TRACE,
 			"TPE present,BSSID[" MACSTR "] SSID:%s\n",
 			MAC2STR(prBssDesc->aucBSSID),
 			prBssDesc->aucSSID);
 
-		DBGLOG_MEM8(SCN, TRACE, prTxPwrEnvIE, IE_SIZE(prTxPwrEnvIE));
+		DBGLOG_MEM8(SCN, LOUD, prTxPwrEnvIE, IE_SIZE(prTxPwrEnvIE));
 
 		rlmTxPwrEnvMaxPwrUpdate(
 			prAdapter,
@@ -5626,7 +5595,7 @@ void scanParseEhtCapIE(uint8_t *pucIE, struct BSS_DESC *prBssDesc)
 	memcpy(prBssDesc->ucEhtPhyCapInfo, ehtCap->ucEhtPhyCap,
 		EHT_PHY_CAP_BYTE_NUM);
 
-	DBGLOG(SCN, TRACE,
+	DBGLOG_LIMITED(SCN, TRACE,
 		"BSSID:" MACSTR
 		" SSID:%s, EHT CAP IE\n",
 		MAC2STR(prBssDesc->aucBSSID),
