@@ -5688,10 +5688,7 @@ int32_t mtk_cfg80211_process_str_cmd(struct wiphy *wiphy,
 {
 	uint32_t rStatus = WLAN_STATUS_SUCCESS;
 	uint8_t *cmd = data;
-	struct GLUE_INFO *prGlueInfo = NULL;
 	STR_CMD_FUNCTION pfHandler = NULL;
-
-	WIPHY_PRIV(wiphy, prGlueInfo);
 
 	if (data == NULL || len == 0) {
 		DBGLOG(INIT, TRACE, "%s data or len is invalid\n", __func__);
@@ -5699,6 +5696,10 @@ int32_t mtk_cfg80211_process_str_cmd(struct wiphy *wiphy,
 	}
 
 	DBGLOG(REQ, INFO, "cmd: %s, len: %d\n", cmd, len);
+	if (kalIsResetOnEnd() == TRUE) {
+		DBGLOG(INIT, WARN, "WiFi is resetting\n");
+		return -EBUSY;
+	}
 
 	pfHandler = get_str_cmd_handler(cmd, len);
 	if (pfHandler != NULL) {
