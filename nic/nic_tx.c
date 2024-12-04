@@ -2228,7 +2228,7 @@ nicTxFillDesc(struct ADAPTER *prAdapter,
 		}
 #endif
 	} else { /* Compose TXD by Msdu info */
-		DBGLOG_LIMITED(NIC, INFO, "Compose TXD by Msdu info\n");
+		DBGLOG_LIMITED(NIC, TRACE, "Compose TXD by Msdu info\n");
 #if (UNIFIED_MAC_TX_FORMAT == 1)
 		if (prMsduInfo->eSrc == TX_PACKET_MGMT) {
 #if (CFG_TX_MGMT_BY_DATA_Q == 1)

@@ -1383,7 +1383,7 @@ static void rlmFillExtCapIE(struct ADAPTER *prAdapter,
 		prExtCap->ucLength--;
 	}
 
-	DBGLOG_MEM8(SAA, INFO, prExtCap->aucCapabilities, prExtCap->ucLength);
+	DBGLOG_MEM8(SAA, TRACE, prExtCap->aucCapabilities, prExtCap->ucLength);
 
 	ASSERT(IE_SIZE(prExtCap) <= (ELEM_HDR_LEN + ELEM_MAX_LEN_EXT_CAP));
 
