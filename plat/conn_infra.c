@@ -1346,7 +1346,7 @@ static void drv_eint_handler(void)
 	fw_spi_read(FM_MAIN_INTR, &main_isr);
 	main_isr &= FM_INTR_MASK;
 
-	WCN_DBG(FM_NTC | CHIP, "interrupt[%04x]\n", main_isr);
+	WCN_DBG_LIMITED(FM_NTC | CHIP, "interrupt[%04x]\n", main_isr);
 
 	if (main_isr & FM_INTR_STC_DONE)
 		fm_stc_done_rechandler();
