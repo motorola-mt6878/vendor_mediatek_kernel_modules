@@ -3856,7 +3856,7 @@ int mtk_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		scanlog_dbg(LOG_SCHED_SCAN_REQ_START_K2D, INFO, "--> %s()\n",
 			__func__);
 
-#if CFG_SUPPORT_LOWLATENCY_MODE
+#if (0 && CFG_SUPPORT_LOWLATENCY_MODE) // IKSWV-97835, always allow cfg80211_scan in LowLatency mode
 	if (!prGlueInfo->prAdapter->fgEnCfg80211Scan
 	    && MEDIA_STATE_CONNECTED
 	    == kalGetMediaStateIndicated(prGlueInfo, ucBssIndex)) {
