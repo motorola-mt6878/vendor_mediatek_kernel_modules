@@ -229,7 +229,9 @@ int32_t kalBoostCpu(struct ADAPTER *prAdapter,
 
 	if (fgRequested == ENUM_CPU_BOOST_STATUS_INIT) {
 		/* initially enable rps working at small cores */
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 		kalSetRpsMap(prGlueInfo, RPS_LITTLE_CORE);
+#endif
 		kalSetISRMask(prAdapter, CPU_LITTLE_CORE);
 		fgRequested = ENUM_CPU_BOOST_STATUS_STOP;
 	}
@@ -249,8 +251,9 @@ int32_t kalBoostCpu(struct ADAPTER *prAdapter,
 #if CFG_SUPPORT_RX_NAPI_THREADED
 		kalSetCpuMask(prGlueInfo->napi_thread, CPU_ALL_CORE);
 #endif
-
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 		kalSetRpsMap(prGlueInfo, RPS_LITTLE_CORE);
+#endif
 		kalSetISRMask(prAdapter, CPU_ALL_CORE);
 		kalSetDramBoost(prAdapter, TRUE);
 	} else if (u4TarPerfLevel >= u4BoostCpuTh &&
@@ -278,7 +281,9 @@ int32_t kalBoostCpu(struct ADAPTER *prAdapter,
 		kalSetCpuMask(prGlueInfo->napi_thread, CPU_BIG_CORE);
 		kalSetTaskUtilMinPct(prGlueInfo->u4RxNapiThreadPid, 100);
 #endif
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 		kalSetRpsMap(prGlueInfo, RPS_BIG_CORE);
+#endif
 		kalSetISRMask(prAdapter, CPU_BIG_CORE);
 		kalSetDramBoost(prAdapter, TRUE);
 #if CFG_SUPPORT_LITTLE_CPU_BOOST
@@ -301,8 +306,9 @@ int32_t kalBoostCpu(struct ADAPTER *prAdapter,
 		kalSetCpuMask(prGlueInfo->napi_thread, CPU_LITTLE_CORE);
 		kalSetTaskUtilMinPct(prGlueInfo->u4RxNapiThreadPid, 0);
 #endif
-
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 		kalSetRpsMap(prGlueInfo, RPS_LITTLE_CORE);
+#endif
 		kalSetISRMask(prAdapter, CPU_LITTLE_CORE);
 		kalSetCpuFreq(DEFAULT_CPU_FREQ, CPU_BIG_CORE);
 	} else if (u4TarPerfLevel < u4BoostLittleCpuTh &&
@@ -334,7 +340,9 @@ int32_t kalBoostCpu(struct ADAPTER *prAdapter,
 		kalSetCpuMask(prGlueInfo->napi_thread, CPU_ALL_CORE);
 		kalSetTaskUtilMinPct(prGlueInfo->u4RxNapiThreadPid, 0);
 #endif
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 		kalSetRpsMap(prGlueInfo, RPS_LITTLE_CORE);
+#endif
 		kalSetISRMask(prAdapter, CPU_ALL_CORE);
 		kalSetCpuFreq(DEFAULT_CPU_FREQ, CPU_ALL_CORE);
 		kalSetDramBoost(prAdapter, FALSE);

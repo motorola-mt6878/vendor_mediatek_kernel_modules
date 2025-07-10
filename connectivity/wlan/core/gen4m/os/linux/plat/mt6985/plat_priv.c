@@ -473,8 +473,9 @@ void kalSetCpuBoost(struct ADAPTER *prAdapter,
 			prBoostInfo->rRxNapiThreadInfo.u4Priority);
 	}
 #endif /* CFG_SUPPORT_RX_NAPI_THREADED */
-
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 	kalSetRpsMap(prGlueInfo, prBoostInfo->u4RpsMap);
+#endif
 	kalSetISRMask(prAdapter, prBoostInfo->u4ISRMask);
 
 #if CFG_SUPPORT_TX_FREE_MSDU_WORK

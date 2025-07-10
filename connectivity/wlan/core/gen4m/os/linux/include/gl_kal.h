@@ -2278,7 +2278,9 @@ uint32_t kalGetFwVerOffset(void);
 uint32_t kalGetEmiMetOffset(void);
 uint32_t kalGetProjectId(void);
 void kalSetEmiMetOffset(uint32_t newEmiMetOffset);
+#if IS_ENABLED(CONFIG_MTK_NET_RPS)
 void kalSetRpsMap(struct GLUE_INFO *glue, unsigned long value);
+#endif
 extern int set_task_util_min_pct(pid_t pid, unsigned int min);
 #if (CFG_COALESCING_INTERRUPT == 1)
 int32_t kalCoalescingInt(struct ADAPTER *prAdapter,
